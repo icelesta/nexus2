@@ -1,0 +1,430 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+
+
+/* Dashboard Full Width */
+
+.fi-main {
+    max-width: 100% !important;
+}
+
+.fi-page {
+    max-width: 100% !important;
+}
+
+.fi-page-content {
+    max-width: 100% !important;
+}
+
+.fi-wi {
+    width: 100% !important;
+}
+
+.fi-wi-widget {
+    width: 100% !important;
+}
+
+/* ==========================================
+   SIDEBAR GROUP TITLE
+========================================== */
+
+.fi-sidebar-group button span,
+.fi-sidebar-group-label {
+    text-transform: uppercase !important;
+    font-weight: 800 !important;
+    font-size: 11px !important;
+    letter-spacing: 0.12em;
+    color: #6b7280 !important;
+}
+
+/* ==========================================
+   NEXUS ERP SIDEBAR COMPACT
+========================================== */
+
+/* Jarak antar Group */
+.fi-sidebar-group {
+    margin-bottom: 0 !important;
+}
+
+/* Header Group */
+.fi-sidebar-group-label,
+.fi-sidebar-group button {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/* Container Group */
+.fi-sidebar-group-content {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/* Jarak antar menu */
+.fi-sidebar-item {
+    margin-bottom: 0 !important;
+}
+
+/* Padding keseluruhan sidebar */
+.fi-sidebar-nav {
+    gap: 0.25rem !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Nexus2 Menu Group Heading
+|--------------------------------------------------------------------------
+*/
+
+.fi-sidebar-group-label{
+
+    color:#c2410c !important;
+
+    font-weight:700;
+
+}
+
+/*
+|--------------------------------------------------------------------------
+| Sidebar Group
+|--------------------------------------------------------------------------
+*/
+
+.fi-sidebar-group{
+
+    margin-top:12px;
+
+}
+
+.fi-sidebar-group-label{
+
+    color:#ea580c !important;
+
+    font-weight:700;
+
+    letter-spacing:.12em;
+
+    text-transform:uppercase;
+
+}
+
+.fi-sidebar-item-label{
+
+    font-weight:500;
+
+}
+
+.fi-sidebar-item-active{
+
+    border-radius:10px;
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| NEXUS ERP
+| Enterprise Image Hover Preview
+|--------------------------------------------------------------------------
+|
+| Golden Standard v2.0
+|
+| - Fix Filament clipping
+| - Hover always on top
+| - Enterprise shadow
+| - Smooth animation
+| - Ready for future Preview Card
+|
+*/
+
+/*--------------------------------------------------
+| Filament Table Overflow Fix
+--------------------------------------------------*/
+
+.fi-ta-content,
+.fi-ta-table,
+.fi-ta-table table,
+.fi-ta-record,
+.fi-ta-row,
+.fi-ta-cell,
+.fi-ta-image {
+    overflow: visible !important;
+}
+
+/*--------------------------------------------------
+| Stacking Context
+--------------------------------------------------*/
+
+.fi-ta-row {
+    position: relative;
+    z-index: 1;
+}
+
+.fi-ta-row:hover {
+    z-index: 100;
+}
+
+/*--------------------------------------------------
+| Thumbnail
+--------------------------------------------------*/
+
+.fi-ta-image {
+
+    position: relative;
+
+    overflow: visible !important;
+
+}
+
+.fi-ta-image img {
+
+    display: block;
+
+    width: 42px;
+
+    height: 42px;
+
+    object-fit: cover;
+
+    border-radius: 8px;
+
+    cursor: zoom-in;
+
+    position: relative;
+
+    z-index: 5;
+
+    transition:
+
+        transform .25s ease,
+
+        box-shadow .25s ease,
+
+        border-radius .25s ease;
+
+}
+
+/*--------------------------------------------------
+| Enterprise Hover
+--------------------------------------------------*/
+
+.fi-ta-image img:hover {
+
+    transform: scale(3.2);
+
+    position: relative;
+
+    z-index: 999999;
+
+    border-radius: 10px;
+
+    box-shadow:
+
+        0 20px 40px rgba(0,0,0,.30),
+
+        0 10px 20px rgba(0,0,0,.20);
+
+}
+
+/*--------------------------------------------------
+| Prevent clipping from responsive wrappers
+--------------------------------------------------*/
+
+.fi-ta-ctn {
+
+    overflow: visible !important;
+
+}
+
+.fi-ta {
+
+    overflow: visible !important;
+
+}
+
+/*--------------------------------------------------
+| Responsive
+--------------------------------------------------*/
+
+@media (max-width: 1024px){
+
+    .fi-ta-image img:hover{
+
+        transform:scale(2.4);
+
+    }
+
+}
+
+/*
+|--------------------------------------------------------------------------
+| Nexus Enterprise Thumbnail
+|--------------------------------------------------------------------------
+*/
+
+.nexus-item-thumbnail{
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    cursor:pointer;
+
+}
+
+.nexus-thumb{
+
+    width:46px;
+
+    height:46px;
+
+    object-fit:cover;
+
+    border-radius:8px;
+
+    border:1px solid #e5e7eb;
+
+    transition:all .20s ease;
+
+}
+
+.nexus-thumb:hover{
+
+    transform:scale(1.08);
+
+    box-shadow:0 4px 12px rgba(0,0,0,.18);
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Nexus Hover Event
+|--------------------------------------------------------------------------
+*/
+
+.nexus-item-thumbnail{
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    width:58px;
+
+    height:58px;
+
+    transition:all .18s ease;
+
+}
+
+.nexus-thumb{
+
+    width:48px;
+
+    height:48px;
+
+    object-fit:cover;
+
+    border-radius:10px;
+
+    border:1px solid #e5e7eb;
+
+    transition:all .18s ease;
+
+}
+
+.nexus-item-thumbnail.is-hover .nexus-thumb{
+
+    transform:scale(1.12);
+
+    box-shadow:
+
+        0 10px 18px rgba(0,0,0,.20);
+
+    border-color:#f59e0b;
+
+}
+
+/*
+|--------------------------------------------------------------------------
+| NDS-001
+| Enterprise Smart Preview
+|--------------------------------------------------------------------------
+*/
+
+.nexus-preview-card{
+
+    position:fixed;
+
+    width:300px;
+
+    min-height:120px;
+
+    background:#ffffff;
+
+    border-radius:12px;
+
+    border:1px solid #e5e7eb;
+
+    box-shadow:
+
+        0 18px 40px rgba(0,0,0,.20);
+
+    overflow:hidden;
+
+    z-index:99999999;
+
+    opacity:0;
+
+    visibility:hidden;
+
+    transform:translateY(10px);
+
+    transition:
+
+        opacity .18s ease,
+
+        transform .18s ease,
+
+        visibility .18s;
+
+    pointer-events:none;
+
+}
+
+.nexus-preview-card.show{
+
+    opacity:1;
+
+    visibility:visible;
+
+    transform:translateY(0);
+
+}
+
+.nexus-preview-header{
+
+    padding:12px 16px;
+
+    background:#2563eb;
+
+    color:#fff;
+
+    font-size:14px;
+
+    font-weight:700;
+
+}
+
+.nexus-preview-content{
+
+    padding:18px;
+
+    font-size:13px;
+
+}

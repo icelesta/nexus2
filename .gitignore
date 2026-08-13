@@ -1,0 +1,72 @@
+# =========================================================
+# Laravel / Environment
+# =========================================================
+
+*.log*
+.DS_Store
+
+.env
+.env.backup
+.env.production
+
+.phpactor.json
+.phpunit.result.cache
+
+# IDE / Editor
+/.fleet
+/.idea
+/.nova
+/.phpunit.cache
+/.vscode
+/.zed
+
+# Composer
+/auth.json
+
+# Dependencies
+/node_modules
+/vendor
+
+# Laravel generated files
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+
+# Laravel / Homestead
+Homestead.json
+Homestead.yaml
+
+# OS
+Thumbs.db
+
+
+# =========================================================
+# Nexus 2.0 - Backup / Temporary Files
+# =========================================================
+
+# Backup files
+*.bak
+*.old
+*.backup
+
+# Temporary files
+*~
+*.tmp
+*.temp
+
+# Known backup copies
+app/Observers/UserObserver - Backup.php
+app/Services/NumberGeneratorService.old.bak
+app/Services/Warehouse/WarehouseTypeService - Copy.bak
+
+
+# =========================================================
+# Nexus 2.0 - Local / Trial Artifacts
+# =========================================================
+
+# Intentionally excluded runtime / generated artifacts
+# Add specific artifacts here only when confirmed unnecessary.*.zip
+
+*.zip

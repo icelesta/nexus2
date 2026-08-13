@@ -1,0 +1,97 @@
+<?php
+
+namespace App\Filament\Resources\Currencies;
+
+use App\Filament\Resources\Currencies\Pages\CreateCurrency;
+use App\Filament\Resources\Currencies\Pages\EditCurrency;
+use App\Filament\Resources\Currencies\Pages\ListCurrencies;
+use App\Filament\Resources\Currencies\Schemas\CurrencyForm;
+use App\Filament\Resources\Currencies\Tables\CurrenciesTable;
+use App\Models\Currency;
+use BackedEnum;
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Table;
+
+class CurrencyResource extends Resource
+{
+    protected static ?string $model = Currency::class;
+
+    protected static string|BackedEnum|null $navigationIcon =
+        Heroicon::OutlinedBanknotes;
+
+    protected static ?string $navigationLabel =
+        'Currency';
+
+    protected static ?string $modelLabel =
+        'Currency';
+
+    protected static ?string $pluralModelLabel =
+        'Currencies';
+
+    protected static string|\UnitEnum|null $navigationGroup =
+        'Finance Setup';
+
+    protected static ?int $navigationSort = 2;
+
+    protected static ?string $recordTitleAttribute = 'currency_name';
+
+    public static function form(Schema $schema): Schema
+    {
+        return CurrencyForm::configure($schema);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return CurrenciesTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [];
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index'  => ListCurrencies::route('/'),
+            'create' => CreateCurrency::route('/create'),
+            'edit'   => EditCurrency::route('/{record}/edit'),
+        ];
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::query()
+            ->where('is_active', true)
+            ->count();
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        $count = static::getModel()::count();
+
+        return match (true) {
+
+            $count === 0 => 'danger',
+
+            $count <= 10 => 'warning',
+
+            default => 'success',
+        };
+    }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return [
+            'currency_code',
+            'currency_name',
+            'symbol',
+            'numeric_code',
+            'country_name',
+        ];
+    }
+    
+    
+}
