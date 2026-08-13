@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS item_serials;
+CREATE TABLE item_serials(
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ item_id BIGINT UNSIGNED NOT NULL,
+ serial_number VARCHAR(150) NOT NULL,
+ warehouse_id BIGINT UNSIGNED NULL,
+ status VARCHAR(30) DEFAULT 'Available',
+ UNIQUE(serial_number),INDEX(item_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

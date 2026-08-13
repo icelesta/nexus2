@@ -1,0 +1,111 @@
+# =========================================================
+# Nexus 2.0 - Git Ignore
+# =========================================================
+
+# ---------------------------------------------------------
+# Environment / Secrets
+# ---------------------------------------------------------
+.env
+.env.*
+!.env.example
+
+# ---------------------------------------------------------
+# Logs
+# ---------------------------------------------------------
+*.log
+*.log.*
+
+# ---------------------------------------------------------
+# Laravel Runtime
+# ---------------------------------------------------------
+/storage/app/private/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*
+/storage/logs/*
+
+# Keep Laravel directory placeholders
+!storage/app/private/.gitignore
+!storage/framework/cache/.gitignore
+!storage/framework/sessions/.gitignore
+!storage/framework/testing/.gitignore
+!storage/framework/views/.gitignore
+!storage/logs/.gitignore
+
+# ---------------------------------------------------------
+# Laravel Public Storage / Build
+# ---------------------------------------------------------
+/public/build/
+/public/hot
+/public/storage
+
+# ---------------------------------------------------------
+# Dependencies
+# ---------------------------------------------------------
+/vendor/
+/node_modules/
+
+# ---------------------------------------------------------
+# IDE / Editor
+# ---------------------------------------------------------
+.idea/
+.vscode/
+.fleet/
+.nova/
+.phpactor.json
+.phpunit.result.cache
+.zed/
+
+# ---------------------------------------------------------
+# OS
+# ---------------------------------------------------------
+.DS_Store
+Thumbs.db
+
+# ---------------------------------------------------------
+# Composer
+# ---------------------------------------------------------
+auth.json
+
+# ---------------------------------------------------------
+# Local / Temporary
+# ---------------------------------------------------------
+Homestead.json
+Homestead.yaml
+
+# ---------------------------------------------------------
+# Nexus 2.0 - Temporary Empty Files
+# ---------------------------------------------------------
+# These files were found in the project root during
+# baseline audit and are currently 0-byte files.
+# They are intentionally excluded from Git until reviewed.
+/#3b82f6,
+/1,
+/false,
+/FilamentPanel
+/heroicon-o-cube,
+/Raw Material,
+/Raw material warehouse,
+/RAW,
+/Super Admin
+/true,
+
+# ---------------------------------------------------------
+# Laravel Storage Directory itself
+# ---------------------------------------------------------
+/storage/*.key
+
+# ---------------------------------------------------------
+# Backup / Temporary Development Files
+# ---------------------------------------------------------
+*.bak
+*.old
+*.backup
+* - Backup.*
+* - Copy.*
+
+# ---------------------------------------------------------
+# Archive Files
+# ---------------------------------------------------------
+*.zip

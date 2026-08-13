@@ -1,0 +1,13 @@
+DROP TABLE IF EXISTS item_prices;
+CREATE TABLE item_prices(
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ item_supplier_id BIGINT UNSIGNED NULL,
+ item_id BIGINT UNSIGNED NOT NULL,
+ price_type VARCHAR(30) NOT NULL,
+ currency_id BIGINT UNSIGNED NOT NULL,
+ price DECIMAL(18,4) NOT NULL,
+ effective_date DATE NOT NULL,
+ expiry_date DATE NULL,
+ is_active TINYINT(1) DEFAULT 1,
+ INDEX(item_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
