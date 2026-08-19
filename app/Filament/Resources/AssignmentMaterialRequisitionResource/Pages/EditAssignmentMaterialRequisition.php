@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\AssignmentMaterialRequisitionResource\Pages;
 
-use App\Filament\Resources\PurchaseOrderResource\PurchaseOrderResource;
-use App\Services\Purchasing\GeneratePurchaseOrderService;
-
 use App\Filament\Resources\AssignmentMaterialRequisitionResource\AssignmentMaterialRequisitionResource;
 use App\Livewire\Purchasing\AssignmentItemsGrid;
 use App\Models\AssignmentMaterialRequisition;
@@ -38,7 +35,21 @@ class EditAssignmentMaterialRequisition extends EditRecord
 
             /*
             |--------------------------------------------------------------------------
+            | Submit AMR
+            |--------------------------------------------------------------------------
+            |
+            | AMR workflow ends here.
+            |
+            | Updated
+            |     ↓
             | Submit
+            |     ↓
+            | Waiting Approval
+            |
+            | Approval is NOT performed on AMR.
+            | Further approval is handled from the
+            | Generate Purchase Order workbench.
+            |
             |--------------------------------------------------------------------------
             */
 
@@ -47,129 +58,22 @@ class EditAssignmentMaterialRequisition extends EditRecord
                 ->icon('heroicon-o-paper-airplane')
                 ->color('primary')
                 ->requiresConfirmation()
-                ->visible(fn (): bool =>
-                    $this->record->status === AssignmentMaterialRequisition::STATUS_DRAFT
+                ->visible(
+                    fn (): bool =>
+                        $this->record->status ===
+                        AssignmentMaterialRequisition::STATUS_UPDATED
                 )
                 ->authorize(
-                    fn (): bool => auth()->user()->can('submit', $this->record)
+                    fn (): bool =>
+                        auth()->user()->can(
+                            'submit',
+                            $this->record
+                        )
                 )
-                ->action(fn () => $this->submitAssignment()),
-            
-
-            Action::make('generatePurchaseOrder')
-                ->label('Generate PO')
-                ->icon('heroicon-o-document-text')
-                ->color('primary')
-                ->requiresConfirmation()
-                ->visible(fn (): bool =>
-
-                    $this->record->status === AssignmentMaterialRequisition::STATUS_ASSIGNED
-
-                    &&
-
-                    empty($this->record->purchase_order_id)
-
-                )
-                ->authorize(
-                    fn (): bool => auth()->user()->can('submit', $this->record)
-                )
-                ->action(fn () => $this->generatePurchaseOrder()),
-
-            Action::make('viewPurchaseOrder')
-                ->label('View Purchase Order')
-                ->icon('heroicon-o-eye')
-                ->color('success')
-                ->visible(fn (): bool =>
-                    ! empty($this->record->purchase_order_id)
-                )
-                ->url(fn () =>
-                    PurchaseOrderResource::getUrl(
-                        'edit',
-                        [
-                            'record' => $this->record->purchase_order_id,
-                        ]
-                    )
+                ->action(
+                    fn () =>
+                        $this->submitAssignment()
                 ),
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Request Approval
-            |--------------------------------------------------------------------------
-            */
-
-            Action::make('requestApproval')
-                ->label('Request Approval')
-                ->icon('heroicon-o-clock')
-                ->color('warning')
-                ->requiresConfirmation()
-                ->visible(fn (): bool =>
-                    $this->record->status === AssignmentMaterialRequisition::STATUS_ASSIGNED
-                )
-                ->authorize(
-                    fn (): bool => auth()->user()->can('requestApproval', $this->record)
-                )
-                ->action(fn () => $this->requestApprovalAssignment()),
-
-            /*
-            |--------------------------------------------------------------------------
-            | Approve
-            |--------------------------------------------------------------------------
-            */
-
-            Action::make('approve')
-                ->label('Approve')
-                ->icon('heroicon-o-check-circle')
-                ->color('success')
-                ->requiresConfirmation()
-                ->visible(fn (): bool =>
-                    $this->record->status === AssignmentMaterialRequisition::STATUS_WAITING_APPROVAL
-                )
-                ->authorize(
-                    fn (): bool => auth()->user()->can('approve', $this->record)
-                )
-                ->action(fn () => $this->approveAssignment()),
-
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Reject
-            |--------------------------------------------------------------------------
-            */
-
-            Action::make('reject')
-                ->label('Reject')
-                ->icon('heroicon-o-x-circle')
-                ->color('danger')
-                ->requiresConfirmation()
-                ->visible(fn (): bool =>
-                    $this->record->status === AssignmentMaterialRequisition::STATUS_WAITING_APPROVAL
-                )
-                ->authorize(
-                    fn (): bool => auth()->user()->can('reject', $this->record)
-                )
-                ->action(fn () => $this->rejectAssignment()),
-
-            /*
-            |--------------------------------------------------------------------------
-            | Complete
-            |--------------------------------------------------------------------------
-            */
-
-            Action::make('complete')
-                ->label('Complete')
-                ->icon('heroicon-o-check-badge')
-                ->color('success')
-                ->requiresConfirmation()
-                ->visible(fn (): bool =>
-                    $this->record->status === AssignmentMaterialRequisition::STATUS_APPROVED
-                )
-                ->authorize(
-                    fn (): bool => auth()->user()->can('complete', $this->record)
-                )
-                ->action(fn () => $this->completeAssignment()),
-
 
         ];
     }
@@ -325,62 +229,6 @@ class EditAssignmentMaterialRequisition extends EditRecord
         $this->redirectToEdit();
     }
 
-    protected function requestApprovalAssignment(): void
-    {
-        app(AssignmentMaterialRequisitionService::class)
-            ->requestApproval($this->record->id);
-
-        $this->refreshRecord();
-
-        $this->success(
-            'Approval request has been sent.'
-        );
-
-        $this->redirectToEdit();
-    }
-
-    protected function approveAssignment(): void
-    {
-        app(AssignmentMaterialRequisitionService::class)
-            ->approve($this->record->id);
-
-        $this->refreshRecord();
-
-        $this->success(
-            'Assignment approved successfully.'
-        );
-
-        $this->redirectToEdit();
-    }
-
-    protected function rejectAssignment(): void
-    {
-        app(AssignmentMaterialRequisitionService::class)
-            ->reject($this->record->id);
-
-        $this->refreshRecord();
-
-        $this->success(
-            'Assignment rejected successfully.'
-        );
-
-        $this->redirectToEdit();
-    }
-
-    protected function completeAssignment(): void
-    {
-        app(AssignmentMaterialRequisitionService::class)
-            ->complete($this->record->id);
-
-        $this->refreshRecord();
-
-        $this->success(
-            'Assignment completed successfully.'
-        );
-
-        $this->redirectToEdit();
-    }
-
 
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
@@ -390,39 +238,5 @@ class EditAssignmentMaterialRequisition extends EditRecord
 
         return $record;
     }
-
-    protected function generatePurchaseOrder(): void
-    {
-        try {
-
-            $purchaseOrder = app(GeneratePurchaseOrderService::class)
-                ->generate($this->record->id);
-
-            $this->refreshRecord();
-
-            Notification::make()
-                ->success()
-                ->title('Purchase Order generated successfully.')
-                ->body("Document Number : {$purchaseOrder->document_no}")
-                ->send();
-
-            $this->redirect(
-                PurchaseOrderResource::getUrl('edit', [
-                    'record' => $purchaseOrder,
-                ])
-            );
-
-        } catch (\Throwable $exception) {
-
-            report($exception);
-
-            Notification::make()
-                ->danger()
-                ->title('Generate Purchase Order Failed')
-                ->body($exception->getMessage())
-                ->persistent()
-                ->send();
-        }
-    }  
 
 }

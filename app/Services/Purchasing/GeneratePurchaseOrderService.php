@@ -6,17 +6,17 @@ namespace App\Services\Purchasing;
 
 use RuntimeException;
 
+use App\Models\ApprovalTransaction;
 use App\Models\AssignmentMaterialRequisition;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
+use App\Models\Supplier;
 use App\Models\TransactionNumbering;
 
 use App\Services\Numbering\NumberingService;
 
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\ValidationException;
 
 class GeneratePurchaseOrderService
 {
@@ -131,37 +131,156 @@ class GeneratePurchaseOrderService
         */
 
         $assignment = AssignmentMaterialRequisition::query()
-
             ->with([
                 'items',
                 'purchaseRequisition',
             ])
-
             ->findOrFail($assignmentId);
 
         /*
         |--------------------------------------------------------------------------
-        | Status Validation
+        | Workflow State Validation
+        |--------------------------------------------------------------------------
+        |
+        | Generate PO is allowed only after the AMR has been submitted
+        | into the approval workflow.
+        |
+        | IMPORTANT:
+        |
+        | The AMR intentionally remains:
+        |
+        |     Waiting Approval
+        |
+        | after submission/final MR approval.
+        |
+        | Approval authority lives in approval_transactions, not in the
+        | AMR status itself.
+        |
+        */
+
+        if (
+            $assignment->status
+            !== 'Waiting Approval'
+        ) {
+
+            throw new RuntimeException(
+                "Assignment Material Requisition [{$assignment->document_no}] is not ready to generate Purchase Order. Current status: [{$assignment->status}]."
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Material Requisition Validation
         |--------------------------------------------------------------------------
         */
 
-        if (! in_array(
+        $purchaseRequisition = $assignment->purchaseRequisition;
 
-            $assignment->status,
-
-            [
-                AssignmentMaterialRequisition::STATUS_DRAFT,
-                AssignmentMaterialRequisition::STATUS_ASSIGNED,
-            ],
-
-            true,
-
-        )) {
+        if (! $purchaseRequisition) {
 
             throw new RuntimeException(
-                'Assignment Material Requisition cannot generate Purchase Order.'
+                "Material Requisition for Assignment [{$assignment->document_no}] was not found."
             );
+        }
 
+        if (
+            $purchaseRequisition->status
+            !== 'Approved'
+        ) {
+
+            throw new RuntimeException(
+                "Material Requisition [{$purchaseRequisition->pr_no}] is not approved."
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Approval Transaction Validation
+        |--------------------------------------------------------------------------
+        |
+        | Approval Engine is the source of truth for final MR approval.
+        |
+        | Do NOT infer approval from AMR status.
+        |
+        */
+
+        $approvalTransaction =
+            ApprovalTransaction::query()
+                ->where(
+                    'document_type',
+                    'MATERIAL_REQUISITION'
+                )
+                ->where(
+                    'document_id',
+                    $purchaseRequisition->getKey()
+                )
+                ->latest('id')
+                ->first();
+
+        if (! $approvalTransaction) {
+
+            throw new RuntimeException(
+                "No Material Requisition approval transaction found for [{$purchaseRequisition->pr_no}]."
+            );
+        }
+
+        if (
+            $approvalTransaction->status
+            !== 'APPROVED'
+        ) {
+
+            throw new RuntimeException(
+                "Material Requisition approval transaction [{$approvalTransaction->id}] is not finally approved."
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Required Approval Steps Validation
+        |--------------------------------------------------------------------------
+        |
+        | Every configured required approval step must be APPROVED.
+        |
+        */
+
+        $requiredSteps =
+            $approvalTransaction
+                ->approvalMaster
+                ?->steps()
+                ->where('is_required', true)
+                ->orderBy('approval_level')
+                ->get();
+
+        if (
+            ! $requiredSteps
+            || $requiredSteps->isEmpty()
+        ) {
+
+            throw new RuntimeException(
+                "No required approval steps are configured for Material Requisition [{$purchaseRequisition->pr_no}]."
+            );
+        }
+
+        foreach ($requiredSteps as $requiredStep) {
+
+            $transactionStep =
+                $approvalTransaction
+                    ->steps()
+                    ->where(
+                        'approval_level',
+                        (int) $requiredStep->approval_level
+                    )
+                    ->first();
+
+            if (
+                ! $transactionStep
+                || $transactionStep->status !== 'APPROVED'
+            ) {
+
+                throw new RuntimeException(
+                    "Material Requisition approval level [{$requiredStep->approval_level}] has not been approved."
+                );
+            }
         }
 
         /*
@@ -171,21 +290,23 @@ class GeneratePurchaseOrderService
         */
 
         if (
+            $assignment->purchase_order_id
+        ) {
 
+            throw new RuntimeException(
+                'Purchase Order has already been generated for this Assignment Material Requisition.'
+            );
+        }
+
+        if (
             method_exists($assignment, 'purchaseOrder')
-
-            &&
-
-            $assignment->purchaseOrder()->exists()
-
+            && $assignment->purchaseOrder()->exists()
         ) {
 
             throw new RuntimeException(
                 'Purchase Order has already been generated.'
             );
-
         }
-
 
         /*
         |--------------------------------------------------------------------------
@@ -198,7 +319,6 @@ class GeneratePurchaseOrderService
             throw new RuntimeException(
                 'Assignment has no items.'
             );
-
         }
 
         foreach ($assignment->items as $item) {
@@ -206,51 +326,36 @@ class GeneratePurchaseOrderService
             if (! $item->supplier_id) {
 
                 throw new RuntimeException(
-
                     "Supplier is required for item {$item->item_code}."
-
                 );
-
             }
 
             if (
-
                 (float) $item->assigned_qty <= 0
-
             ) {
 
                 throw new RuntimeException(
-
                     "Assigned Quantity must be greater than zero for {$item->item_code}."
-
                 );
-
             }
 
             if (
-
                 (float) $item->unit_price <= 0
-
             ) {
 
                 throw new RuntimeException(
-
                     "Unit Price must be greater than zero for {$item->item_code}."
-
                 );
-
             }
-
         }
 
         /*
         |--------------------------------------------------------------------------
-        | Return
+        | Return Validated Assignment
         |--------------------------------------------------------------------------
         */
 
         return $assignment;
-
     }
 
     /*
@@ -282,8 +387,12 @@ class GeneratePurchaseOrderService
             throw new RuntimeException(
                 'Purchase Order can only be generated when all items use the same supplier.'
             );
-
         }
+
+        $supplier = \App\Models\Supplier::query()
+            ->findOrFail($supplierId->first());
+
+        $paymentTermId = $supplier->payment_term_id;
 
         /*
         |--------------------------------------------------------------------------
@@ -346,6 +455,9 @@ class GeneratePurchaseOrderService
 
             'supplier_id'
                 => $supplierId->first(),
+
+            'payment_term_id'
+                => $paymentTermId,
 
             /*
             |--------------------------------------------------------------------------
@@ -792,60 +904,14 @@ class GeneratePurchaseOrderService
      */
     protected function updateAssignment(
         AssignmentMaterialRequisition $assignment,
-        PurchaseOrder $purchaseOrder,
+        PurchaseOrder $purchaseOrder
     ): void {
-
         $assignment->update([
-
-            /*
-            |--------------------------------------------------------------------------
-            | Purchase Order Reference
-            |--------------------------------------------------------------------------
-            */
-
-            'purchase_order_id'
-                => $purchaseOrder->id,
-
-            /*
-            |--------------------------------------------------------------------------
-            | Workflow
-            |--------------------------------------------------------------------------
-            */
-
-            'status'
-                => AssignmentMaterialRequisition::STATUS_COMPLETED,
-
-            /*
-            |--------------------------------------------------------------------------
-            | Audit
-            |--------------------------------------------------------------------------
-            */
-
-            'updated_by'
-                => auth()->id(),
-
+            'purchase_order_id' => $purchaseOrder->getKey(),
+            'status' => AssignmentMaterialRequisition::STATUS_COMPLETED,
+            'updated_by' => auth()->id(),
         ]);
-
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Helper
-    |--------------------------------------------------------------------------
-    */
-
-    /**
-     * Find Assignment Material Requisition.
-     *
-     * @throws ModelNotFoundException
-     */
-    protected function findAssignment(
-        int $id,
-    ): AssignmentMaterialRequisition {
-
-        return AssignmentMaterialRequisition::query()
-            ->findOrFail($id);
-
-    }
 
 }

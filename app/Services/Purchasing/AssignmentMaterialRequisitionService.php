@@ -6,6 +6,8 @@ namespace App\Services\Purchasing;
 
 use RuntimeException;
 
+use App\Services\Approval\ApprovalTransactionService;
+
 use App\Models\AssignmentMaterialRequisition;
 use App\Models\AssignmentMaterialRequisitionItem;
 use App\Models\PurchaseRequisition;
@@ -29,6 +31,7 @@ class AssignmentMaterialRequisitionService
         protected AssignmentMaterialRequisitionItemService $itemService,
         protected PricingService $pricingService,
         protected NumberingService $numberingService,
+        protected ApprovalTransactionService $approvalTransactionService,
         protected DatabaseManager $db,
     ) {
     }
@@ -271,6 +274,27 @@ class AssignmentMaterialRequisitionService
 
     /**
      * Submit Assignment Material Requisition.
+     *
+     * AMR Workflow:
+     *
+     * Draft
+     *   ↓
+     * Updated
+     *   ↓
+     * Submit
+     *   ↓
+     * Waiting Approval
+     *
+     * AMR stops here.
+     *
+     * AMR does NOT perform:
+     * - Approval
+     * - Rejection
+     * - Completion
+     *
+     * After AMR submission, the next approval level
+     * of the original Material Requisition Approval
+     * Transaction is activated.
      */
     public function submit(
         int $id,
@@ -278,20 +302,77 @@ class AssignmentMaterialRequisitionService
 
         return $this->db->transaction(function () use ($id) {
 
+            /*
+            |--------------------------------------------------------------------------
+            | Load AMR
+            |--------------------------------------------------------------------------
+            */
+
             $assignment = $this->findById($id);
 
-            //$this->validateDocument($assignment);
+            /*
+            |--------------------------------------------------------------------------
+            | Validate Workflow
+            |--------------------------------------------------------------------------
+            |
+            | Only UPDATED AMR may be submitted.
+            |
+            */
 
             $this->validateWorkflowTransition(
                 $assignment,
-                AssignmentMaterialRequisition::STATUS_ASSIGNED,
-            ); 
-            
+                AssignmentMaterialRequisition::STATUS_WAITING_APPROVAL,
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Move AMR to Waiting Approval
+            |--------------------------------------------------------------------------
+            */
 
             $assignment->update([
-                'status'     => AssignmentMaterialRequisition::STATUS_ASSIGNED,
+                'status' => AssignmentMaterialRequisition::STATUS_WAITING_APPROVAL,
+
                 'updated_by' => auth()->id(),
             ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Activate Next MR Approval Level
+            |--------------------------------------------------------------------------
+            |
+            | AMR does NOT approve anything.
+            |
+            | The approval transaction remains attached
+            | to the original Material Requisition.
+            |
+            | Example:
+            |
+            | MR Approval Level 1
+            |        ↓
+            |      APPROVED
+            |        ↓
+            |      AMR Buyer
+            |        ↓
+            |    Submit AMR
+            |        ↓
+            | MR Approval Level 2
+            |        ↓
+            |      PENDING
+            |
+            */
+
+            $this->approvalTransactionService
+                ->activateNextMaterialRequisitionLevel(
+                    (int) $assignment->purchase_requisition_id
+                );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Return Fresh AMR
+            |--------------------------------------------------------------------------
+            */
+
             return $assignment->refresh();
         });
     }
@@ -1372,28 +1453,35 @@ class AssignmentMaterialRequisitionService
             $item->update([
 
                 'supplier_id'       => $supplierId,
-
                 'assigned_qty'      => $assignedQty,
-
                 'unit_price'        => $unitPrice,
-
                 'discount_percent'  => $discountPercent,
-
                 'discount_amount'   => $discountAmount,
-
                 'tax_id'            => $tax?->id,
-
                 'tax_name'          => $tax?->tax_name,
-
                 'tax_percent'       => $taxPercent,
-
                 'tax_amount'        => $taxAmount,
-
                 'line_total'        => $subTotal,
-
                 'grand_total'       => $grandTotal,
 
             ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | AMR Header Status
+            |--------------------------------------------------------------------------
+            */
+
+            $assignment = $item->assignmentMaterialRequisition;
+
+            if (
+                $assignment
+                && $assignment->status === AssignmentMaterialRequisition::STATUS_DRAFT
+            ) {
+                $assignment->update([
+                    'status' => AssignmentMaterialRequisition::STATUS_UPDATED,
+                ]);
+            }
 
             return $item->refresh();
 
@@ -1426,31 +1514,84 @@ class AssignmentMaterialRequisitionService
     }
 
     /**
-     * Allowed workflow transitions.
+     * Allowed AMR workflow transitions.
+     *
+     * AMR workflow ends at Waiting Approval.
+     *
+     * Approval is NOT performed on AMR.
      */
     protected function getAllowedTransitions(): array
     {
         return [
 
+            /*
+            |--------------------------------------------------------------------------
+            | Draft
+            |--------------------------------------------------------------------------
+            */
+
             AssignmentMaterialRequisition::STATUS_DRAFT => [
-                AssignmentMaterialRequisition::STATUS_ASSIGNED,
+                AssignmentMaterialRequisition::STATUS_UPDATED,
                 AssignmentMaterialRequisition::STATUS_CANCELLED,
             ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Updated
+            |--------------------------------------------------------------------------
+            */
+
+            AssignmentMaterialRequisition::STATUS_UPDATED => [
+                AssignmentMaterialRequisition::STATUS_WAITING_APPROVAL,
+                AssignmentMaterialRequisition::STATUS_CANCELLED,
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Assigned
+            |--------------------------------------------------------------------------
+            |
+            | Kept for backward compatibility with existing AMR records.
+            |
+            */
 
             AssignmentMaterialRequisition::STATUS_ASSIGNED => [
                 AssignmentMaterialRequisition::STATUS_WAITING_APPROVAL,
                 AssignmentMaterialRequisition::STATUS_CANCELLED,
             ],
 
-            AssignmentMaterialRequisition::STATUS_WAITING_APPROVAL => [
-                AssignmentMaterialRequisition::STATUS_APPROVED,
-                AssignmentMaterialRequisition::STATUS_REJECTED,
-            ],
+            /*
+            |--------------------------------------------------------------------------
+            | Waiting Approval
+            |--------------------------------------------------------------------------
+            |
+            | FINAL AMR STATE.
+            |
+            | AMR does not transition to:
+            | - Approved
+            | - Rejected
+            | - Completed
+            |
+            | Further approval belongs to the original
+            | Material Requisition approval transaction.
+            |
+            */
 
-            AssignmentMaterialRequisition::STATUS_APPROVED => [
-                AssignmentMaterialRequisition::STATUS_COMPLETED,
-                AssignmentMaterialRequisition::STATUS_CANCELLED,
-            ],
+            AssignmentMaterialRequisition::STATUS_WAITING_APPROVAL => [],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Legacy States
+            |--------------------------------------------------------------------------
+            |
+            | These constants remain for backward compatibility
+            | with historical AMR records.
+            |
+            | They are no longer part of the active AMR workflow.
+            |
+            */
+
+            AssignmentMaterialRequisition::STATUS_APPROVED => [],
 
             AssignmentMaterialRequisition::STATUS_COMPLETED => [],
 

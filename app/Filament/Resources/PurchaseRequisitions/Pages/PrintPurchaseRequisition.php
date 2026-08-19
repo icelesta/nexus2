@@ -6,8 +6,8 @@ namespace App\Filament\Resources\PurchaseRequisitions\Pages;
 
 use App\Filament\Resources\PurchaseRequisitions\PurchaseRequisitionResource;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Filament\Resources\Pages\Page;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
+use Filament\Resources\Pages\Page;
 use Illuminate\Database\Eloquent\Model;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -21,10 +21,27 @@ class PrintPurchaseRequisition extends Page
     protected string $view =
         'filament.resources.purchase-requisitions.pages.print-purchase-requisition';
 
+    /*
+    |--------------------------------------------------------------------------
+    | Mount
+    |--------------------------------------------------------------------------
+    */
+
     public function mount(int|string $record): void
     {
         $this->record = $this->resolveRecord($record);
 
+        $this->loadPurchaseRequisitionData();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Load MR + AMR Commercial Data
+    |--------------------------------------------------------------------------
+    */
+
+    protected function loadPurchaseRequisitionData(): void
+    {
         $this->record->load([
             'company',
             'businessUnit',
@@ -40,12 +57,29 @@ class PrintPurchaseRequisition extends Page
             'items.item',
             'items.uom',
             'items.warehouse',
+
+            /*
+            |--------------------------------------------------------------------------
+            | AMR Commercial Synchronization
+            |--------------------------------------------------------------------------
+            */
+
+            'items.latestAssignmentMaterialRequisitionItem.supplier',
         ]);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Page Information
+    |--------------------------------------------------------------------------
+    */
+
     public function getTitle(): string
     {
-        return (string) ($this->record->pr_no ?? 'Material Requisition');
+        return (string) (
+            $this->record->pr_no
+            ?? 'Material Requisition'
+        );
     }
 
     public function getHeading(): string
@@ -63,9 +97,18 @@ class PrintPurchaseRequisition extends Page
         return $this->record;
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Document Information
+    |--------------------------------------------------------------------------
+    */
+
     public function getDocumentNumber(): string
     {
-        return (string) ($this->record->pr_no ?? '-');
+        return (string) (
+            $this->record->pr_no
+            ?? '-'
+        );
     }
 
     public function getDocumentDate(): string
@@ -78,9 +121,18 @@ class PrintPurchaseRequisition extends Page
     public function getDocumentStatus(): string
     {
         return strtoupper(
-            (string) ($this->record->status ?? '-')
+            (string) (
+                $this->record->status
+                ?? '-'
+            )
         );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Export PDF
+    |--------------------------------------------------------------------------
+    */
 
     public function exportPdf(): Response
     {
@@ -101,50 +153,80 @@ class PrintPurchaseRequisition extends Page
             'items.item',
             'items.uom',
             'items.warehouse',
+
+            /*
+            |--------------------------------------------------------------------------
+            | AMR Commercial Synchronization
+            |--------------------------------------------------------------------------
+            */
+
+            'items.latestAssignmentMaterialRequisitionItem.supplier',
         ]);
 
-        $documentNumber = (string) ($record->pr_no ?? '-');
-
-        $documentDate = $record->request_date
-            ? $record->request_date->format('d M Y')
-            : '-';
-
-        $documentStatus = strtoupper(
-            (string) ($record->status ?? '-')
-        );
+        /*
+        |--------------------------------------------------------------------------
+        | Generate PDF
+        |--------------------------------------------------------------------------
+        */
 
         $pdf = Pdf::loadView(
             'filament.resources.purchase-requisitions.pages.print-purchase-requisition',
             [
                 'record' => $record,
 
+                /*
+                |--------------------------------------------------------------------------
+                | Compatibility
+                |--------------------------------------------------------------------------
+                |
+                | Blade lama masih mungkin membaca variable ini.
+                | Commercial data sekarang berasal langsung dari
+                | each MR Item relationship.
+                |
+                */
+
+                'assignmentItems' => [],
+
                 'pdfMode' => true,
 
-                'documentNumber' => $documentNumber,
+                'documentNumber' => $this->getDocumentNumber(),
 
-                'documentDate' => $documentDate,
+                'documentDate' => $this->getDocumentDate(),
 
-                'documentStatus' => $documentStatus,
+                'documentStatus' => $this->getDocumentStatus(),
             ]
         );
 
-        $pdf->setPaper('a4', 'portrait');
+        $pdf->setPaper(
+            'a4',
+            'portrait'
+        );
 
         return $pdf->download(
             $this->sanitizePdfFilename(
-                $documentNumber . '.pdf'
+                $this->getDocumentNumber() . '.pdf'
             )
         );
     }
 
-    protected function sanitizePdfFilename(string $filename): string
-    {
+    /*
+    |--------------------------------------------------------------------------
+    | PDF Filename
+    |--------------------------------------------------------------------------
+    */
+
+    protected function sanitizePdfFilename(
+        string $filename
+    ): string {
         $filename = preg_replace(
             '/[^\pL\pN\-_\.]+/u',
             '-',
             $filename
         ) ?? 'material-requisition.pdf';
 
-        return trim($filename, '-');
+        return trim(
+            $filename,
+            '-'
+        );
     }
 }

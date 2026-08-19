@@ -275,17 +275,21 @@
                             line-height:16px;
                             font-weight:600;
                             background:#fafbfd;
+                            white-space:nowrap;
                         ">
 
                         T.O.P
 
                     </td>
 
-                    <td style="padding:5px 8px;
-                                font-size:11px;
-                                line-height:16px;">
+                    <td
+                        style="
+                            padding:5px 8px;
+                            font-size:11px;
+                            line-height:16px;
+                        ">
 
-                        {{ $purchaseOrder->payment_term ?? 'NET 30 DAYS' }}
+                        {{ $purchaseOrder->paymentTerm?->term_name ?? '-' }}
 
                     </td>
 

@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+
 class PurchaseOrder extends Model
 {
     use HasFactory;
@@ -235,13 +236,13 @@ class PurchaseOrder extends Model
 
     public const STATUS_DRAFT = 'Draft';
 
-    public const STATUS_APPROVED = 'Approved';
+    public const STATUS_SUBMIT = 'Submit';
 
-    public const STATUS_PARTIALLY_RECEIVED = 'Partially Received';
+    public const STATUS_ON_PROGRESS = 'On Progress';
 
     public const STATUS_COMPLETED = 'Completed';
 
-    public const STATUS_CLOSED = 'Closed';
+    public const STATUS_REJECTED = 'Rejected';
 
     public const STATUS_CANCELLED = 'Cancelled';
 
@@ -260,6 +261,8 @@ class PurchaseOrder extends Model
 
     public const APPROVAL_REJECTED = 'Rejected';
 
+    public const APPROVAL_CANCELLED = 'Cancelled';
+
     /*
     |--------------------------------------------------------------------------
     | Document Status Options
@@ -270,17 +273,17 @@ class PurchaseOrder extends Model
     {
         return [
 
-            self::STATUS_DRAFT                => 'Draft',
+            self::STATUS_DRAFT       => 'Draft',
 
-            self::STATUS_APPROVED             => 'Approved',
+            self::STATUS_SUBMIT      => 'Submit',
 
-            self::STATUS_PARTIALLY_RECEIVED   => 'Partially Received',
+            self::STATUS_ON_PROGRESS => 'On Progress',
 
-            self::STATUS_COMPLETED            => 'Completed',
+            self::STATUS_COMPLETED   => 'Completed',
 
-            self::STATUS_CLOSED               => 'Closed',
+            self::STATUS_REJECTED    => 'Rejected',
 
-            self::STATUS_CANCELLED            => 'Cancelled',
+            self::STATUS_CANCELLED   => 'Cancelled',
 
         ];
     }
@@ -296,13 +299,15 @@ class PurchaseOrder extends Model
     {
         return [
 
-            self::APPROVAL_PENDING    => 'Pending',
+            self::APPROVAL_PENDING   => 'Pending',
 
-            self::APPROVAL_WAITING    => 'Waiting Approval',
+            self::APPROVAL_WAITING   => 'Waiting Approval',
 
-            self::APPROVAL_APPROVED   => 'Approved',
+            self::APPROVAL_APPROVED  => 'Approved',
 
-            self::APPROVAL_REJECTED   => 'Rejected',
+            self::APPROVAL_REJECTED  => 'Rejected',
+
+            self::APPROVAL_CANCELLED => 'Cancelled',
 
         ];
     }
@@ -370,6 +375,20 @@ class PurchaseOrder extends Model
             'currency_id'
         );
     }
+
+    /**
+     * Shipping Address.
+     *
+     * Purchase Order shipping destination.
+     */
+    public function shippingAddress(): BelongsTo
+    {
+        return $this->belongsTo(
+            ShippingAddress::class,
+            'shipping_address_id',
+        );
+    }
+
 
     /**
      * Company Snapshot.
@@ -540,25 +559,31 @@ class PurchaseOrder extends Model
      */
     public function scopeDraft(Builder $query): Builder
     {
-        return $query->where('status', self::STATUS_DRAFT);
+        return $query->where(
+            'status',
+            self::STATUS_DRAFT
+        );
     }
 
     /**
-     * Approved Purchase Orders.
+     * Submitted Purchase Orders.
      */
-    public function scopeApproved(Builder $query): Builder
-    {
-        return $query->where('status', self::STATUS_APPROVED);
-    }
-
-    /**
-     * Partially Received Purchase Orders.
-     */
-    public function scopePartiallyReceived(Builder $query): Builder
+    public function scopeSubmit(Builder $query): Builder
     {
         return $query->where(
             'status',
-            self::STATUS_PARTIALLY_RECEIVED
+            self::STATUS_SUBMIT
+        );
+    }
+
+    /**
+     * Purchase Orders in progress.
+     */
+    public function scopeOnProgress(Builder $query): Builder
+    {
+        return $query->where(
+            'status',
+            self::STATUS_ON_PROGRESS
         );
     }
 
@@ -574,13 +599,13 @@ class PurchaseOrder extends Model
     }
 
     /**
-     * Closed Purchase Orders.
+     * Rejected Purchase Orders.
      */
-    public function scopeClosed(Builder $query): Builder
+    public function scopeRejected(Builder $query): Builder
     {
         return $query->where(
             'status',
-            self::STATUS_CLOSED
+            self::STATUS_REJECTED
         );
     }
 
@@ -646,6 +671,17 @@ class PurchaseOrder extends Model
         );
     }
 
+    /**
+     * Cancelled Approval.
+     */
+    public function scopeCancelledApproval(Builder $query): Builder
+    {
+        return $query->where(
+            'approval_status',
+            self::APPROVAL_CANCELLED
+        );
+    }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -662,23 +698,23 @@ class PurchaseOrder extends Model
     }
 
     /**
-     * Check whether the Purchase Order is Approved.
+     * Check whether the Purchase Order has been submitted.
      */
-    public function isApproved(): bool
+    public function isSubmit(): bool
     {
-        return $this->status === self::STATUS_APPROVED;
+        return $this->status === self::STATUS_SUBMIT;
     }
 
     /**
-     * Check whether the Purchase Order is Partially Received.
+     * Check whether the Purchase Order is in progress.
      */
-    public function isPartiallyReceived(): bool
+    public function isOnProgress(): bool
     {
-        return $this->status === self::STATUS_PARTIALLY_RECEIVED;
+        return $this->status === self::STATUS_ON_PROGRESS;
     }
 
     /**
-     * Check whether the Purchase Order is Completed.
+     * Check whether the Purchase Order is completed.
      */
     public function isCompleted(): bool
     {
@@ -686,15 +722,15 @@ class PurchaseOrder extends Model
     }
 
     /**
-     * Check whether the Purchase Order is Closed.
+     * Check whether the Purchase Order is rejected.
      */
-    public function isClosed(): bool
+    public function isRejected(): bool
     {
-        return $this->status === self::STATUS_CLOSED;
+        return $this->status === self::STATUS_REJECTED;
     }
 
     /**
-     * Check whether the Purchase Order is Cancelled.
+     * Check whether the Purchase Order is cancelled.
      */
     public function isCancelled(): bool
     {
@@ -740,6 +776,14 @@ class PurchaseOrder extends Model
         return $this->approval_status === self::APPROVAL_REJECTED;
     }
 
+    /**
+     * Check whether approval is cancelled.
+     */
+    public function isApprovalCancelled(): bool
+    {
+        return $this->approval_status === self::APPROVAL_CANCELLED;
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Permission Helpers
@@ -748,43 +792,60 @@ class PurchaseOrder extends Model
 
     /**
      * Determine whether the document can be edited.
+     *
+     * Only Draft + Pending Approval can be edited.
      */
     public function canEdit(): bool
     {
-        return $this->isDraft();
+        return $this->isDraft()
+            && $this->isPendingApproval();
     }
 
     /**
      * Determine whether the document can be deleted.
+     *
+     * Only Draft + Pending Approval can be deleted.
      */
     public function canDelete(): bool
     {
-        return $this->isDraft();
+        return $this->isDraft()
+            && $this->isPendingApproval();
     }
 
     /**
      * Determine whether the document can be submitted for approval.
+     *
+     * Only Draft + Pending Approval can be submitted.
      */
     public function canSubmit(): bool
     {
-        return $this->isDraft();
+        return $this->isDraft()
+            && $this->isPendingApproval();
     }
 
     /**
      * Determine whether the document can be approved.
+     *
+     * Approval is only available while:
+     * - Document Status = Submit
+     * - Approval Status = Waiting Approval
      */
     public function canApprove(): bool
     {
-        return $this->isWaitingApproval();
+        return $this->isSubmit()
+            && $this->isWaitingApproval();
     }
 
     /**
      * Determine whether items can be received.
+     *
+     * Receiving is only available after approval,
+     * when the document is already On Progress.
      */
     public function canReceive(): bool
     {
-        return $this->isApproved()
-            || $this->isPartiallyReceived();
+        return $this->isOnProgress()
+            && $this->isApprovalApproved();
     }
 
     /**
@@ -797,11 +858,15 @@ class PurchaseOrder extends Model
 
     /**
      * Determine whether the document can be cancelled.
+     *
+     * Completed, Rejected, and already Cancelled documents
+     * cannot be cancelled again.
      */
     public function canCancel(): bool
     {
-        return ! $this->isCancelled()
-            && ! $this->isClosed();
+        return ! $this->isCompleted()
+            && ! $this->isRejected()
+            && ! $this->isCancelled();
     }
 
 
@@ -817,14 +882,6 @@ class PurchaseOrder extends Model
     public function isLocked(): bool
     {
         return ! $this->isDraft();
-    }
-
-    public function shippingAddress(): BelongsTo
-    {
-        return $this->belongsTo(
-            ShippingAddress::class,
-            'shipping_address_id'
-        );
     }
 
 

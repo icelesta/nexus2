@@ -153,16 +153,24 @@
 }
 
 /*--------------------------------------------------
-| Stacking Context
+| Stacking Context - UI Overlap Fix
 --------------------------------------------------*/
+
+/*
+ * Do not create a stacking context for every table row.
+ * This prevents hovered rows from unnecessarily covering
+ * floating menus, dropdowns and popovers.
+ *
+ * Business logic and table functionality are untouched.
+ */
 
 .fi-ta-row {
     position: relative;
-    z-index: 1;
+    z-index: auto;
 }
 
 .fi-ta-row:hover {
-    z-index: 100;
+    z-index: auto;
 }
 
 /*--------------------------------------------------
@@ -427,4 +435,55 @@
 
     font-size:13px;
 
+}
+
+/* ==========================================================================
+   Purchase Order - Section Header
+   ========================================================================== */
+
+.po-section .fi-section-header {
+    background-color: #f1f5f9 !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.po-section .fi-section-header .fi-section-heading {
+    color: #334155 !important;
+}
+
+.po-section .fi-section-header .fi-section-description {
+    color: #64748b !important;
+}
+
+/* ==========================================================================
+   Purchase Order - Sticky Document Header
+   ========================================================================== */
+
+.po-document-header {
+    position: -webkit-sticky !important;
+    position: sticky !important;
+
+    top: 0 !important;
+
+    z-index: 50 !important;
+
+    width: 100%;
+
+    background-color: #ffffff;
+
+    isolation: isolate;
+
+    box-shadow:
+        0 2px 6px rgba(15, 23, 42, 0.08);
+}
+
+.po-document-header table {
+    width: 100%;
+}
+
+.fi-page.fi-resource-purchase-order-resource-purchase-orders
+.fi-grid-col:has(.po-document-header) {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    z-index: 40;
 }

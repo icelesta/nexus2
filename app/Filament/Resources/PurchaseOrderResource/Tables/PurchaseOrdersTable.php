@@ -11,8 +11,9 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 
-use Filament\Tables\Columns\TextColumn;
+use App\Models\PurchaseOrder;
 use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
 
 class PurchaseOrdersTable
 {
@@ -68,6 +69,22 @@ class PurchaseOrdersTable
                 TextColumn::make('approval_status')
                     ->label('Approval')
                     ->badge()
+                    ->color(fn (?string $state): string => match ($state) {
+
+                        PurchaseOrder::APPROVAL_APPROVED
+                            => 'success',
+
+                        PurchaseOrder::APPROVAL_REJECTED
+                            => 'danger',
+
+                        PurchaseOrder::APPROVAL_WAITING,
+                        PurchaseOrder::APPROVAL_PENDING
+                            => 'warning',
+
+                        default
+                            => 'gray',
+
+                    })
                     ->sortable(),
 
                 TextColumn::make('creator.name')

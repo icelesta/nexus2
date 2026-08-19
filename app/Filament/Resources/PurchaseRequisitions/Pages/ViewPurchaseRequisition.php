@@ -7,157 +7,73 @@ namespace App\Filament\Resources\PurchaseRequisitions\Pages;
 use App\Filament\Resources\PurchaseRequisitions\Actions\ApprovePurchaseRequisition;
 use App\Filament\Resources\PurchaseRequisitions\Actions\RejectPurchaseRequisition;
 use App\Filament\Resources\PurchaseRequisitions\PurchaseRequisitionResource;
-use App\Filament\Resources\PurchaseRequisitions\Schemas\PurchaseRequisitionApproval;
-use Filament\Actions\Action;
 use Filament\Resources\Pages\ViewRecord;
-use Filament\Schemas\Schema;
+use Illuminate\Contracts\Support\Htmlable;
 
 class ViewPurchaseRequisition extends ViewRecord
 {
-    protected static string $resource =
-        PurchaseRequisitionResource::class;
+    protected static string $resource = PurchaseRequisitionResource::class;
 
-    /*
-    |--------------------------------------------------------------------------
-    | Title
-    |--------------------------------------------------------------------------
-    */
+    /**
+     * ============================================================
+     * GOLDEN READ-ONLY VIEW
+     * ============================================================
+     *
+     * Header bawaan Filament sengaja dikosongkan.
+     *
+     * Breadcrumb tetap muncul:
+     *
+     * Purchase Requisitions > MR/2026/08/000010 > View
+     *
+     * Sedangkan document header ditampilkan oleh:
+     *
+     * PurchaseRequisitionHeader
+     * ============================================================
+     */
 
-    public function getTitle(): string
+    public function getHeading(): string|Htmlable|null
     {
-        return 'Material Requisition';
+        return null;
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Heading
-    |--------------------------------------------------------------------------
-    */
-
-    public function getHeading(): string
+    public function getSubheading(): string|Htmlable|null
     {
-        return 'Material Requisition';
+        return null;
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Subheading
-    |--------------------------------------------------------------------------
-    */
-
-    public function getSubheading(): ?string
-    {
-        return $this->record->pr_no;
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Breadcrumb
-    |--------------------------------------------------------------------------
-    */
-
-    public function getBreadcrumb(): string
-    {
-        return 'View';
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Header Actions
-    |--------------------------------------------------------------------------
-    */
-
+    /**
+     * ============================================================
+     * HEADER ACTIONS
+     * ============================================================
+     *
+     * Approval dilakukan dari halaman View MR.
+     *
+     * Approver wajib membuka dan melakukan checking
+     * Material Requisition sebelum melakukan approval.
+     *
+     * Visibility dan authorization tetap dikendalikan
+     * oleh masing-masing Approval Action.
+     */
     protected function getHeaderActions(): array
     {
         return [
 
             /*
             |--------------------------------------------------------------------------
-            | Document Status
-            |--------------------------------------------------------------------------
-            */
-
-            Action::make('status')
-                ->label(
-                    strtoupper(
-                        (string) $this->record->status
-                    )
-                )
-                ->color(
-                    match (
-                        $this->record->status
-                    ) {
-
-                        'Draft' =>
-                            'warning',
-
-                        'Submitted' =>
-                            'info',
-
-                        'Pending Approval' =>
-                            'warning',
-
-                        'Approved' =>
-                            'success',
-
-                        'Rejected' =>
-                            'danger',
-
-                        'Cancelled',
-                        'Closed' =>
-                            'gray',
-
-                        default =>
-                            'gray',
-                    }
-                )
-                ->disabled(),
-
-            /*
-            |--------------------------------------------------------------------------
-            | Reject
-            |--------------------------------------------------------------------------
-            */
-
-            RejectPurchaseRequisition::make(),
-
-            /*
-            |--------------------------------------------------------------------------
-            | Approve
+            | APPROVE MATERIAL REQUISITION
             |--------------------------------------------------------------------------
             */
 
             ApprovePurchaseRequisition::make(),
 
+            /*
+            |--------------------------------------------------------------------------
+            | REJECT MATERIAL REQUISITION
+            |--------------------------------------------------------------------------
+            */
+
+            RejectPurchaseRequisition::make(),
+
         ];
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Dynamic Approval Infolist
-    |--------------------------------------------------------------------------
-    |
-    | IMPORTANT:
-    |
-    | We pass the existing Schema directly into configure().
-    |
-    | DO NOT do:
-    |
-    | $schema->components([
-    |     PurchaseRequisitionApproval::configure($schema)
-    | ]);
-    |
-    | That creates recursive Schema construction.
-    |
-    */
-
-    public function infolist(
-        Schema $schema
-    ): Schema {
-
-        return PurchaseRequisitionApproval::configure(
-            $schema,
-            $this->record,
-        );
     }
 }

@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\AssignmentMaterialRequisitionResource\Tables;
 
-use App\Services\Purchasing\AssignmentMaterialRequisitionService;
+use App\Models\ApprovalMaster;
+use App\Models\ApprovalTransaction;
+use App\Models\AssignmentMaterialRequisition;
 
-use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -26,198 +27,729 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 
-
+use Illuminate\Database\Eloquent\Model;
 
 
 class AssignmentMaterialRequisitionsTable
 {
-    public static function configure(Table $table): Table
-    {
+    public static function configure(
+        Table $table
+    ): Table {
+
         return $table
 
-            ->defaultSort('assigned_at', 'desc')
+            /*
+            |--------------------------------------------------------------------------
+            | DEFAULT SORT
+            |--------------------------------------------------------------------------
+            */
+
+            ->defaultSort(
+                'assigned_at',
+                'desc'
+            )
+
+            /*
+            |--------------------------------------------------------------------------
+            | COLUMNS
+            |--------------------------------------------------------------------------
+            */
 
             ->columns([
 
-                TextColumn::make('purchaseRequisition.pr_no')
+                /*
+                |--------------------------------------------------------------------------
+                | PR NUMBER
+                |--------------------------------------------------------------------------
+                */
+
+                TextColumn::make(
+                    'purchaseRequisition.pr_no'
+                )
                     ->label('PR Number')
-                    ->weight(FontWeight::SemiBold)
+                    ->weight(
+                        FontWeight::SemiBold
+                    )
                     ->copyable()
-                    ->tooltip('Click to copy PR Number')
+                    ->tooltip(
+                        'Click to copy PR Number'
+                    )
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('assignedTo.name')
-                    ->label('Assigned To')
+                /*
+                |--------------------------------------------------------------------------
+                | DEPARTMENT
+                |--------------------------------------------------------------------------
+                */
+
+                TextColumn::make(
+                    'purchaseRequisition.department.display_name'
+                )
+                    ->label('Department')
                     ->searchable()
                     ->sortable()
                     ->placeholder('-'),
 
-                TextColumn::make('assigned_at')
+                /*
+                |--------------------------------------------------------------------------
+                | REMARK
+                |--------------------------------------------------------------------------
+                */
+
+                TextColumn::make(
+                    'purchaseRequisition.remarks'
+                )
+                    ->label('Remark')
+                    ->searchable()
+                    ->limit(45)
+                    ->tooltip(
+                        fn ($record): ?string =>
+                            $record
+                                ->purchaseRequisition
+                                ?->remarks
+                    )
+                    ->placeholder('-'),
+
+                /*
+                |--------------------------------------------------------------------------
+                | REQUESTED BY
+                |--------------------------------------------------------------------------
+                */
+
+                TextColumn::make(
+                    'purchaseRequisition.requester.name'
+                )
+                    ->label('Requested By')
+                    ->searchable()
+                    ->sortable()
+                    ->placeholder('-'),
+
+                /*
+                |--------------------------------------------------------------------------
+                | REQUEST DATE
+                |--------------------------------------------------------------------------
+                */
+
+                TextColumn::make(
+                    'purchaseRequisition.request_date'
+                )
+                    ->label('Request Date')
+                    ->date('d M Y')
+                    ->sortable()
+                    ->placeholder('-'),
+
+                /*
+                |--------------------------------------------------------------------------
+                | MR STATUS
+                |--------------------------------------------------------------------------
+                |
+                | The MR workflow status is derived from:
+                |
+                | Approval Master
+                |        +
+                | Approval Transaction
+                |        +
+                | Approval Transaction Steps
+                |
+                | Examples:
+                |
+                | Draft
+                | Waiting Approval
+                | Approval 1/2
+                | Approval 2/2
+                | Approval 1/3
+                | Approval 2/3
+                | Approval 3/3
+                |
+                */
+
+                TextColumn::make(
+                    'mr_approval_status'
+                )
+                    ->label('MR Status')
+                    ->badge()
+                    ->state(
+                        function (
+                            Model $record
+                        ): string {
+
+                            $purchaseRequisition =
+                                $record->purchaseRequisition;
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | No MR
+                            |--------------------------------------------------------------------------
+                            */
+
+                            if (! $purchaseRequisition) {
+                                return '-';
+                            }
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Terminal / Initial MR Status
+                            |--------------------------------------------------------------------------
+                            */
+
+                            if (
+                                in_array(
+                                    $purchaseRequisition->status,
+                                    [
+                                        'Draft',
+                                        'Rejected',
+                                        'Cancelled',
+                                        'Closed',
+                                    ],
+                                    true
+                                )
+                            ) {
+                                return $purchaseRequisition->status;
+                            }
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Active MR Approval Master
+                            |--------------------------------------------------------------------------
+                            |
+                            | Approval levels are dynamically read
+                            | from Approval Master.
+                            |
+                            */
+
+                            static $totalApprovals = null;
+
+                            if (
+                                $totalApprovals === null
+                            ) {
+
+                                $totalApprovals =
+                                    ApprovalMaster::query()
+                                        ->active()
+                                        ->where(
+                                            'code',
+                                            'MR-APPROVAL'
+                                        )
+                                        ->withCount([
+                                            'steps as required_approval_count' =>
+                                                fn ($query) =>
+                                                    $query->where(
+                                                        'is_required',
+                                                        true
+                                                    ),
+                                        ])
+                                        ->value(
+                                            'required_approval_count'
+                                        );
+
+                                $totalApprovals =
+                                    max(
+                                        1,
+                                        (int) $totalApprovals
+                                    );
+                            }
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Approval Transaction
+                            |--------------------------------------------------------------------------
+                            */
+
+                            $transaction =
+                                ApprovalTransaction::query()
+                                    ->where(
+                                        'document_type',
+                                        'MATERIAL_REQUISITION'
+                                    )
+                                    ->where(
+                                        'document_id',
+                                        $purchaseRequisition->getKey()
+                                    )
+                                    ->latest('id')
+                                    ->first();
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | No Approval Transaction
+                            |--------------------------------------------------------------------------
+                            */
+
+                            if (! $transaction) {
+
+                                if (
+                                    $purchaseRequisition->status
+                                    === 'Pending Approval'
+                                ) {
+                                    return 'Waiting Approval';
+                                }
+
+                                return $purchaseRequisition->status;
+                            }
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Rejected
+                            |--------------------------------------------------------------------------
+                            */
+
+                            if (
+                                $transaction->status
+                                === 'REJECTED'
+                            ) {
+                                return 'Rejected';
+                            }
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Count Approved Steps
+                            |--------------------------------------------------------------------------
+                            |
+                            | Do NOT use current_level as the
+                            | displayed approval progress.
+                            |
+                            | We count completed approval steps.
+                            |
+                            */
+
+                            $approvedCount =
+                                $transaction
+                                    ->steps()
+                                    ->where(
+                                        'status',
+                                        'APPROVED'
+                                    )
+                                    ->count();
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | No Approval Completed
+                            |--------------------------------------------------------------------------
+                            */
+
+                            if (
+                                $approvedCount === 0
+                            ) {
+                                return 'Waiting Approval';
+                            }
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Approval Progress
+                            |--------------------------------------------------------------------------
+                            */
+
+                            return sprintf(
+                                'Approval %d/%d',
+                                min(
+                                    $approvedCount,
+                                    $totalApprovals
+                                ),
+                                $totalApprovals
+                            );
+                        }
+                    )
+                    ->color(
+                        function (
+                            string $state
+                        ): string {
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Empty
+                            |--------------------------------------------------------------------------
+                            */
+
+                            if (
+                                $state === '-'
+                            ) {
+                                return 'gray';
+                            }
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Draft
+                            |--------------------------------------------------------------------------
+                            */
+
+                            if (
+                                $state === 'Draft'
+                            ) {
+                                return 'gray';
+                            }
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Waiting Approval
+                            |--------------------------------------------------------------------------
+                            */
+
+                            if (
+                                $state === 'Waiting Approval'
+                            ) {
+                                return 'warning';
+                            }
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Approval Progress
+                            |--------------------------------------------------------------------------
+                            */
+
+                            if (
+                                str_starts_with(
+                                    $state,
+                                    'Approval '
+                                )
+                            ) {
+
+                                if (
+                                    preg_match(
+                                        '/Approval (\d+)\/(\d+)/',
+                                        $state,
+                                        $matches
+                                    )
+                                ) {
+
+                                    $current =
+                                        (int) $matches[1];
+
+                                    $total =
+                                        (int) $matches[2];
+
+                                    if (
+                                        $current >= $total
+                                    ) {
+                                        return 'success';
+                                    }
+                                }
+
+                                return 'warning';
+                            }
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Other States
+                            |--------------------------------------------------------------------------
+                            */
+
+                            return match ($state) {
+
+                                'Rejected' =>
+                                    'danger',
+
+                                'Cancelled' =>
+                                    'danger',
+
+                                'Closed' =>
+                                    'primary',
+
+                                default =>
+                                    'gray',
+
+                            };
+                        }
+                    ),
+
+                /*
+                |--------------------------------------------------------------------------
+                | ASSIGNMENT DATE
+                |--------------------------------------------------------------------------
+                */
+
+                TextColumn::make(
+                    'assigned_at'
+                )
                     ->label('Assignment Date')
                     ->date('d M Y')
-                    ->sortable(),
+                    ->sortable()
+                    ->placeholder('-'),
 
-                TextColumn::make('status')
+                /*
+                |--------------------------------------------------------------------------
+                | AMR STATUS
+                |--------------------------------------------------------------------------
+                */
+
+                TextColumn::make(
+                    'status'
+                )
+                    ->label('Status AMR')
                     ->badge()
                     ->sortable()
                     ->searchable()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(
+                        fn (
+                            string $state
+                        ): string => match ($state) {
 
-                        'Draft'             => 'gray',
+                            'Draft' =>
+                                'gray',
 
-                        'Assigned'          => 'info',
+                            'Assigned' =>
+                                'info',
 
-                        'Waiting Approval'  => 'warning',
+                            'Waiting Approval' =>
+                                'warning',
 
-                        'Approved'          => 'success',
+                            'Approved' =>
+                                'success',
 
-                        'Completed'         => 'success',
+                            'Completed' =>
+                                'success',
 
-                        'Rejected'          => 'danger',
+                            'Rejected' =>
+                                'danger',
 
-                        'Cancelled'         => 'gray',
+                            'Cancelled' =>
+                                'gray',
 
-                        default             => 'gray',
+                            default =>
+                                'gray',
 
-                    }),
+                        }
+                    ),
 
             ])
 
+            /*
+            |--------------------------------------------------------------------------
+            | FILTERS
+            |--------------------------------------------------------------------------
+            */
+
             ->filters([
 
-                SelectFilter::make('status')
-                    ->label('Status')
+                /*
+                |--------------------------------------------------------------------------
+                | AMR STATUS
+                |--------------------------------------------------------------------------
+                */
+
+                SelectFilter::make(
+                    'status'
+                )
+                    ->label('Status AMR')
                     ->options([
-                        'Draft' => 'Draft',
-                        'Assigned' => 'Assigned',
-                        'Waiting Approval' => 'Waiting Approval',
-                        'Approved' => 'Approved',
-                        'Completed' => 'Completed',
-                        'Rejected' => 'Rejected',
-                        'Cancelled' => 'Cancelled',
+
+                        'Draft' =>
+                            'Draft',
+
+                        'Assigned' =>
+                            'Assigned',
+
+                        'Waiting Approval' =>
+                            'Waiting Approval',
+
+                        'Approved' =>
+                            'Approved',
+
+                        'Completed' =>
+                            'Completed',
+
+                        'Rejected' =>
+                            'Rejected',
+
+                        'Cancelled' =>
+                            'Cancelled',
+
                     ]),
 
-                SelectFilter::make('assigned_to')
+                /*
+                |--------------------------------------------------------------------------
+                | ASSIGNED TO
+                |--------------------------------------------------------------------------
+                */
+
+                SelectFilter::make(
+                    'assigned_to'
+                )
                     ->label('Assigned To')
-                    ->relationship('assignedTo', 'name')
+                    ->relationship(
+                        'assignedTo',
+                        'name'
+                    )
                     ->searchable()
                     ->preload(),
 
-                SelectFilter::make('purchase_requisition_id')
-                    ->label('Purchase Requisition')
-                    ->relationship('purchaseRequisition', 'pr_no')
+                /*
+                |--------------------------------------------------------------------------
+                | PURCHASE REQUISITION
+                |--------------------------------------------------------------------------
+                */
+
+                SelectFilter::make(
+                    'purchase_requisition_id'
+                )
+                    ->label(
+                        'Purchase Requisition'
+                    )
+                    ->relationship(
+                        'purchaseRequisition',
+                        'pr_no'
+                    )
                     ->searchable()
                     ->preload(),
 
-                Filter::make('assigned_at')
-                    ->label('Assignment Date')
+                /*
+                |--------------------------------------------------------------------------
+                | ASSIGNMENT DATE
+                |--------------------------------------------------------------------------
+                */
+
+                Filter::make(
+                    'assigned_at'
+                )
+                    ->label(
+                        'Assignment Date'
+                    )
                     ->schema([
 
-                        DatePicker::make('from')
+                        DatePicker::make(
+                            'from'
+                        )
                             ->label('From'),
 
-                        DatePicker::make('until')
+                        DatePicker::make(
+                            'until'
+                        )
                             ->label('Until'),
 
                     ])
+                    ->query(
+                        function (
+                            $query,
+                            array $data
+                        ) {
 
-                    ->query(function ($query, array $data) {
+                            return $query
 
-                        return $query
-                            ->when(
-                                $data['from'],
-                                fn ($query, $date) => $query->whereDate('assigned_at', '>=', $date)
-                            )
-                            ->when(
-                                $data['until'],
-                                fn ($query, $date) => $query->whereDate('assigned_at', '<=', $date)
-                            );
+                                ->when(
+                                    $data['from'] ?? null,
+                                    fn (
+                                        $query,
+                                        $date
+                                    ) =>
+                                        $query->whereDate(
+                                            'assigned_at',
+                                            '>=',
+                                            $date
+                                        )
+                                )
 
-                    }),
+                                ->when(
+                                    $data['until'] ?? null,
+                                    fn (
+                                        $query,
+                                        $date
+                                    ) =>
+                                        $query->whereDate(
+                                            'assigned_at',
+                                            '<=',
+                                            $date
+                                        )
+                                );
+
+                        }
+                    ),
+
+                /*
+                |--------------------------------------------------------------------------
+                | TRASHED
+                |--------------------------------------------------------------------------
+                */
 
                 TrashedFilter::make(),
 
             ])
 
-                ->recordActions([
+            /*
+            |--------------------------------------------------------------------------
+            | ROW ACTIONS
+            |--------------------------------------------------------------------------
+            |
+            | AMR is no longer an approval workspace.
+            |
+            | AMR responsibilities:
+            |
+            | Draft
+            |   ↓
+            | Updated
+            |   ↓
+            | Submit
+            |   ↓
+            | Waiting Approval
+            |
+            | Therefore:
+            |
+            | NO Approve
+            | NO Reject
+            | NO Complete
+            | NO Generate PO
+            |
+            | Approval and Generate PO are handled
+            | by the next workflow workspace.
+            |
+            */
 
-                    ActionGroup::make([
+            ->actions([
 
-                        ViewAction::make()
-                            ->icon('heroicon-o-eye'),
+                ActionGroup::make([
 
-                        EditAction::make()
-                            ->icon('heroicon-o-pencil-square'),
+                    /*
+                    |--------------------------------------------------------------------------
+                    | View
+                    |--------------------------------------------------------------------------
+                    */
 
-                        Action::make('submit')
-                            ->label('Submit')
-                            ->icon('heroicon-o-paper-airplane')
-                            ->color('warning')
-                            ->requiresConfirmation()
-                            ->visible(fn ($record) => $record->status === 'Draft')
-                            ->modalHeading('Submit Assignment')
-                            ->modalDescription(
-                                'After submission, this Assignment Material Requisition will be locked for editing.'
-                            )
-                            ->action(function ($record): void {
-                                app(AssignmentMaterialRequisitionService::class)
-                                    ->submit($record->id);
-                            }),
+                    ViewAction::make(),
 
-                        Action::make('generatePo')
-                            ->label('Generate PO')
-                            ->icon('heroicon-o-document-duplicate')
-                            ->color('success')
-                            ->requiresConfirmation()
-                            ->visible(fn ($record) => $record->status === 'Assigned')
-                            ->modalHeading('Generate Purchase Order')
-                            ->modalDescription(
-                                'Generate a Purchase Order from this Assignment Material Requisition.'
-                            )
-                            ->action(function ($record): void {
-                                app(\App\Services\Purchasing\GeneratePurchaseOrderService::class)
-                                    ->generate($record->id);
-                            }),                            
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Edit
+                    |--------------------------------------------------------------------------
+                    */
 
-                        DeleteAction::make()
-                            ->icon('heroicon-o-trash')
-                            ->color('danger')
-                            ->label('Delete')
-                            ->requiresConfirmation()
-                            ->visible(fn ($record) => $record->canDelete())
-                            ->modalHeading('Delete Assignment Material Requisition')
-                            ->modalDescription(
-                                'This Assignment Material Requisition will be moved to Trash (Soft Delete).'
-                            )
-                            ->modalSubmitActionLabel('Delete')
-                            ->successNotificationTitle(
-                                'Assignment Material Requisition deleted successfully.'
-                            )
-                            ->action(function ($record): void {
-                                app(AssignmentMaterialRequisitionService::class)
-                                    ->delete($record->id);
-                            }),
+                    EditAction::make(),
 
-                    ])
-                        ->label('Actions')
-                        ->icon('heroicon-m-ellipsis-vertical')
-                        ->button(),
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Delete
+                    |--------------------------------------------------------------------------
+                    */
+
+                    DeleteAction::make()
+                        ->visible(
+                            fn (
+                                AssignmentMaterialRequisition $record
+                            ): bool =>
+                                $record->canDelete()
+                        ),
 
                 ])
+                    ->label('Actions')
+                    ->button()
+                    ->color('warning'),
 
+            ])
 
-            ->toolbarActions([
+            /*
+            |--------------------------------------------------------------------------
+            | BULK ACTIONS
+            |--------------------------------------------------------------------------
+            */
+
+            ->bulkActions([
 
                 BulkActionGroup::make([
 
                     DeleteBulkAction::make(),
 
-                    RestoreBulkAction::make(),
-
                     ForceDeleteBulkAction::make(),
 
-                ])
+                    RestoreBulkAction::make(),
+
+                ]),
 
             ]);
     }

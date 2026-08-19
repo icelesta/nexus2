@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Models\Currency;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class PurchaseRequisition extends Model
 {
@@ -178,17 +179,6 @@ class PurchaseRequisition extends Model
         );
     }
 
-    /**
-     * Assignment Material Requisitions.
-     */
-    public function assignmentMaterialRequisitions(): HasMany
-    {
-        return $this->hasMany(
-            AssignmentMaterialRequisition::class,
-            'purchase_requisition_id'
-        );
-    }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -263,14 +253,27 @@ class PurchaseRequisition extends Model
     }
 
     /**
-     * Assignment Material Requisition Items.
+     * Assignment Material Requisitions.
      */
-    public function assignmentItems(): HasMany
+    public function assignmentMaterialRequisitions(): HasMany
     {
         return $this->hasMany(
-            AssignmentMaterialRequisitionItem::class,
-            'purchase_requisition_item_id'
+            AssignmentMaterialRequisition::class,
+            'purchase_requisition_id'
         );
+    }
+
+    /**
+     * Latest Assignment Material Requisition.
+     *
+     * Used as the current Purchasing / Commercial reference.
+     */
+    public function latestAssignmentMaterialRequisition(): HasOne
+    {
+        return $this->hasOne(
+            AssignmentMaterialRequisition::class,
+            'purchase_requisition_id'
+        )->latestOfMany('id');
     }
 
     public function canEdit(): bool

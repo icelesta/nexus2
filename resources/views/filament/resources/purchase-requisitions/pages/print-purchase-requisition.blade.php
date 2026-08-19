@@ -819,7 +819,6 @@ $printClass = $pdfMode
                     MATERIAL REQUISITION ITEMS
                 </div>
 
-
                 <div
                     style="
                         overflow:hidden;
@@ -832,7 +831,7 @@ $printClass = $pdfMode
                         style="
                             width:100%;
                             border-collapse:collapse;
-                            font-size:10px;
+                            font-size:9px;
                         "
                     >
 
@@ -847,8 +846,8 @@ $printClass = $pdfMode
 
                                 <th
                                     style="
-                                        width:40px;
-                                        padding:8px;
+                                        width:28px;
+                                        padding:7px 5px;
                                         text-align:center;
                                         border-right:1px solid #d7dee7;
                                         border-bottom:1px solid #d7dee7;
@@ -859,8 +858,8 @@ $printClass = $pdfMode
 
                                 <th
                                     style="
-                                        width:100px;
-                                        padding:8px;
+                                        width:70px;
+                                        padding:7px 5px;
                                         text-align:left;
                                         border-right:1px solid #d7dee7;
                                         border-bottom:1px solid #d7dee7;
@@ -871,7 +870,7 @@ $printClass = $pdfMode
 
                                 <th
                                     style="
-                                        padding:8px;
+                                        padding:7px 5px;
                                         text-align:left;
                                         border-right:1px solid #d7dee7;
                                         border-bottom:1px solid #d7dee7;
@@ -882,7 +881,7 @@ $printClass = $pdfMode
 
                                 <th
                                     style="
-                                        padding:8px;
+                                        padding:7px 5px;
                                         text-align:left;
                                         border-right:1px solid #d7dee7;
                                         border-bottom:1px solid #d7dee7;
@@ -893,8 +892,8 @@ $printClass = $pdfMode
 
                                 <th
                                     style="
-                                        width:70px;
-                                        padding:8px;
+                                        width:45px;
+                                        padding:7px 5px;
                                         text-align:right;
                                         border-right:1px solid #d7dee7;
                                         border-bottom:1px solid #d7dee7;
@@ -905,8 +904,8 @@ $printClass = $pdfMode
 
                                 <th
                                     style="
-                                        width:70px;
-                                        padding:8px;
+                                        width:45px;
+                                        padding:7px 5px;
                                         text-align:center;
                                         border-right:1px solid #d7dee7;
                                         border-bottom:1px solid #d7dee7;
@@ -917,8 +916,8 @@ $printClass = $pdfMode
 
                                 <th
                                     style="
-                                        width:95px;
-                                        padding:8px;
+                                        width:70px;
+                                        padding:7px 5px;
                                         text-align:center;
                                         border-right:1px solid #d7dee7;
                                         border-bottom:1px solid #d7dee7;
@@ -929,29 +928,111 @@ $printClass = $pdfMode
 
                                 <th
                                     style="
-                                        width:150px;
-                                        padding:8px;
+                                        width:85px;
+                                        padding:7px 5px;
                                         text-align:left;
+                                        border-right:1px solid #d7dee7;
                                         border-bottom:1px solid #d7dee7;
                                     "
                                 >
                                     WAREHOUSE
                                 </th>
 
+                                {{-- =====================================================
+                                     PURCHASING INFORMATION
+                                ====================================================== --}}
+
+                                <th
+                                    style="
+                                        width:105px;
+                                        padding:7px 5px;
+                                        text-align:left;
+                                        border-right:1px solid #d7dee7;
+                                        border-bottom:1px solid #d7dee7;
+                                    "
+                                >
+                                    SUPPLIER
+                                </th>
+
+                                <th
+                                    style="
+                                        width:75px;
+                                        padding:7px 5px;
+                                        text-align:right;
+                                        border-right:1px solid #d7dee7;
+                                        border-bottom:1px solid #d7dee7;
+                                    "
+                                >
+                                    UNIT PRICE
+                                </th>
+
+                                <th
+                                    style="
+                                        width:65px;
+                                        padding:7px 5px;
+                                        text-align:right;
+                                        border-right:1px solid #d7dee7;
+                                        border-bottom:1px solid #d7dee7;
+                                    "
+                                >
+                                    DISCOUNT
+                                </th>
+
+                                <th
+                                    style="
+                                        width:65px;
+                                        padding:7px 5px;
+                                        text-align:center;
+                                        border-right:1px solid #d7dee7;
+                                        border-bottom:1px solid #d7dee7;
+                                    "
+                                >
+                                    TAX
+                                </th>
+
+                                <th
+                                    style="
+                                        width:75px;
+                                        padding:7px 5px;
+                                        text-align:right;
+                                        border-right:1px solid #d7dee7;
+                                        border-bottom:1px solid #d7dee7;
+                                    "
+                                >
+                                    TAX AMOUNT
+                                </th>
+
+                                <th
+                                    style="
+                                        width:85px;
+                                        padding:7px 5px;
+                                        text-align:right;
+                                        border-bottom:1px solid #d7dee7;
+                                    "
+                                >
+                                    AMOUNT
+                                </th>
+
                             </tr>
 
                         </thead>
-
 
                         <tbody>
 
                             @forelse($record->items as $index => $item)
 
+                                @php
+                                    $assignmentItem =
+                                        $item->latestAssignmentMaterialRequisitionItem;
+                                @endphp
+
                                 <tr>
+
+                                    {{-- NO --}}
 
                                     <td
                                         style="
-                                            padding:8px;
+                                            padding:7px 5px;
                                             text-align:center;
                                             border-right:1px solid #e2e8f0;
                                             border-bottom:1px solid #e2e8f0;
@@ -960,9 +1041,11 @@ $printClass = $pdfMode
                                         {{ $index + 1 }}
                                     </td>
 
+                                    {{-- ITEM CODE --}}
+
                                     <td
                                         style="
-                                            padding:8px;
+                                            padding:7px 5px;
                                             border-right:1px solid #e2e8f0;
                                             border-bottom:1px solid #e2e8f0;
                                         "
@@ -970,9 +1053,11 @@ $printClass = $pdfMode
                                         {{ $item->item?->item_code ?? '-' }}
                                     </td>
 
+                                    {{-- ITEM NAME --}}
+
                                     <td
                                         style="
-                                            padding:8px;
+                                            padding:7px 5px;
                                             border-right:1px solid #e2e8f0;
                                             border-bottom:1px solid #e2e8f0;
                                         "
@@ -980,9 +1065,11 @@ $printClass = $pdfMode
                                         {{ $item->item?->item_name ?? '-' }}
                                     </td>
 
+                                    {{-- DESCRIPTION --}}
+
                                     <td
                                         style="
-                                            padding:8px;
+                                            padding:7px 5px;
                                             border-right:1px solid #e2e8f0;
                                             border-bottom:1px solid #e2e8f0;
                                         "
@@ -990,9 +1077,11 @@ $printClass = $pdfMode
                                         {{ $item->remarks ?? '-' }}
                                     </td>
 
+                                    {{-- QTY --}}
+
                                     <td
                                         style="
-                                            padding:8px;
+                                            padding:7px 5px;
                                             text-align:right;
                                             border-right:1px solid #e2e8f0;
                                             border-bottom:1px solid #e2e8f0;
@@ -1001,9 +1090,11 @@ $printClass = $pdfMode
                                         {{ number_format((float) $item->quantity, 2) }}
                                     </td>
 
+                                    {{-- UOM --}}
+
                                     <td
                                         style="
-                                            padding:8px;
+                                            padding:7px 5px;
                                             text-align:center;
                                             border-right:1px solid #e2e8f0;
                                             border-bottom:1px solid #e2e8f0;
@@ -1012,9 +1103,11 @@ $printClass = $pdfMode
                                         {{ $item->uom?->uom_name ?? '-' }}
                                     </td>
 
+                                    {{-- REQUIRED DATE --}}
+
                                     <td
                                         style="
-                                            padding:8px;
+                                            padding:7px 5px;
                                             text-align:center;
                                             border-right:1px solid #e2e8f0;
                                             border-bottom:1px solid #e2e8f0;
@@ -1023,13 +1116,157 @@ $printClass = $pdfMode
                                         {{ $item->required_date?->format('d-M-Y') ?? '-' }}
                                     </td>
 
+                                    {{-- WAREHOUSE --}}
+
                                     <td
                                         style="
-                                            padding:8px;
+                                            padding:7px 5px;
+                                            border-right:1px solid #e2e8f0;
                                             border-bottom:1px solid #e2e8f0;
                                         "
                                     >
                                         {{ $item->warehouse?->warehouse_name ?? '-' }}
+                                    </td>
+
+                                    {{-- =================================================
+                                         SUPPLIER
+                                    ================================================== --}}
+
+                                    <td
+                                        style="
+                                            padding:7px 5px;
+                                            border-right:1px solid #e2e8f0;
+                                            border-bottom:1px solid #e2e8f0;
+                                        "
+                                    >
+                                        {{ $assignmentItem?->supplier?->supplier_name ?? '-' }}
+                                    </td>
+
+                                    {{-- =================================================
+                                         UNIT PRICE
+                                    ================================================== --}}
+
+                                    <td
+                                        style="
+                                            padding:7px 5px;
+                                            text-align:right;
+                                            border-right:1px solid #e2e8f0;
+                                            border-bottom:1px solid #e2e8f0;
+                                            white-space:nowrap;
+                                        "
+                                    >
+                                        @if($assignmentItem)
+                                            Rp {{ number_format((float) $assignmentItem->unit_price, 2) }}
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+
+                                    {{-- =================================================
+                                         DISCOUNT
+                                    ================================================== --}}
+
+                                    <td
+                                        style="
+                                            padding:7px 5px;
+                                            text-align:right;
+                                            border-right:1px solid #e2e8f0;
+                                            border-bottom:1px solid #e2e8f0;
+                                            white-space:nowrap;
+                                        "
+                                    >
+                                        @if($assignmentItem)
+
+                                            {{ number_format((float) $assignmentItem->discount_percent, 2) }}%
+
+                                            <br>
+
+                                            <span
+                                                style="
+                                                    color:#64748b;
+                                                    font-size:8px;
+                                                "
+                                            >
+                                                Rp {{ number_format((float) $assignmentItem->discount_amount, 2) }}
+                                            </span>
+
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+
+                                    {{-- =================================================
+                                         TAX
+                                    ================================================== --}}
+
+                                    <td
+                                        style="
+                                            padding:7px 5px;
+                                            text-align:center;
+                                            border-right:1px solid #e2e8f0;
+                                            border-bottom:1px solid #e2e8f0;
+                                        "
+                                    >
+                                        @if($assignmentItem)
+
+                                            {{ $assignmentItem->tax_name ?? '-' }}
+
+                                            @if((float) $assignmentItem->tax_percent > 0)
+                                                <br>
+                                                <span
+                                                    style="
+                                                        color:#64748b;
+                                                        font-size:8px;
+                                                    "
+                                                >
+                                                    {{ number_format((float) $assignmentItem->tax_percent, 2) }}%
+                                                </span>
+                                            @endif
+
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+
+                                    {{-- =================================================
+                                         TAX AMOUNT
+                                    ================================================== --}}
+
+                                    <td
+                                        style="
+                                            padding:7px 5px;
+                                            text-align:right;
+                                            border-right:1px solid #e2e8f0;
+                                            border-bottom:1px solid #e2e8f0;
+                                            white-space:nowrap;
+                                        "
+                                    >
+                                        @if($assignmentItem)
+                                            Rp {{ number_format((float) $assignmentItem->tax_amount, 2) }}
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+
+                                    {{-- =================================================
+                                         AMOUNT
+                                    ================================================== --}}
+
+                                    <td
+                                        style="
+                                            padding:7px 5px;
+                                            text-align:right;
+                                            font-weight:700;
+                                            color:#12385d;
+                                            border-bottom:1px solid #e2e8f0;
+                                            white-space:nowrap;
+                                        "
+                                    >
+                                        @if($assignmentItem)
+                                            Rp {{ number_format((float) $assignmentItem->grand_total, 2) }}
+                                        @else
+                                            -
+                                        @endif
                                     </td>
 
                                 </tr>
@@ -1039,7 +1276,7 @@ $printClass = $pdfMode
                                 <tr>
 
                                     <td
-                                        colspan="8"
+                                        colspan="14"
                                         style="
                                             padding:25px;
                                             text-align:center;

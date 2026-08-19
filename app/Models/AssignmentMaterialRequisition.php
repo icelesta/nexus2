@@ -36,40 +36,13 @@ class AssignmentMaterialRequisition extends Model
 
     protected $fillable = [
 
-        /*
-        |--------------------------------------------------------------------------
-        | Document Information
-        |--------------------------------------------------------------------------
-        */
-
         'document_no',
         'document_date',
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Purchase Requisition Reference
-        |--------------------------------------------------------------------------
-        */
-
         'purchase_requisition_id',
+        'purchase_order_id',
 
-        /*
-        |--------------------------------------------------------------------------
-        | Assignment Information
-        |--------------------------------------------------------------------------
-        */
-
-        'assigned_to',
-        'assigned_by',
-        'assigned_at',
         'pr_number',
-
-        /*
-        |--------------------------------------------------------------------------
-        | Snapshot Header
-        |--------------------------------------------------------------------------
-        */
 
         'company_id',
         'business_unit_id',
@@ -77,40 +50,31 @@ class AssignmentMaterialRequisition extends Model
         'department_id',
         'section_id',
         'cost_center_id',
-        'warehouse_id',
 
+        'warehouse_id',
         'shipping_address_id',
 
         'currency_id',
-        'exchange_rate',        
+        'exchange_rate',
 
         'requester_id',
 
         'request_date',
         'required_date',
-
         'priority',
 
         'reference_no',
         'delivery_location',
 
-        /*
-        |--------------------------------------------------------------------------
-        | Workflow
-        |--------------------------------------------------------------------------
-        */
+        'assigned_to',
+        'assigned_by',
+        'assigned_at',
 
         'status',
 
         'created_by',
         'updated_by',
-        'deleted_by',        
-
-        /*
-        |--------------------------------------------------------------------------
-        | Remarks
-        |--------------------------------------------------------------------------
-        */
+        'deleted_by',
 
         'remarks',
     ];
@@ -148,6 +112,8 @@ class AssignmentMaterialRequisition extends Model
 
     public const STATUS_DRAFT = 'Draft';
 
+    public const STATUS_UPDATED = 'Updated';
+
     public const STATUS_ASSIGNED = 'Assigned';
 
     public const STATUS_WAITING_APPROVAL = 'Waiting Approval';
@@ -170,6 +136,7 @@ class AssignmentMaterialRequisition extends Model
     {
         return [
             self::STATUS_DRAFT              => 'Draft',
+            self::STATUS_UPDATED            => 'Updated',
             self::STATUS_ASSIGNED           => 'Assigned',
             self::STATUS_WAITING_APPROVAL   => 'Waiting Approval',
             self::STATUS_APPROVED           => 'Approved',
@@ -466,6 +433,7 @@ class AssignmentMaterialRequisition extends Model
     {
         return in_array($this->status, [
             self::STATUS_DRAFT,
+            self::STATUS_UPDATED,
             self::STATUS_ASSIGNED,
         ], true);
     }
@@ -493,7 +461,10 @@ class AssignmentMaterialRequisition extends Model
      */
     public function canSubmit(): bool
     {
-        return $this->status === self::STATUS_DRAFT;
+        return in_array($this->status, [
+            self::STATUS_UPDATED,
+            self::STATUS_ASSIGNED,
+        ], true);
     }
 
     /**

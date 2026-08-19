@@ -1,11 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+
 
 class PurchaseRequisitionItem extends Model
 {
@@ -38,17 +43,13 @@ class PurchaseRequisitionItem extends Model
         'purchase_requisition_id',
 
         'item_id',
-
         'uom_id',
-
         'warehouse_id',
 
         'quantity',
-
         'estimated_unit_price',
 
         'required_date',
-
         'remarks',
 
         'status',
@@ -73,7 +74,6 @@ class PurchaseRequisitionItem extends Model
             'warehouse_id' => 'integer',
 
             'quantity' => 'decimal:4',
-
             'estimated_unit_price' => 'decimal:2',
 
             'required_date' => 'date',
@@ -96,37 +96,83 @@ class PurchaseRequisitionItem extends Model
 
     public function purchaseRequisition(): BelongsTo
     {
-        return $this->belongsTo(PurchaseRequisition::class);
+        return $this->belongsTo(
+            PurchaseRequisition::class
+        );
     }
 
     public function item(): BelongsTo
     {
-        return $this->belongsTo(Item::class);
+        return $this->belongsTo(
+            Item::class
+        );
     }
 
     public function uom(): BelongsTo
     {
-        return $this->belongsTo(Uom::class);
+        return $this->belongsTo(
+            Uom::class
+        );
     }
 
     public function warehouse(): BelongsTo
     {
-        return $this->belongsTo(Warehouse::class);
+        return $this->belongsTo(
+            Warehouse::class
+        );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | AMR Commercial Synchronization
+    |--------------------------------------------------------------------------
+    */
+
+    public function assignmentMaterialRequisitionItems(): HasMany
+    {
+        return $this->hasMany(
+            AssignmentMaterialRequisitionItem::class,
+            'purchase_requisition_item_id'
+        );
+    }
+
+    public function latestAssignmentMaterialRequisitionItem(): HasOne
+    {
+        return $this->hasOne(
+            AssignmentMaterialRequisitionItem::class,
+            'purchase_requisition_item_id'
+        )->latestOfMany('id');
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Audit Relationships
+    |--------------------------------------------------------------------------
+    */
 
     public function createdBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(
+            User::class,
+            'created_by'
+        );
     }
 
     public function updatedBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'updated_by');
+        return $this->belongsTo(
+            User::class,
+            'updated_by'
+        );
     }
 
     public function deletedBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'deleted_by');
+        return $this->belongsTo(
+            User::class,
+            'deleted_by'
+        );
     }
 
     /*
@@ -137,32 +183,50 @@ class PurchaseRequisitionItem extends Model
 
     public function scopeDraft(Builder $query): Builder
     {
-        return $query->where('status', self::STATUS_DRAFT);
+        return $query->where(
+            'status',
+            self::STATUS_DRAFT
+        );
     }
 
     public function scopeSubmitted(Builder $query): Builder
     {
-        return $query->where('status', self::STATUS_SUBMITTED);
+        return $query->where(
+            'status',
+            self::STATUS_SUBMITTED
+        );
     }
 
     public function scopeApproved(Builder $query): Builder
     {
-        return $query->where('status', self::STATUS_APPROVED);
+        return $query->where(
+            'status',
+            self::STATUS_APPROVED
+        );
     }
 
     public function scopeRejected(Builder $query): Builder
     {
-        return $query->where('status', self::STATUS_REJECTED);
+        return $query->where(
+            'status',
+            self::STATUS_REJECTED
+        );
     }
 
     public function scopeCancelled(Builder $query): Builder
     {
-        return $query->where('status', self::STATUS_CANCELLED);
+        return $query->where(
+            'status',
+            self::STATUS_CANCELLED
+        );
     }
 
     public function scopeClosed(Builder $query): Builder
     {
-        return $query->where('status', self::STATUS_CLOSED);
+        return $query->where(
+            'status',
+            self::STATUS_CLOSED
+        );
     }
 
     /*
@@ -173,7 +237,8 @@ class PurchaseRequisitionItem extends Model
 
     public function getEstimatedTotalAttribute(): float
     {
-        return (float) $this->quantity * (float) $this->estimated_unit_price;
+        return (float) $this->quantity
+            * (float) $this->estimated_unit_price;
     }
 
     /*

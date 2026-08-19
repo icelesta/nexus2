@@ -10,15 +10,17 @@ use App\Models\PurchaseOrderItem;
 class PricingService
 {
     /**
-     * Status Purchase Order yang dianggap valid
-     * untuk histori pembelian.
+     * Document statuses that are considered valid
+     * for purchase history.
+     *
+     * A Purchase Order is considered a valid purchase
+     * history only after approval has been granted.
      */
     private function validStatuses(): array
     {
         return [
-            PurchaseOrder::STATUS_APPROVED,
+            PurchaseOrder::STATUS_ON_PROGRESS,
             PurchaseOrder::STATUS_COMPLETED,
-            PurchaseOrder::STATUS_CLOSED,
         ];
     }
 
@@ -26,7 +28,7 @@ class PricingService
      * Get Last Purchase Price.
      *
      * Returns:
-     * - Last Purchase Price
+     * - Last valid Purchase Price
      * - 0.00 if no purchase history exists
      */
     public function getLastPurchasePrice(
@@ -48,11 +50,25 @@ class PricingService
                 'purchase_orders.status',
                 $this->validStatuses(),
             )
-            ->whereNull('purchase_orders.deleted_at')
-            ->whereNull('purchase_order_items.deleted_at')
-            ->orderByDesc('purchase_orders.document_date')
-            ->orderByDesc('purchase_order_items.id')
-            ->value('purchase_order_items.unit_price');
+            ->where(
+                'purchase_orders.approval_status',
+                PurchaseOrder::APPROVAL_APPROVED,
+            )
+            ->whereNull(
+                'purchase_orders.deleted_at',
+            )
+            ->whereNull(
+                'purchase_order_items.deleted_at',
+            )
+            ->orderByDesc(
+                'purchase_orders.document_date',
+            )
+            ->orderByDesc(
+                'purchase_order_items.id',
+            )
+            ->value(
+                'purchase_order_items.unit_price',
+            );
 
         return round(
             (float) ($lastPrice ?? 0),
@@ -61,7 +77,7 @@ class PricingService
     }
 
     /**
-     * Determine whether an Item has purchase history.
+     * Determine whether an Item has valid purchase history.
      */
     public function hasPurchaseHistory(
         int $itemId,
@@ -81,8 +97,16 @@ class PricingService
                 'purchase_orders.status',
                 $this->validStatuses(),
             )
-            ->whereNull('purchase_orders.deleted_at')
-            ->whereNull('purchase_order_items.deleted_at')
+            ->where(
+                'purchase_orders.approval_status',
+                PurchaseOrder::APPROVAL_APPROVED,
+            )
+            ->whereNull(
+                'purchase_orders.deleted_at',
+            )
+            ->whereNull(
+                'purchase_order_items.deleted_at',
+            )
             ->exists();
     }
 
@@ -118,11 +142,25 @@ class PricingService
                 'purchase_orders.status',
                 $this->validStatuses(),
             )
-            ->whereNull('purchase_orders.deleted_at')
-            ->whereNull('purchase_order_items.deleted_at')
-            ->orderByDesc('purchase_orders.document_date')
-            ->orderByDesc('purchase_order_items.id')
-            ->select('purchase_order_items.*')
+            ->where(
+                'purchase_orders.approval_status',
+                PurchaseOrder::APPROVAL_APPROVED,
+            )
+            ->whereNull(
+                'purchase_orders.deleted_at',
+            )
+            ->whereNull(
+                'purchase_order_items.deleted_at',
+            )
+            ->orderByDesc(
+                'purchase_orders.document_date',
+            )
+            ->orderByDesc(
+                'purchase_order_items.id',
+            )
+            ->select(
+                'purchase_order_items.*',
+            )
             ->first();
     }
 }

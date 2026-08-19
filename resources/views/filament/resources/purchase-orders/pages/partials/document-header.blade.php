@@ -11,7 +11,9 @@
     ];
 @endphp
 
-<table style="width:100%; border-collapse:collapse; border:1px solid #7d93aa;">
+<div class="po-document-header">
+
+    <table style="width:100%; border-collapse:collapse; border:1px solid #7d93aa;">
 
     <tr>
 
@@ -188,11 +190,13 @@
 
                     <td
                         style="
+                            width:110px;
                             font-weight:600;
                             padding:8px;
+                            white-space:nowrap;
                         ">
 
-                        Status
+                        Approval Status
 
                     </td>
 
@@ -201,9 +205,10 @@
                             padding:8px;
                             font-weight:bold;
                             color:#12385d;
+                            white-space:nowrap;
                         ">
 
-                        {{ strtoupper($purchaseOrder->status ?? 'DRAFT') }}
+                        {{ strtoupper($purchaseOrder->approval_status ?? 'PENDING') }}
 
                     </td>
 
@@ -216,3 +221,19 @@
     </tr>
 
 </table>
+</div>
+<style>
+    .fi-page.fi-resource-purchase-order-resource-purchase-orders
+    .fi-grid-col:has(.po-document-header) {
+        position: sticky;
+        top: 0;
+        align-self: start;
+        z-index: 40;
+    }
+
+    .po-document-header {
+        position: relative;
+        z-index: 41;
+        background: white;
+    }
+</style>

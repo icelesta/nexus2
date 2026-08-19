@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\PurchaseRequisitions\Pages;
 
+use App\Filament\Resources\PurchaseRequisitions\Actions\ApprovePurchaseRequisition;
+use App\Filament\Resources\PurchaseRequisitions\Actions\RejectPurchaseRequisition;
+
 use App\Filament\Resources\PurchaseRequisitions\PurchaseRequisitionResource;
 use App\Services\Purchasing\PurchaseRequisitionService;
 use App\Services\Purchasing\PurchaseRequisitionItemService;
@@ -88,6 +91,29 @@ class EditPurchaseRequisition extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+
+            /*
+            |--------------------------------------------------------------------------
+            | APPROVE
+            |--------------------------------------------------------------------------
+            */
+
+            ApprovePurchaseRequisition::make(),
+
+            /*
+            |--------------------------------------------------------------------------
+            | REJECT
+            |--------------------------------------------------------------------------
+            */
+
+            RejectPurchaseRequisition::make(),
+
+            /*
+            |--------------------------------------------------------------------------
+            | DELETE
+            |--------------------------------------------------------------------------
+            */
+
             DeleteAction::make()
                 ->requiresConfirmation()
                 ->disabled(
@@ -107,6 +133,7 @@ class EditPurchaseRequisition extends EditRecord
                         static::getResource()::getUrl('index')
                     );
                 }),
+
         ];
     }
 

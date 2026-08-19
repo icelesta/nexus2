@@ -274,6 +274,7 @@ class AssignmentItemsGrid extends Component
             return;
         }
 
+
         $assignedQty =
             (float) ($this->assignedQty[$itemId] ?? 0);
 

@@ -44,7 +44,7 @@ class PaymentTermObserver
         */
 
         $paymentTerm->due_days ??= 0;
-        $paymentTerm->grace_days ??= 0;
+        $paymentTerm->grace_period_days ??= 0;
 
         $paymentTerm->discount_days ??= 0;
         $paymentTerm->discount_percent ??= 0;
