@@ -98,21 +98,6 @@ class GeneratePurchaseOrderForm
                                     )
                                     ->columnSpan(3),
 
-                                Placeholder::make(
-                                    'buyer'
-                                )
-                                    ->label('Purchasing PIC')
-                                    ->content(
-                                        fn (
-                                            ?AssignmentMaterialRequisition $record
-                                        ): string =>
-                                            $record
-                                                ?->assignedTo
-                                                ?->name
-                                            ?? '-'
-                                    )
-                                    ->columnSpan(3),
-
                             ]),
 
                     ])
