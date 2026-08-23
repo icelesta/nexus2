@@ -14,6 +14,9 @@ use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\HtmlString;
 
+use Filament\Notifications\Notification;
+use Illuminate\Validation\ValidationException;
+
 class EditPurchaseRequisition extends EditRecord
 {
     protected static string $resource = PurchaseRequisitionResource::class;
@@ -110,6 +113,23 @@ class EditPurchaseRequisition extends EditRecord
 
             /*
             |--------------------------------------------------------------------------
+            | SAVE
+            |--------------------------------------------------------------------------
+            */
+
+            $this->getSaveFormAction()
+                ->formId('form'),
+
+            /*
+            |--------------------------------------------------------------------------
+            | CANCEL
+            |--------------------------------------------------------------------------
+            */
+
+            $this->getCancelFormAction(),
+
+            /*
+            |--------------------------------------------------------------------------
             | DELETE
             |--------------------------------------------------------------------------
             */
@@ -189,6 +209,12 @@ class EditPurchaseRequisition extends EditRecord
         return 'Edit';
     }
 
+    protected function getFormActions(): array
+    {
+        return [];
+    }
+
+
     protected function getSavedNotificationTitle(): ?string
     {
         return 'Material Requisition updated successfully.';
@@ -210,6 +236,7 @@ class EditPurchaseRequisition extends EditRecord
         return static::getResource()::getUrl('index');
     }   
 
+    
     protected function handleRecordUpdate(
         \Illuminate\Database\Eloquent\Model $record,
         array $data,
@@ -221,6 +248,8 @@ class EditPurchaseRequisition extends EditRecord
             $record->getKey(),
             $data,
         );
-    }     
+    }
+    
+
 
 }

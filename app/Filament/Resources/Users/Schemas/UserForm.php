@@ -9,6 +9,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\FileUpload;
 
 use Illuminate\Support\Facades\Hash;
 
@@ -64,6 +65,23 @@ class UserForm
                             ->maxLength(20)
                             ->placeholder('+628123456789')
                             ->prefixIcon('heroicon-o-phone'),
+
+                        FileUpload::make('avatar')
+                            ->label('Profile Photo')
+                            ->image()
+                            ->imageEditor()
+                            ->disk('public')
+                            ->directory('avatars')
+                            ->visibility('public')
+                            ->maxSize(2048)
+                            ->acceptedFileTypes([
+                                'image/jpeg',
+                                'image/png',
+                                'image/webp',
+                            ])
+                            ->avatar()
+                            ->columnSpanFull(),
+                            
 
                         TextInput::make('password')
                             ->label('Password')

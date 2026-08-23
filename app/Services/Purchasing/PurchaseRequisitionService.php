@@ -670,26 +670,28 @@ class PurchaseRequisitionService
     /**
      * Validate document before modification.
      */
+
     protected function validateDocument(
         PurchaseRequisition $purchaseRequisition,
     ): void {
 
+        /*
+        |--------------------------------------------------------------------------
+        | Document Status
+        |--------------------------------------------------------------------------
+        |
+        | Only Draft Material Requisition may be modified.
+        |
+        */
+
         if (! $this->canModify($purchaseRequisition)) {
 
             throw new RuntimeException(
-                'Purchase Requisition cannot be modified because its current status does not allow this operation.'
-            );
-        }
-
-        if (! $purchaseRequisition
-            ->items()
-            ->exists()) {
-
-            throw new RuntimeException(
-                'Purchase Requisition must contain at least one item before it can be submitted.'
+                'Material Requisition cannot be modified because its current status does not allow this operation.'
             );
         }
     }
+
 
     /**
      * Validate workflow transition.

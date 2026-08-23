@@ -27,6 +27,7 @@ class User extends Authenticatable
         'name',
         'email',
         'phone',
+        'avatar',
         'password',
 
         // Preferences
@@ -266,6 +267,15 @@ class User extends Authenticatable
 
         return $query;
     } 
+
+    public function getAvatarUrlAttribute(): string
+    {
+        if (filled($this->avatar)) {
+            return asset('storage/' . ltrim($this->avatar, '/'));
+        }
+
+        return asset('images/default-avatar.png');
+    }
 
 
     /*

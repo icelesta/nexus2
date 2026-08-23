@@ -119,6 +119,27 @@
                             background:#fafbfd;
                         ">
 
+                        Attn. PIC
+
+                    </td>
+
+                    <td style="padding:8px 10px;">
+
+                        {{ $supplier?->contact_person ?? '-' }}
+
+                    </td>
+
+                </tr>
+
+                <tr>
+
+                    <td
+                        style="
+                            padding:8px 10px;
+                            font-weight:600;
+                            background:#fafbfd;
+                        ">
+
                         Phone
 
                     </td>
@@ -306,15 +327,20 @@
                             background:#fafbfd;
                         ">
 
-                        Payment
+                        Payment Instruction
 
                     </td>
 
-                    <td style="padding:5px 8px;
-                                font-size:11px;
-                                line-height:16px;">
+                    <td
+                        style="
+                            padding:5px 8px;
+                            font-size:11px;
+                            line-height:16px;
+                        ">
 
-                        {{ $purchaseOrder->payment_method ?? 'BANK TRANSFER' }}
+                        {{ filled($purchaseOrder->payment_instruction)
+                            ? $purchaseOrder->payment_instruction
+                            : '-' }}
 
                     </td>
 
@@ -399,7 +425,7 @@
 
         <td
             style="
-                width:65%;
+                width:55%;
                 padding:8px 10px;
                 vertical-align:top;
                 line-height:21px;
@@ -452,106 +478,138 @@
 
         </td>
 
-        {{-- ========================================== --}}
-        {{-- CONTACT --}}
-        {{-- ========================================== --}}
+{{-- ========================================== --}}
+{{-- CONTACT --}}
+{{-- ========================================== --}}
 
-        <td
-            style="
-                width:35%;
-                padding:8px 10px;
-                vertical-align:top;
-                font-size:13px;
-                line-height:18px;
-            ">
+<td
+    style="
+        width:50%;
+        padding:8px 10px;
+        vertical-align:top;
+        font-size:12px;
+        line-height:17px;
+        overflow:hidden;
+    "
+>
 
-            <table
+    <table
+        style="
+            width:100%;
+            border:none;
+            border-collapse:collapse;
+            table-layout:fixed;
+        "
+    >
+
+        {{-- Attention --}}
+        <tr>
+
+            <td
                 style="
-                    width:100%;
+                    width:78px;
                     border:none;
-                    border-collapse:collapse;
-                ">
+                    padding:1px 0;
+                    font-weight:600;
+                    white-space:nowrap;
+                    vertical-align:middle;
+                    font-size:12px;
+                    line-height:17px;
+                "
+            >
+                Attention :
+            </td>
 
-                <tr>
+            <td
+                style="
+                    width:auto;
+                    border:none;
+                    padding:1px 0 1px 2px;
+                    vertical-align:middle;
+                    white-space:nowrap;
+                    font-size:12px;
+                    line-height:17px;
+                "
+            >
+                {{ $shipping?->attention ?? '-' }}
+            </td>
 
-                    <td
-                        style="
-                            width:120px;
-                            border:none;
-                            padding:1px 0;
-                            font-weight:600;
-                        ">
-
-                        Attention :
-
-                    </td>
-
-                    <td
-                        style="
-                            border:none;
-                            padding:2px 0;
-                        ">
-
-                        {{ $shipping?->attention ?? '-' }}
-
-                    </td>
-
-                </tr>
+        </tr>
 
 
-                <tr>
+        {{-- Phone --}}
+        <tr>
 
-                    <td
-                        style="
-                            border:none;
-                            padding:2px 0;
-                            font-weight:600;
-                        ">
+            <td
+                style="
+                    width:78px;
+                    border:none;
+                    padding:1px 0;
+                    font-weight:600;
+                    white-space:nowrap;
+                    vertical-align:middle;
+                    font-size:12px;
+                    line-height:17px;
+                "
+            >
+                Phone (WA) :
+            </td>
 
-                        Phone (WA) :
+            <td
+                style="
+                    width:auto;
+                    border:none;
+                    padding:1px 0 1px 2px;
+                    vertical-align:middle;
+                    white-space:nowrap;
+                    font-size:12px;
+                    line-height:17px;
+                "
+            >
+                {{ $shipping?->phone ?? '-' }}
+            </td>
 
-                    </td>
+        </tr>
 
-                    <td
-                        style="
-                            border:none;
-                            padding:2px 0;
-                        ">
 
-                        {{ $shipping?->phone ?? '-' }}
+        {{-- Email --}}
+        <tr>
 
-                    </td>
+            <td
+                style="
+                    width:78px;
+                    border:none;
+                    padding:1px 0;
+                    font-weight:600;
+                    white-space:nowrap;
+                    vertical-align:middle;
+                    font-size:12px;
+                    line-height:17px;
+                "
+            >
+                Email :
+            </td>
 
-                </tr>
+            <td
+                style="
+                    width:auto;
+                    border:none;
+                    padding:1px 0 1px 2px;
+                    vertical-align:middle;
+                    font-size:12px;
+                    line-height:17px;
+                    letter-spacing:-0.15px;
 
-                <tr>
+                "
+            >
+                {{ $shipping?->email ?? '-' }}
+            </td>
 
-                    <td
-                        style="
-                            border:none;
-                            padding:2px 0;
-                            font-weight:600;
-                        ">
+        </tr>
 
-                        Email :  
+    </table>
 
-                    </td>
-
-                    <td
-                        style="
-                            border:none;
-                            padding:2px 0;
-                        ">
-
-                        {{ $shipping?->email ?? '-' }}
-
-                    </td>
-
-                </tr>
-
-            </table>
-
-        </td>
+</td>
 
     </tr>
 

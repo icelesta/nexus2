@@ -459,22 +459,6 @@
 
                     </td>
 
-                    {{-- RIGHT --}}
-
-                    <td
-                        style="
-                            border:none;
-                            padding:0;
-                            text-align:right;
-                            color:#777;
-                            font-size:10px;
-                        ">
-
-                        Purchase Order :
-                        {{ $purchaseOrder->document_no }}
-
-                    </td>
-
                 </tr>
 
             </table>
@@ -487,57 +471,3 @@
 
 </table>
 
-{{-- ===================================================== --}}
-{{-- DOCUMENT INFORMATION --}}
-{{-- ===================================================== --}}
-
-<table
-    style="
-        width:100%;
-        margin-top:6px;
-        border-collapse:collapse;
-        border:none;
-        font-size:10px;
-        color:#777;
-    ">
-
-    <tr>
-
-        <td
-            style="
-                border:none;
-                padding:0;
-            ">
-
-            Printed :
-
-            {{ now()->format('d M Y H:i') }}
-
-        </td>
-
-        <td
-            style="
-                border:none;
-                padding:0;
-                text-align:center;
-            ">
-
-            Nexus ERP 2.0
-
-        </td>
-
-        <td
-            style="
-                border:none;
-                padding:0;
-                text-align:right;
-            ">
-
-            Generated Automatically
-
-        </td>
-
-    </tr>
-
-</table>
-+

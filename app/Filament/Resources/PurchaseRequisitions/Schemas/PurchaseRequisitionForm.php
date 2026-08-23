@@ -11,6 +11,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\View;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
 class PurchaseRequisitionForm
@@ -35,24 +36,15 @@ class PurchaseRequisitionForm
                             ->label('Request Date')
                             ->native(false)
                             ->default(now())
+                            ->live()
                             ->required(),
 
                         DatePicker::make('required_date')
                             ->label('Required Date')
                             ->native(false)
+                            ->minDate(fn (Get $get) => $get('request_date'))
                             ->required(),
 
-/*                        Select::make('priority')
-                            ->label('Priority')
-                            ->options([
-                                'Low' => 'Low',
-                                'Normal' => 'Normal',
-                                'High' => 'High',
-                                'Urgent' => 'Urgent',
-                            ])
-                            ->default('Normal')
-                            ->native(false)
-                            ->required(),*/
 
                         Select::make('company_id')
                             ->label('Company')

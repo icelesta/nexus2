@@ -17,6 +17,10 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Support\HtmlString;
 
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Repeater;
+
 class AssignmentMaterialRequisitionForm
 {
     public static function configure(
@@ -244,7 +248,27 @@ class AssignmentMaterialRequisitionForm
                                                     ?->remarks
                                                 ?? '-'
                                     )
-                                    ->columnSpan(6),
+                                    ->columnSpan(2),
+
+
+                                /*
+                                |--------------------------------------------------------------------------
+                                | PAYMENT INSTRUCTION
+                                |--------------------------------------------------------------------------
+                                |
+                                | Free-text payment instruction.
+                                | Required before the Assignment can be saved/submitted.
+                                |
+                                */
+
+                                Textarea::make('payment_instruction')
+                                    ->label('Payment Instruction')
+                                    ->required()
+                                    ->rows(2)
+                                    ->autosize()
+                                    ->maxLength(5000)
+                                    ->placeholder('Enter payment instruction...')
+                                    ->columnSpan(2),
 
                             ]),
 
@@ -590,6 +614,79 @@ class AssignmentMaterialRequisitionForm
                             ),
 
                     ]),
+
+                /*
+                |--------------------------------------------------------------------------
+                | SUPPORTING DOCUMENTS
+                |--------------------------------------------------------------------------
+                |
+                | Supporting documents for AMR only.
+                | These documents are not propagated to PO
+                | or any subsequent transaction module.
+                |
+                */
+
+                Section::make(
+                    'Supporting Documents'
+                )
+                    ->description(
+                        'Upload supplier quotation or other supporting documents for this Assignment Material Requisition.'
+                    )
+                    ->columnSpanFull()
+                    ->schema([
+
+                        Repeater::make('documents')
+                            ->relationship('documents')
+                            ->label('Supplier Quotation / Supporting Document')
+                            ->schema([
+
+                                FileUpload::make('file_path')
+                                    ->label('Document')
+                                    ->disk('public')
+                                    ->directory('purchasing/amr/supporting-documents')
+                                    ->preserveFilenames()
+                                    ->downloadable()
+                                    ->openable()
+                                    ->maxSize(10240)
+                                    ->acceptedFileTypes([
+                                        'application/pdf',
+                                        'image/jpeg',
+                                        'image/png',
+                                        'application/msword',
+                                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                        'application/vnd.ms-excel',
+                                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                    ])
+                                    ->storeFileNamesIn('file_name')
+                                    ->required()
+                                    ->columnSpanFull(),
+
+                                Hidden::make('document_type')
+                                    ->default('SUPPLIER_QUOTATION'),
+
+                                Hidden::make('uploaded_by')
+                                    ->default(
+                                        fn (): ?int => auth()->id()
+                                    ),
+
+                            ])
+                            ->columns(1)
+                            ->addActionLabel(
+                                'Upload Supporting Document'
+                            )
+                            ->defaultItems(0)
+                            ->reorderable(false)
+                            ->collapsible()
+                            ->itemLabel(
+                                fn (
+                                    array $state
+                                ): ?string =>
+                                    $state['file_name'] ?? 'Supporting Document'
+                            ),
+
+                    ]),
+
+
 
             ]);
     }

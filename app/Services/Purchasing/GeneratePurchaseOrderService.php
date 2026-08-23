@@ -566,8 +566,9 @@ class GeneratePurchaseOrderService
             |--------------------------------------------------------------------------
             */
 
-            'remarks'
-                => $assignment->remarks,
+            'remarks' => $assignment->remarks,
+
+            'payment_instruction' => $assignment->payment_instruction,
 
             /*
             |--------------------------------------------------------------------------

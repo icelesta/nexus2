@@ -97,6 +97,7 @@
 
         </td>
 
+        
         {{-- ===================================================== --}}
         {{-- DOCUMENT INFO --}}
         {{-- ===================================================== --}}
@@ -105,15 +106,26 @@
             style="
                 width:230px;
                 border-left:1px solid #7d93aa;
+                border-right:1px solid #7d93aa;
+                border-top:1px solid #7d93aa;
+                border-bottom:1px solid #7d93aa;
                 vertical-align:top;
                 padding:0;
-            ">
+            "
+        >
 
             <table
                 style="
                     width:100%;
+                    border:none;
                     border-collapse:collapse;
-                ">
+                    border-spacing:0;
+                "
+            >
+
+                {{-- =============================================
+                PURCHASE ORDER TITLE
+                ============================================= --}}
 
                 <tr>
 
@@ -121,13 +133,15 @@
                         colspan="2"
                         style="
                             background:#12385d;
-                            color:white;
+                            color:#ffffff;
                             text-align:center;
                             font-size:17px;
                             font-weight:bold;
                             padding:10px;
+                            border:none;
                             border-bottom:1px solid #7d93aa;
-                        ">
+                        "
+                    >
 
                         PURCHASE ORDER
 
@@ -135,15 +149,24 @@
 
                 </tr>
 
+
+                {{-- =============================================
+                NUMBER
+                ============================================= --}}
+
                 <tr>
 
                     <td
                         style="
-                            width:90px;
+                            width:95px;
                             font-weight:600;
                             padding:8px;
+                            border:none;
                             border-bottom:1px solid #d7dee7;
-                        ">
+                            vertical-align:middle;
+                            white-space:nowrap;
+                        "
+                    >
 
                         Number
 
@@ -152,8 +175,12 @@
                     <td
                         style="
                             padding:8px;
+                            border:none;
                             border-bottom:1px solid #d7dee7;
-                        ">
+                            vertical-align:middle;
+                            white-space:nowrap;
+                        "
+                    >
 
                         {{ $purchaseOrder->document_no }}
 
@@ -161,40 +188,23 @@
 
                 </tr>
 
-                <tr>
 
-                    <td
-                        style="
-                            font-weight:600;
-                            padding:8px;
-                            border-bottom:1px solid #d7dee7;
-                        ">
-
-                        Date
-
-                    </td>
-
-                    <td
-                        style="
-                            padding:8px;
-                            border-bottom:1px solid #d7dee7;
-                        ">
-
-                        {{ optional($purchaseOrder->document_date)->format('d M Y') }}
-
-                    </td>
-
-                </tr>
+                {{-- =============================================
+                APPROVAL STATUS
+                ============================================= --}}
 
                 <tr>
 
                     <td
                         style="
-                            width:110px;
+                            width:95px;
                             font-weight:600;
                             padding:8px;
+                            border:none;
+                            vertical-align:middle;
                             white-space:nowrap;
-                        ">
+                        "
+                    >
 
                         Approval Status
 
@@ -203,10 +213,13 @@
                     <td
                         style="
                             padding:8px;
+                            border:none;
+                            vertical-align:middle;
                             font-weight:bold;
                             color:#12385d;
                             white-space:nowrap;
-                        ">
+                        "
+                    >
 
                         {{ strtoupper($purchaseOrder->approval_status ?? 'PENDING') }}
 

@@ -1,10 +1,3 @@
-{{-- ==========================================================
-| Nexus ERP 2.0
-| Purchase Order Print Layout
-| Corporate Edition V3.1
-| Sprint PO-Print 3.1
-========================================================== --}}
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -18,346 +11,282 @@
 
     <style>
 
-        /*************************************************
-        RESET
-        *************************************************/
-
-        *{
-            margin:0;
-            padding:0;
-            box-sizing:border-box;
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
         }
 
-        html{
-
-            background:#e9edf3;
-
-            min-height:100%;
-
+        html {
+            background: #e9edf3;
+            min-height: 100%;
         }
 
-        body{
-
-            font-family:"Segoe UI",Arial,Helvetica,sans-serif;
-
-            color:#1b1b1b;
-
-            background:#e9edf3;
-
-            font-size:10pt;
-
-            line-height:1.35;
-
-            margin:0;
-
-            padding:30px 0;
-
+        body {
+            margin: 0;
+            padding: 24px 0;
+            background: #e9edf3;
+            color: #1b1b1b;
+            font-family:
+                "Segoe UI",
+                Arial,
+                Helvetica,
+                sans-serif;
+            font-size: 10pt;
+            line-height: 1.35;
         }
 
-        /*************************************************
-        PAGE
-        *************************************************/
+        .document-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 0;
+        }
 
-        .document-wrapper{
-
-            width:100%;
-
-            display:flex;
-
-            justify-content:center;
-
-            align-items:flex-start;
-
-            padding:24px 0;
-
-            background:#edf1f7;
-
-        }        
-
-        .document{
-
-            width:190mm;
-
-            min-height:277mm;
-
-            background:#ffffff;
-
-            padding:8mm;
-
-            border:1px solid #d9e2ec;
+        .document {
+            width: 190mm;
+            min-height: 277mm;
+            margin: 0 auto;
+            padding: 7mm;
+            background: #ffffff;
+            border: 1px solid #d9e2ec;
 
             box-shadow:
-                0 3px 10px rgba(0,0,0,.08),
-                0 15px 35px rgba(0,0,0,.12);
-
+                0 3px 10px rgba(0, 0, 0, .08),
+                0 15px 35px rgba(0, 0, 0, .12);
         }
 
-        /*************************************************
-        TYPOGRAPHY
-        *************************************************/
-
-        h1{
-
-            font-size:22px;
-
-            font-weight:700;
-
-            color:#12385d;
-
+        h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #12385d;
         }
 
-        h2{
-
-            font-size:17px;
-
-            font-weight:700;
-
+        h2 {
+            font-size: 17px;
+            font-weight: 700;
         }
 
-        h3{
-
-            font-size:14px;
-
-            font-weight:700;
-
+        h3 {
+            font-size: 14px;
+            font-weight: 700;
         }
 
-        p{
-
-            margin:2px 0;
-
+        p {
+            margin: 2px 0;
         }
 
-        small{
-
-            color:#777;
-
+        small {
+            color: #777;
         }
 
-        /*************************************************
-        SECTION
-        *************************************************/
-
-        .section{
-
-            margin-top:5mm;
-
+        .section {
+            width: 100%;
+            margin-top: 4mm;
         }
 
-        .section:first-child{
-
-            margin-top:0;
-
+        .section:first-child {
+            margin-top: 0;
         }
 
-        /*************************************************
-        TABLE
-        *************************************************/
-
-        table{
-
-            width:100%;
-
-            border-collapse:collapse;
-
+        .section:last-child {
+            margin-bottom: 0;
         }
 
-        th{
-
-            background:#eef4fa;
-
-            color:#12385d;
-
-            font-size:10pt;
-
-            font-weight:700;
-
-            border:1px solid #97a8bb;
-
-            padding:6px;
-
+        table {
+            width: 100%;
+            max-width: 100%;
+            border-collapse: collapse;
+            border-spacing: 0;
+            page-break-inside: auto;
         }
 
-        td{
-
-            border:1px solid #b8c3cf;
-
-            padding:6px;
-
-            vertical-align:top;
-
+        th {
+            padding: 6px;
+            background: #eef4fa;
+            color: #12385d;
+            font-size: 10pt;
+            font-weight: 700;
+            border: 1px solid #97a8bb;
         }
 
-        table{
-
-            width:100%;
-
-            border-collapse:collapse;
-
-            page-break-inside:auto;
-
+        td {
+            padding: 6px;
+            vertical-align: top;
+            border: 1px solid #b8c3cf;
         }
 
-        tr{
-
-            page-break-inside:avoid;
-
-            page-break-after:auto;
-
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
         }
 
-        thead{
-
-            display:table-header-group;
-
+        thead {
+            display: table-header-group;
         }
 
-        tfoot{
-
-            display:table-footer-group;
-
+        tfoot {
+            display: table-footer-group;
         }
 
-
-        /*************************************************
-        HELPERS
-        *************************************************/
-
-        .text-center{
-
-            text-align:center;
-
+        .text-center {
+            text-align: center;
         }
 
-        .text-right{
-
-            text-align:right;
-
+        .text-right {
+            text-align: right;
         }
 
-        .text-left{
-
-            text-align:left;
-
+        .text-left {
+            text-align: left;
         }
 
-        .fw-bold{
-
-            font-weight:700;
-
+        .fw-bold {
+            font-weight: 700;
         }
 
-        .mb-5{
-
-            margin-bottom:5mm;
-
+        .mb-5 {
+            margin-bottom: 5mm;
         }
 
-        .mb-8{
-
-            margin-bottom:8mm;
-
+        .mb-8 {
+            margin-bottom: 8mm;
         }
 
-        .mt-8{
-
-            margin-top:8mm;
-
+        .mt-8 {
+            margin-top: 8mm;
         }
 
-        .border-top{
-
-            border-top:1px solid #bfc7cf;
-
+        .border-top {
+            border-top: 1px solid #bfc7cf;
         }
 
-        /*************************************************
-        PAGE BREAK
-        *************************************************/
-
-        .page-break{
-
-            page-break-after:always;
-
+        .page-break {
+            page-break-after: always;
         }
 
-        /*************************************************
-        PRINT
-        *************************************************/
-
-        @page{
-
-            size:A4 portrait;
-
-            margin:10mm;
-
+        .avoid-break {
+            page-break-inside: avoid;
         }
 
+        .document-header,
+        .po-header,
+        .po-summary,
+        .po-signature {
+            page-break-inside: avoid;
+        }
 
-        /* Preview Browser */
-        @media screen{
+        /*
+        ================================================
+        FOOTER
+        ================================================
+        Footer dikembalikan.
+        Jangan hide .po-footer.
+        */
 
-            .document{
+        .po-footer {
+            display: block;
+            width: 100%;
+        }
 
-                width:210mm;
+        @page {
+            size: A4 portrait;
+            margin: 8mm;
+        }
 
-                min-height:297mm;
+        @media screen {
 
-                padding:10mm;
+            html {
+                background: #e9edf3;
+            }
 
-                margin:20px auto;
+            body {
+                background: #e9edf3;
+                padding: 20px 0;
+            }
 
-                background:#fff;
+            .document-wrapper {
+                width: 100%;
+                padding: 0;
+            }
 
-                box-shadow:0 10px 30px rgba(0,0,0,.12);
+            .document {
+                width: 190mm;
+                min-height: 277mm;
+                margin: 0 auto;
+                padding: 7mm;
+                background: #ffffff;
+                border: 1px solid #d9e2ec;
 
+                box-shadow:
+                    0 6px 20px rgba(0, 0, 0, .10);
             }
 
         }
 
-        /* Print & PDF */
-        @media print{
+        @media print {
 
-            html{
-
-                background:#ffffff;
-
+            html {
+                background: #ffffff;
             }
 
-            body{
-
-                background:#ffffff;
-
-                margin:0;
-
-                padding:0;
-
+            body {
+                margin: 0;
+                padding: 0;
+                background: #ffffff;
+                font-size: 9.5pt;
+                line-height: 1.30;
             }
 
-            .document-wrapper{
-
-                display:block;
-
-                padding:0;
-
-                background:#ffffff;
-
+            .document-wrapper {
+                display: block;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                background: #ffffff;
             }
 
-            .document{
+            .document {
+                width: 100%;
+                min-height: auto;
+                margin: 0;
+                padding: 0;
+                background: #ffffff;
+                border: none;
+                box-shadow: none;
+            }
 
-                width:auto;
+            .section {
+                width: 100%;
+                margin-top: 3mm;
+            }
 
-                min-height:auto;
+            .section:first-child {
+                margin-top: 0;
+            }
 
-                border:none;
+            table {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
 
-                box-shadow:none;
+            img {
+                max-width: 100% !important;
+                height: auto !important;
+            }
 
-                margin:0;
+            hr {
+                display: none !important;
+            }
 
-                padding:0;
+            .po-footer {
+                display: block !important;
+            }
 
+            .po-summary,
+            .po-signature {
+                page-break-inside: avoid !important;
             }
 
         }
@@ -366,101 +295,107 @@
 
 </head>
 
+
 <body>
 
 <div class="document-wrapper">
 
     <div class="document">
 
-    {{-- ============================================= --}}
-    {{-- Corporate Header                              --}}
-    {{-- ============================================= --}}
+        {{-- =============================================
+        Corporate Header
+        ============================================= --}}
 
-    <section class="section">
+        <section class="section document-header avoid-break">
 
-        @include(
-            'filament.resources.purchase-orders.pages.partials.document-header'
-        )
+            @include(
+                'filament.resources.purchase-orders.pages.partials.document-header'
+            )
 
-    </section>
+        </section>
 
-    {{-- ============================================= --}}
-    {{-- Purchase Order Header                         --}}
-    {{-- ============================================= --}}
 
-    <section class="section">
+        {{-- =============================================
+        Purchase Order Header
+        ============================================= --}}
 
-        @include(
-            'filament.resources.purchase-orders.pages.partials.po-header'
-        )
+        <section class="section po-header avoid-break">
 
-    </section>
+            @include(
+                'filament.resources.purchase-orders.pages.partials.po-header'
+            )
 
-    {{-- ============================================= --}}
-    {{-- Item Table                                    --}}
-    {{-- ============================================= --}}
+        </section>
 
-    <section class="section">
 
-        @include(
-            'filament.resources.purchase-orders.pages.partials.po-items-table'
-        )
+        {{-- =============================================
+        Item Table
+        ============================================= --}}
 
-    </section>
+        <section class="section po-items">
 
-    {{-- ============================================= --}}
-    {{-- Summary                                       --}}
-    {{-- ============================================= --}}
+            @include(
+                'filament.resources.purchase-orders.pages.partials.po-items-table'
+            )
 
-    <section class="section">
+        </section>
 
-        @include(
-            'filament.resources.purchase-orders.pages.partials.po-summary'
-        )
 
-    </section>
+        {{-- =============================================
+        Summary
+        ============================================= --}}
 
-    {{-- ============================================= --}}
-    {{-- Signature                                     --}}
-    {{-- ============================================= --}}
+        <section class="section po-summary avoid-break">
 
-    <section class="section">
+            @include(
+                'filament.resources.purchase-orders.pages.partials.po-summary'
+            )
 
-        @include(
-            'filament.resources.purchase-orders.pages.partials.po-signature'
-        )
+        </section>
 
-    </section>
 
-    {{-- ============================================= --}}
-    {{-- Footer                                        --}}
-    {{-- ============================================= --}}
+        {{-- =============================================
+        Signature
+        ============================================= --}}
 
-    <section class="section">
+        <section class="section po-signature avoid-break">
 
-        @include(
-            'filament.resources.purchase-orders.pages.partials.po-footer'
-        )
+            @include(
+                'filament.resources.purchase-orders.pages.partials.po-signature'
+            )
 
-    </section>
+        </section>
+
+
+        {{-- =============================================
+        Footer
+        ============================================= --}}
+
+        <section class="section po-footer">
+
+            @include(
+                'filament.resources.purchase-orders.pages.partials.po-footer'
+            )
+
+        </section>
+
+    </div>
 
 </div>
 
-</div>
 
 @if($autoPrint)
 
 <script>
 
-window.onload=function(){
-
+window.addEventListener('load', function () {
     window.print();
-
-};
+});
 
 </script>
 
 @endif
+
 
 </body>
 

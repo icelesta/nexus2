@@ -1009,10 +1009,7 @@ class AssignmentMaterialRequisitionService
 
                 'supplier_id'          => null,
 
-                'unit_price' => $this->pricingService
-                    ->getLastPurchasePrice(
-                        $purchaseRequisitionItem->item_id,
-                    ),
+                'unit_price' => 0.00,
 
                 'quotation_number'     => null,
                 'quotation_date'       => null,

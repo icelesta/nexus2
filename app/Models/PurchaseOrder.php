@@ -146,6 +146,7 @@ class PurchaseOrder extends Model
         */
 
         'remarks',
+        'payment_instruction',
 
         /*
         |--------------------------------------------------------------------------

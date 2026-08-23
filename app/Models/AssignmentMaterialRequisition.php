@@ -77,6 +77,7 @@ class AssignmentMaterialRequisition extends Model
         'deleted_by',
 
         'remarks',
+        'payment_instruction',
     ];
 
     /*
@@ -552,5 +553,19 @@ class AssignmentMaterialRequisition extends Model
             'shipping_address_id'
         );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Supporting Documents
+    |--------------------------------------------------------------------------
+    */
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(
+            AssignmentMaterialRequisitionDocument::class,
+            'assignment_material_requisition_id'
+        );
+    }    
     
 }

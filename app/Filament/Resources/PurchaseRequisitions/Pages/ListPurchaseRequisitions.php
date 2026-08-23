@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Filament\Resources\PurchaseRequisitions\Pages;
 
 use App\Filament\Resources\PurchaseRequisitions\PurchaseRequisitionResource;
+use App\Filament\Support\Concerns\HasGlobalTransactionFilters;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListPurchaseRequisitions extends ListRecords
 {
+    use HasGlobalTransactionFilters;
+
     protected static string $resource = PurchaseRequisitionResource::class;
 
     protected function getHeaderActions(): array
@@ -41,5 +44,17 @@ class ListPurchaseRequisitions extends ListRecords
     public function getBreadcrumb(): string
     {
         return 'Material Requisition';
+    }
+
+    public function getGlobalTransactionStatusOptions(): array
+    {
+        return [
+            'Draft'             => 'Draft',
+            'Waiting Approval'  => 'Waiting Approval',
+            'Approved'          => 'Approved',
+            'Rejected'          => 'Rejected',
+            'Cancelled'         => 'Cancelled',
+            'Closed'            => 'Closed',
+        ];
     }
 }

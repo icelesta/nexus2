@@ -38,6 +38,157 @@ class AssignmentMaterialRequisitionsTable
 
         return $table
 
+
+            ->header(
+                fn ($livewire) => view(
+                    'filament.components.global-transaction-filters',
+                    [
+                        'livewire' => $livewire,
+                    ]
+                )
+            )
+
+            ->modifyQueryUsing(
+                function (
+                    \Illuminate\Database\Eloquent\Builder $query,
+                    \App\Filament\Resources\AssignmentMaterialRequisitionResource\Pages\ListAssignmentMaterialRequisitions $livewire,
+                ): \Illuminate\Database\Eloquent\Builder {
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | GLOBAL TRANSACTION FILTER
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if (
+                        ! $livewire->canUseGlobalTransactionFilters()
+                    ) {
+                        return $query;
+                    }
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | BRANCH
+                    |--------------------------------------------------------------------------
+                    |
+                    | AMR does not store branch directly.
+                    | Branch belongs to the source Material Requisition.
+                    |
+                    */
+
+                    if (
+                        $livewire->globalBranchFilter !== null
+                    ) {
+
+                        $query->whereHas(
+                            'purchaseRequisition',
+                            function (
+                                \Illuminate\Database\Eloquent\Builder $mrQuery
+                            ) use ($livewire): void {
+
+                                $mrQuery->where(
+                                    'branch_id',
+                                    $livewire->globalBranchFilter
+                                );
+
+                            }
+                        );
+
+                    }
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | DEPARTMENT
+                    |--------------------------------------------------------------------------
+                    |
+                    | AMR Department is inherited from Material Requisition.
+                    |
+                    */
+
+                    if (
+                        $livewire->globalDepartmentFilter !== null
+                    ) {
+
+                        $query->whereHas(
+                            'purchaseRequisition',
+                            function (
+                                \Illuminate\Database\Eloquent\Builder $mrQuery
+                            ) use ($livewire): void {
+
+                                $mrQuery->where(
+                                    'department_id',
+                                    $livewire->globalDepartmentFilter
+                                );
+
+                            }
+                        );
+
+                    }
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | ASSIGNMENT DATE FROM
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if (
+                        filled($livewire->globalDateFrom)
+                    ) {
+
+                        $query->whereDate(
+                            'assignment_material_requisitions.assigned_at',
+                            '>=',
+                            $livewire->globalDateFrom
+                        );
+
+                    }
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | ASSIGNMENT DATE TO
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if (
+                        filled($livewire->globalDateTo)
+                    ) {
+
+                        $query->whereDate(
+                            'assignment_material_requisitions.assigned_at',
+                            '<=',
+                            $livewire->globalDateTo
+                        );
+
+                    }
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | AMR STATUS
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if (
+                        filled($livewire->globalStatusFilter)
+                    ) {
+
+                        $query->where(
+                            'assignment_material_requisitions.status',
+                            $livewire->globalStatusFilter
+                        );
+
+                    }
+
+
+                    return $query;
+                }
+            )
+            
+
             /*
             |--------------------------------------------------------------------------
             | DEFAULT SORT
@@ -87,8 +238,42 @@ class AssignmentMaterialRequisitionsTable
                     'purchaseRequisition.department.display_name'
                 )
                     ->label('Department')
-                    ->searchable()
-                    ->sortable()
+                    ->searchable(
+                        query: function ($query, string $search): void {
+
+                            $query->whereHas(
+                                'purchaseRequisition.department',
+                                function ($query) use ($search): void {
+
+                                    $query
+                                        ->where(
+                                            'department_code',
+                                            'like',
+                                            "%{$search}%"
+                                        )
+                                        ->orWhere(
+                                            'department_name',
+                                            'like',
+                                            "%{$search}%"
+                                        );
+                                }
+                            );
+                        }
+                    )
+                    ->sortable(
+                        query: function ($query, string $direction): void {
+
+                            $query->orderBy(
+                                Department::query()
+                                    ->select('department_name')
+                                    ->whereColumn(
+                                        'departments.id',
+                                        'purchase_requisitions.department_id'
+                                    ),
+                                $direction
+                            );
+                        }
+                    )
                     ->placeholder('-'),
 
                 /*

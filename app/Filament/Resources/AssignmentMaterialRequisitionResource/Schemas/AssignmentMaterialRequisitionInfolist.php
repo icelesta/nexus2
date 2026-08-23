@@ -2,10 +2,12 @@
 
 namespace App\Filament\Resources\AssignmentMaterialRequisitionResource\Schemas;
 
+use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Storage;
 
 class AssignmentMaterialRequisitionInfolist
 {
@@ -39,6 +41,12 @@ class AssignmentMaterialRequisitionInfolist
                                 Grid::make(2)
                                     ->schema([
 
+                                        /*
+                                        |--------------------------------------------------------------------------
+                                        | ROW 1
+                                        |--------------------------------------------------------------------------
+                                        */
+
                                         TextEntry::make('document_no')
                                             ->label('Assignment Number'),
 
@@ -46,18 +54,43 @@ class AssignmentMaterialRequisitionInfolist
                                             ->label('Assignment Date')
                                             ->date(),
 
+                                        /*
+                                        |--------------------------------------------------------------------------
+                                        | ROW 2
+                                        |--------------------------------------------------------------------------
+                                        */
+
                                         TextEntry::make('assignedTo.name')
-                                            ->label('Assigned To'),
+                                            ->label('Assigned To')
+                                            ->placeholder('-'),
 
                                         TextEntry::make('assignedBy.name')
-                                            ->label('Assigned By'),
+                                            ->label('Assigned By')
+                                            ->placeholder('-'),
+
+                                        /*
+                                        |--------------------------------------------------------------------------
+                                        | ROW 3
+                                        |--------------------------------------------------------------------------
+                                        */
 
                                         TextEntry::make('status')
                                             ->label('Status')
                                             ->badge(),
 
+                                        TextEntry::make('payment_instruction')
+                                            ->label('Payment Instruction')
+                                            ->placeholder('-'),
+
+                                        /*
+                                        |--------------------------------------------------------------------------
+                                        | ROW 4
+                                        |--------------------------------------------------------------------------
+                                        */
+
                                         TextEntry::make('remarks')
                                             ->label('Remarks')
+                                            ->placeholder('-')
                                             ->columnSpanFull(),
 
                                     ]),
@@ -114,6 +147,116 @@ class AssignmentMaterialRequisitionInfolist
                                     ]),
 
                             ]),
+
+                    ])
+                    ->columnSpanFull(),
+
+                /*
+                |--------------------------------------------------------------------------
+                | SUPPORTING DOCUMENTS
+                |--------------------------------------------------------------------------
+                |
+                | Read-only supporting documents for AMR.
+                |
+                | Documents remain attached to AMR only.
+                | They are NOT propagated to PO or other transactions.
+                |
+                | Users can:
+                | - View / Open
+                | - Download
+                |
+                | Users cannot:
+                | - Edit
+                | - Delete
+                | - Upload
+                |
+                */
+
+                Section::make('Supporting Documents')
+                    ->description(
+                        'Supplier quotations and other supporting documents for this Assignment Material Requisition.'
+                    )
+                    ->schema([
+
+                        RepeatableEntry::make('documents')
+                            ->label('')
+                            ->schema([
+
+                                TextEntry::make('file_name')
+                                    ->label('Document')
+                                    ->weight('bold')
+                                    ->columnSpan(2),
+
+                                TextEntry::make('document_type')
+                                    ->label('Type')
+                                    ->badge(),
+
+                                TextEntry::make('uploader.name')
+                                    ->label('Uploaded By')
+                                    ->placeholder('-'),
+
+                                TextEntry::make('created_at')
+                                    ->label('Uploaded At')
+                                    ->dateTime(),
+
+                                /*
+                                |--------------------------------------------------------------------------
+                                | VIEW DOCUMENT
+                                |--------------------------------------------------------------------------
+                                */
+
+                                TextEntry::make('view_document')
+                                    ->label('View')
+                                    ->state('Open Document')
+                                    ->icon('heroicon-o-eye')
+                                    ->color('primary')
+                                    ->url(
+                                        fn (
+                                            $record
+                                        ): ?string =>
+                                            filled(
+                                                $record?->file_path
+                                            )
+                                                ? Storage::disk('public')
+                                                    ->url(
+                                                        $record->file_path
+                                                    )
+                                                : null
+                                    )
+                                    ->openUrlInNewTab(),
+
+                                /*
+                                |--------------------------------------------------------------------------
+                                | DOWNLOAD DOCUMENT
+                                |--------------------------------------------------------------------------
+                                */
+
+                                TextEntry::make('download_document')
+                                    ->label('Download')
+                                    ->state('Download')
+                                    ->icon('heroicon-o-arrow-down-tray')
+                                    ->color('primary')
+                                    ->url(
+                                        fn (
+                                            $record
+                                        ): ?string =>
+                                            filled(
+                                                $record?->file_path
+                                            )
+                                                ? route(
+                                                    'purchasing.amr.documents.download',
+                                                    [
+                                                        'document' =>
+                                                            $record->id,
+                                                    ]
+                                                )
+                                                : null
+                                    )
+                                    ->openUrlInNewTab(),
+
+                            ])
+                            ->columns(6)
+                            ->contained(true),
 
                     ])
                     ->columnSpanFull(),

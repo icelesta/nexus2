@@ -229,4 +229,12 @@ class PrintPurchaseRequisition extends Page
             '-'
         );
     }
+    
+    public function downloadPdf(int|string $record): Response
+    {
+        $this->record = $this->resolveRecord($record);
+
+        return $this->exportPdf();
+    }
+
 }

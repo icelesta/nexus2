@@ -79,11 +79,107 @@
 
 }
 
+
+{{-- ==========================================================
+| Purchase Order Signature
+| Nexus ERP 2.0
+| Corporate Layout
+========================================================== --}}
+
+<style>
+
+.signature-table {
+
+    width: 100%;
+
+    border-collapse: collapse;
+
+    margin-top: 18px;
+
+    border: 1px solid #b8c3cf;
+
+}
+
+.signature-table td {
+
+    width: 50%;
+
+    text-align: center;
+
+    vertical-align: top;
+
+    padding: 7px 12px 12px;
+
+    border: 1px solid #b8c3cf;
+
+    height: 125px;
+
+}
+
+.signature-title {
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    color: #374151;
+
+    margin-bottom: 42px;
+
+}
+
+.signature-line {
+
+    border-top: 1px solid #444;
+
+    margin: 0 auto;
+
+    width: 85%;
+
+    padding-top: 5px;
+
+}
+
+.signature-name {
+
+    font-weight: 600;
+
+    font-size: 13px;
+
+    color: #111827;
+
+}
+
+.signature-position {
+
+    font-size: 11px;
+
+    color: #6b7280;
+
+    margin-top: 2px;
+
+}
+
+.signature-date {
+
+    font-size: 11px;
+
+    color: #9ca3af;
+
+    margin-top: 3px;
+
+}
+
 </style>
+
 
 <table class="signature-table">
 
     <tr>
+
+        {{-- =============================================
+        Prepared By
+        ============================================= --}}
 
         <td>
 
@@ -94,12 +190,6 @@
             </div>
 
             <div class="signature-line">
-
-                <div class="signature-name">
-
-                    {{ $generatedBy?->name ?? '-' }}
-
-                </div>
 
                 <div class="signature-position">
 
@@ -113,41 +203,20 @@
 
                 </div>
 
-            </div>
-
-        </td>
-
-        <td>
-
-            <div class="signature-title">
-
-                Reviewed / Checked By
-
-            </div>
-
-            <div class="signature-line">
-
                 <div class="signature-name">
 
-                    ______________________
-
-                </div>
-
-                <div class="signature-position">
-
-                    Purchasing Supervisor
-
-                </div>
-
-                <div class="signature-date">
-
-                    &nbsp;
+                    {{ $generatedBy?->name ?? '-' }}
 
                 </div>
 
             </div>
 
         </td>
+
+
+        {{-- =============================================
+        Approved By
+        ============================================= --}}
 
         <td>
 
@@ -159,12 +228,6 @@
 
             <div class="signature-line">
 
-                <div class="signature-name">
-
-                    {{ $approvedBy?->name ?? '-' }}
-
-                </div>
-
                 <div class="signature-position">
 
                     Approver
@@ -174,6 +237,12 @@
                 <div class="signature-date">
 
                     {{ optional($purchaseOrder->approved_at)->format('d M Y H:i') }}
+
+                </div>
+
+                <div class="signature-name">
+
+                    {{ $approvedBy?->name ?? '-' }}
 
                 </div>
 

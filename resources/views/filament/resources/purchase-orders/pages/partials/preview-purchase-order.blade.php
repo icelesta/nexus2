@@ -1,19 +1,29 @@
 {{-- ===========================================================
  | Nexus ERP 2.0
  | Purchase Order Preview
+ | Standalone Document View
  ============================================================ --}}
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $purchaseOrder->document_no }}</title>
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        {{ $purchaseOrder->document_no }}
+    </title>
+
 </head>
 
-<body class="bg-gray-100">
+
+<body>
 
     @include(
         'filament.resources.purchase-orders.pages.partials.print-layout',
@@ -41,4 +51,5 @@
     )
 
 </body>
+
 </html>

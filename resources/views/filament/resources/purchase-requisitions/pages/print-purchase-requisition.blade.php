@@ -219,7 +219,17 @@ $printClass = $pdfMode
 @endphp
 
 
-<x-filament-panels::page>
+@if (! $pdfMode)
+
+    <x-filament-panels::page>
+
+@endif
+    <div
+        class="mx-auto max-w-6xl"
+        @if ($pdfMode)
+            style="width:100%; margin:0; padding:0;"
+        @endif
+    >
 
     <div class="mx-auto max-w-6xl">
 
@@ -228,35 +238,62 @@ $printClass = $pdfMode
         ========================================================== --}}
         @if (! $pdfMode)
 
-            <div class="mb-6 flex items-center justify-between">
+            <div
+                class="mb-6 flex items-center justify-between
+                       rounded-xl border border-gray-200
+                       bg-white px-4 py-3 shadow-sm"
+            >
 
-                <div>
-                    <p class="mt-1 text-sm text-gray-500">
+                {{-- =====================================================
+                     DOCUMENT CONTEXT
+                ====================================================== --}}
+                <div class="min-w-0">
+
+                    <div class="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                        Material Requisition
+                    </div>
+
+                    <div class="mt-1 truncate text-sm font-semibold text-gray-800">
                         {{ $documentNumber }}
-                        <span class="mx-1">•</span>
-                        Preview
-                    </p>
+                    </div>
+
                 </div>
 
-                <div class="flex items-center gap-3">
 
-                    {{-- =========================================================
-                         BACK TO MATERIAL REQUISITION LIST
-                    ========================================================== --}}
+                {{-- =====================================================
+                     ACTIONS
+                ====================================================== --}}
+                <div class="flex items-center gap-2">
+
+                    <a
+                        href="/admin/purchase-requisitions"
+                        class="inline-flex items-center gap-2 rounded-lg
+                               border border-gray-300
+                               bg-white
+                               px-4 py-2
+                               text-sm font-semibold text-gray-700
+                               shadow-sm
+                               transition
+                               hover:bg-gray-50
+                               hover:text-gray-900
+                               focus:outline-none
+                               focus:ring-2
+                               focus:ring-gray-300"
+                    >
+                        <x-filament::icon
+                            icon="heroicon-o-arrow-left"
+                            class="h-4 w-4"
+                        />
+
+                        <span>Back</span>
+                    </a>
+
+
+                    {{-- =================================================
+                         PRINT
+                    ================================================== --}}
                     <x-filament::button
                         color="gray"
-                        icon="heroicon-o-arrow-left"
-                        :href="PurchaseRequisitionResource::getUrl('index')"
-                    >
-                        Back
-                    </x-filament::button>
-
-
-                    {{-- =========================================================
-                         PRINT
-                    ========================================================== --}}
-                    <x-filament::button
-                        color="warning"
                         icon="heroicon-o-printer"
                         type="button"
                         onclick="window.print()"
@@ -265,17 +302,37 @@ $printClass = $pdfMode
                     </x-filament::button>
 
 
-                    {{-- =========================================================
+                    {{-- =================================================
                          EXPORT PDF
-                         TEMPORARILY DISABLED
-                    ========================================================== --}}
-                    <x-filament::button
-                        color="success"
-                        icon="heroicon-o-document-arrow-down"
-                        disabled
+                    ================================================== --}}
+                    <a
+                        href="{{ route('purchase-requisitions.print.pdf', ['record' => $record->getKey()]) }}"
+                        style="
+                            display:inline-flex;
+                            align-items:center;
+                            justify-content:center;
+                            gap:8px;
+                            height:36px;
+                            padding:0 14px;
+                            border:1px solid #2563eb;
+                            border-radius:8px;
+                            background:#2563eb;
+                            color:#ffffff;
+                            font-size:14px;
+                            font-weight:600;
+                            line-height:1;
+                            text-decoration:none;
+                            white-space:nowrap;
+                            box-shadow:0 1px 2px rgba(0,0,0,.05);
+                        "
                     >
-                        Export PDF
-                    </x-filament::button>
+                        <x-filament::icon
+                            icon="heroicon-o-document-arrow-down"
+                            style="width:16px;height:16px;"
+                        />
+
+                        <span>Export PDF</span>
+                    </a>
 
                 </div>
 
@@ -470,35 +527,6 @@ $printClass = $pdfMode
                             </tr>
 
 
-                            {{-- DATE --}}
-                            <tr>
-
-                                <td
-                                    style="
-                                        padding:8px;
-                                        font-size:11px;
-                                        font-weight:600;
-                                        vertical-align:middle;
-                                        border-bottom:1px solid #d7dee7;
-                                    "
-                                >
-                                    Date
-                                </td>
-
-                                <td
-                                    style="
-                                        padding:8px;
-                                        font-size:11px;
-                                        vertical-align:middle;
-                                        border-bottom:1px solid #d7dee7;
-                                    "
-                                >
-                                    {{ $documentDate }}
-                                </td>
-
-                            </tr>
-
-
                             {{-- STATUS --}}
                             <tr>
 
@@ -566,22 +594,9 @@ $printClass = $pdfMode
                     </div>
 
 
-                    {{-- Requester --}}
-                    <div
-                        style="
-                            display:grid;
-                            grid-template-columns:145px 15px 1fr;
-                            margin-bottom:10px;
-                            font-size:11px;
-                        "
-                    >
-                        <div>Requester</div>
-                        <div>:</div>
-                        <div>{{ $requester }}</div>
-                    </div>
-
-
-                    {{-- Request Date --}}
+                    {{-- =====================================================
+                         REQUEST DATE
+                    ====================================================== --}}
                     <div
                         style="
                             display:grid;
@@ -596,7 +611,9 @@ $printClass = $pdfMode
                     </div>
 
 
-                    {{-- Required Date --}}
+                    {{-- =====================================================
+                         REQUIRED DATE
+                    ====================================================== --}}
                     <div
                         style="
                             display:grid;
@@ -611,52 +628,9 @@ $printClass = $pdfMode
                     </div>
 
 
-                    {{-- Priority --}}
-                    <div
-                        style="
-                            display:grid;
-                            grid-template-columns:145px 15px 1fr;
-                            margin-bottom:10px;
-                            font-size:11px;
-                        "
-                    >
-                        <div>Priority</div>
-                        <div>:</div>
-                        <div>{{ $priority }}</div>
-                    </div>
-
-
-                    {{-- Delivery Location --}}
-                    <div
-                        style="
-                            display:grid;
-                            grid-template-columns:145px 15px 1fr;
-                            margin-bottom:10px;
-                            font-size:11px;
-                        "
-                    >
-                        <div>Delivery Location</div>
-                        <div>:</div>
-                        <div>{{ $deliveryLocation }}</div>
-                    </div>
-
-
-                    {{-- Reference --}}
-                    <div
-                        style="
-                            display:grid;
-                            grid-template-columns:145px 15px 1fr;
-                            margin-bottom:10px;
-                            font-size:11px;
-                        "
-                    >
-                        <div>Reference No</div>
-                        <div>:</div>
-                        <div>{{ $referenceNo }}</div>
-                    </div>
-
-
-                    {{-- Remarks --}}
+                    {{-- =====================================================
+                         REMARKS
+                    ====================================================== --}}
                     <div
                         style="
                             display:grid;
@@ -690,37 +664,9 @@ $printClass = $pdfMode
                     </div>
 
 
-                    {{-- Company --}}
-                    <div
-                        style="
-                            display:grid;
-                            grid-template-columns:145px 15px 1fr;
-                            margin-bottom:10px;
-                            font-size:11px;
-                        "
-                    >
-                        <div>Company</div>
-                        <div>:</div>
-                        <div>{{ $record->company?->company_name ?? '-' }}</div>
-                    </div>
-
-
-                    {{-- Business Unit --}}
-                    <div
-                        style="
-                            display:grid;
-                            grid-template-columns:145px 15px 1fr;
-                            margin-bottom:10px;
-                            font-size:11px;
-                        "
-                    >
-                        <div>Business Unit</div>
-                        <div>:</div>
-                        <div>{{ $businessUnit }}</div>
-                    </div>
-
-
-                    {{-- Branch --}}
+                    {{-- =====================================================
+                         BRANCH
+                    ====================================================== --}}
                     <div
                         style="
                             display:grid;
@@ -735,7 +681,9 @@ $printClass = $pdfMode
                     </div>
 
 
-                    {{-- Department --}}
+                    {{-- =====================================================
+                         DEPARTMENT
+                    ====================================================== --}}
                     <div
                         style="
                             display:grid;
@@ -750,37 +698,9 @@ $printClass = $pdfMode
                     </div>
 
 
-                    {{-- Section --}}
-                    <div
-                        style="
-                            display:grid;
-                            grid-template-columns:145px 15px 1fr;
-                            margin-bottom:10px;
-                            font-size:11px;
-                        "
-                    >
-                        <div>Section</div>
-                        <div>:</div>
-                        <div>{{ $section }}</div>
-                    </div>
-
-
-                    {{-- Cost Center --}}
-                    <div
-                        style="
-                            display:grid;
-                            grid-template-columns:145px 15px 1fr;
-                            margin-bottom:10px;
-                            font-size:11px;
-                        "
-                    >
-                        <div>Cost Center</div>
-                        <div>:</div>
-                        <div>{{ $costCenter }}</div>
-                    </div>
-
-
-                    {{-- Warehouse --}}
+                    {{-- =====================================================
+                         WAREHOUSE
+                    ====================================================== --}}
                     <div
                         style="
                             display:grid;
@@ -1298,10 +1218,328 @@ $printClass = $pdfMode
 
             </div>
 
+            {{-- =========================================================
+                 MR SUMMARY
+                 SUBTOTAL / DISCOUNT / TAX / GRAND TOTAL
+            ========================================================= --}}
+
+            @php
+
+                /*
+                |--------------------------------------------------------------------------
+                | MR SUMMARY CALCULATION
+                |--------------------------------------------------------------------------
+                | Source:
+                | - Qty          : Material Requisition Item
+                | - Unit Price    : Assignment Material Requisition Item
+                | - Discount      : Assignment Material Requisition Item
+                | - Tax Amount    : Assignment Material Requisition Item
+                |--------------------------------------------------------------------------
+                */
+
+                $subtotal = 0;
+                $discount = 0;
+                $tax = 0;
+
+                foreach ($record->items as $item) {
+
+                    $assignmentItem =
+                        $item->latestAssignmentMaterialRequisitionItem;
+
+                    if (! $assignmentItem) {
+                        continue;
+                    }
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | SUBTOTAL
+                    |--------------------------------------------------------------------------
+                    | Qty × Unit Price
+                    */
+
+                    $qty = (float) $item->quantity;
+
+                    $unitPrice = (float) $assignmentItem->unit_price;
+
+                    $subtotal += $qty * $unitPrice;
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | DISCOUNT
+                    |--------------------------------------------------------------------------
+                    | Total discount seluruh items
+                    */
+
+                    $discount += (float) $assignmentItem->discount_amount;
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | TAX
+                    |--------------------------------------------------------------------------
+                    | Total tax amount seluruh items
+                    */
+
+                    $tax += (float) $assignmentItem->tax_amount;
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | GRAND TOTAL
+                |--------------------------------------------------------------------------
+                */
+
+                $grandTotal =
+                    $subtotal
+                    - $discount
+                    + $tax;
+
+            @endphp
+
 
             {{-- =========================================================
-                 SIGNATURE
-            ========================================================== --}}
+                 SUMMARY TABLE
+            ========================================================= --}}
+
+            <div
+                style="
+                    width:100%;
+                    margin-top:10px;
+                    margin-bottom:30px;
+                    padding:0 28px;
+                    box-sizing:border-box;
+                "
+            >
+
+                <div
+                    style="
+                        display:flex;
+                        justify-content:flex-end;
+                        align-items:flex-start;
+                    "
+                >
+
+                    <div
+                        style="
+                            width:320px;
+                        "
+                    >
+
+                        <table
+                            style="
+                                width:100%;
+                                border-collapse:collapse;
+                                font-size:12px;
+                            "
+                        >
+
+                            {{-- SUBTOTAL --}}
+
+                            <tr>
+
+                                <td
+                                    style="
+                                        padding:8px 12px;
+                                        background:#f8f9fa;
+                                        border:1px solid #e5e7eb;
+                                        width:55%;
+                                        font-weight:600;
+                                    "
+                                >
+                                    Subtotal
+                                </td>
+
+                                <td
+                                    style="
+                                        padding:8px 12px;
+                                        border:1px solid #e5e7eb;
+                                        text-align:right;
+                                        white-space:nowrap;
+                                    "
+                                >
+                                    Rp {{ number_format($subtotal, 2, ',', '.') }}
+                                </td>
+
+                            </tr>
+
+
+                            {{-- DISCOUNT --}}
+
+                            <tr>
+
+                                <td
+                                    style="
+                                        padding:8px 12px;
+                                        background:#f8f9fa;
+                                        border:1px solid #e5e7eb;
+                                        font-weight:600;
+                                    "
+                                >
+                                    Discount
+                                </td>
+
+                                <td
+                                    style="
+                                        padding:8px 12px;
+                                        border:1px solid #e5e7eb;
+                                        text-align:right;
+                                        white-space:nowrap;
+                                    "
+                                >
+                                    Rp {{ number_format($discount, 2, ',', '.') }}
+                                </td>
+
+                            </tr>
+
+
+                            {{-- TAX --}}
+
+                            <tr>
+
+                                <td
+                                    style="
+                                        padding:8px 12px;
+                                        background:#f8f9fa;
+                                        border:1px solid #e5e7eb;
+                                        font-weight:600;
+                                    "
+                                >
+                                    Tax
+                                </td>
+
+                                <td
+                                    style="
+                                        padding:8px 12px;
+                                        border:1px solid #e5e7eb;
+                                        text-align:right;
+                                        white-space:nowrap;
+                                    "
+                                >
+                                    Rp {{ number_format($tax, 2, ',', '.') }}
+                                </td>
+
+                            </tr>
+
+
+                            {{-- GRAND TOTAL --}}
+
+                            <tr>
+
+                                <td
+                                    style="
+                                        padding:10px 12px;
+                                        background:#2563eb;
+                                        color:#ffffff;
+                                        border:1px solid #2563eb;
+                                        font-weight:700;
+                                    "
+                                >
+                                    Grand Total
+                                </td>
+
+                                <td
+                                    style="
+                                        padding:10px 12px;
+                                        background:#2563eb;
+                                        color:#ffffff;
+                                        border:1px solid #2563eb;
+                                        text-align:right;
+                                        font-weight:700;
+                                        white-space:nowrap;
+                                    "
+                                >
+                                    Rp {{ number_format($grandTotal, 2, ',', '.') }}
+                                </td>
+
+                            </tr>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {{-- =========================================================
+                 APPROVAL SIGNATURE DATA
+            ========================================================= --}}
+
+            @php
+
+                /*
+                |--------------------------------------------------------------------------
+                | Load Material Requisition Approval Transaction
+                |--------------------------------------------------------------------------
+                | Approval Engine is the source of truth.
+                |
+                | Requested By
+                |     → transaction creator + submitted_at
+                |
+                | Approved By #1
+                |     → approval level 1 + approver + acted_at
+                |
+                | Approved By #2
+                |     → approval level 2 + approver + acted_at
+                |--------------------------------------------------------------------------
+                */
+
+                $approvalTransaction =
+                    \App\Models\ApprovalTransaction::query()
+                        ->with([
+                            'creator',
+                            'steps.approver',
+                        ])
+                        ->where(
+                            'document_type',
+                            'MATERIAL_REQUISITION'
+                        )
+                        ->where(
+                            'document_id',
+                            $record->getKey()
+                        )
+                        ->latest('id')
+                        ->first();
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Approval Level 1
+                |--------------------------------------------------------------------------
+                */
+
+                $approvalStep1 = $approvalTransaction
+                    ?->steps
+                    ->first(
+                        fn ($step) =>
+                            (int) $step->approval_level === 1
+                            && $step->status === 'APPROVED'
+                    );
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Approval Level 2
+                |--------------------------------------------------------------------------
+                */
+
+                $approvalStep2 = $approvalTransaction
+                    ?->steps
+                    ->first(
+                        fn ($step) =>
+                            (int) $step->approval_level === 2
+                            && $step->status === 'APPROVED'
+                    );
+
+            @endphp
+
+
+            {{-- =========================================================
+                 SIGNATURE / APPROVAL AUDIT TRAIL
+            ========================================================= --}}
+
             <div
                 style="
                     border-top:1px solid #d7dee7;
@@ -1313,85 +1551,393 @@ $printClass = $pdfMode
                     style="
                         width:100%;
                         border-collapse:collapse;
+                        table-layout:fixed;
                     "
                 >
 
                     <tr>
 
+                        {{-- =================================================
+                             REQUESTED BY
+                        ================================================== --}}
+
                         <td
                             style="
                                 width:33.33%;
                                 text-align:center;
                                 vertical-align:top;
                                 font-size:11px;
+                                border:1px solid #d7dee7;
+                                padding:14px 10px 16px;
+                                box-sizing:border-box;
                             "
                         >
-                            <strong>Requested By</strong>
+
+                            <strong>
+                                Requested By
+                            </strong>
+
+
+                        @if($approvalTransaction?->submitted_at)
 
                             <div
                                 style="
-                                    height:65px;
+                                    margin-top:24px;
+                                    color:#64748b;
+                                    font-size:10px;
+                                    line-height:1.4;
+                                "
+                            >
+                                Submitted at
+                            </div>
+
+                            <div
+                                style="
+                                    color:#64748b;
+                                    font-size:10px;
+                                    line-height:1.4;
+                                "
+                            >
+                                {{ $approvalTransaction->submitted_at->format('d M Y H:i:s') }}
+                            </div>
+
+                        @else
+
+                            <div
+                                style="
+                                    margin-top:24px;
+                                    color:#94a3b8;
+                                    font-size:10px;
+                                "
+                            >
+                                -
+                            </div>
+
+                        @endif
+
+
+                            <div
+                                style="
+                                    height:35px;
                                     margin:0 20px;
                                     border-bottom:1px solid #9ca3af;
                                 "
                             ></div>
 
-                            <div style="margin-top:7px;">
-                                {{ $requester }}
+
+                            <div
+                                style="
+                                    margin-top:7px;
+                                    font-weight:500;
+                                "
+                            >
+                                {{ $approvalTransaction?->creator?->name ?? '-' }}
                             </div>
+
                         </td>
 
 
+                        {{-- =================================================
+                             APPROVED BY #1
+                        ================================================== --}}
+
                         <td
                             style="
                                 width:33.33%;
                                 text-align:center;
                                 vertical-align:top;
                                 font-size:11px;
+                                border:1px solid #d7dee7;
+                                padding:14px 10px 16px;
+                                box-sizing:border-box;
                             "
                         >
-                            <strong>Reviewed By</strong>
+
+                            <strong>
+                                Approved By
+                            </strong>
+
+
+                            @if(
+                                $approvalStep1
+                                && $approvalStep1->approver
+                                && $approvalStep1->acted_at
+                            )
+
+                                <div
+                                    style="
+                                        margin-top:24px;
+                                        color:#64748b;
+                                        font-size:10px;
+                                        line-height:1.4;
+                                    "
+                                >
+                                    Approved at
+                                </div>
+
+                                <div
+                                    style="
+                                        color:#64748b;
+                                        font-size:10px;
+                                        line-height:1.4;
+                                    "
+                                >
+                                    {{ $approvalStep1->acted_at->format('d M Y H:i:s') }}
+                                </div>
+
+                            @else
+
+                                <div
+                                    style="
+                                        margin-top:24px;
+                                        color:#94a3b8;
+                                        font-size:10px;
+                                    "
+                                >
+                                    -
+                                </div>
+
+                            @endif
+
 
                             <div
                                 style="
-                                    height:65px;
+                                    height:35px;
                                     margin:0 20px;
                                     border-bottom:1px solid #9ca3af;
                                 "
                             ></div>
 
-                            <div style="margin-top:7px;">
-                                -
+
+                            <div
+                                style="
+                                    margin-top:7px;
+                                    font-weight:500;
+                                "
+                            >
+                                {{ $approvalStep1?->approver?->name ?? '-' }}
                             </div>
+
                         </td>
 
 
+                        {{-- =================================================
+                             APPROVED BY #2
+                        ================================================== --}}
+
                         <td
                             style="
                                 width:33.33%;
                                 text-align:center;
                                 vertical-align:top;
                                 font-size:11px;
+                                border:1px solid #d7dee7;
+                                padding:14px 10px 16px;
+                                box-sizing:border-box;
                             "
                         >
-                            <strong>Approved By</strong>
+
+                            <strong>
+                                Approved By
+                            </strong>
+
+
+                            @if(
+                                $approvalStep2
+                                && $approvalStep2->approver
+                                && $approvalStep2->acted_at
+                            )
+
+                                <div
+                                    style="
+                                        margin-top:24px;
+                                        color:#64748b;
+                                        font-size:10px;
+                                        line-height:1.4;
+                                    "
+                                >
+                                    Approved at
+                                </div>
+
+                                <div
+                                    style="
+                                        color:#64748b;
+                                        font-size:10px;
+                                        line-height:1.4;
+                                    "
+                                >
+                                    {{ $approvalStep2->acted_at->format('d M Y H:i:s') }}
+                                </div>
+
+                            @else
+
+                                <div
+                                    style="
+                                        margin-top:24px;
+                                        color:#94a3b8;
+                                        font-size:10px;
+                                    "
+                                >
+                                    -
+                                </div>
+
+                            @endif
+
 
                             <div
                                 style="
-                                    height:65px;
+                                    height:35px;
                                     margin:0 20px;
                                     border-bottom:1px solid #9ca3af;
                                 "
                             ></div>
 
-                            <div style="margin-top:7px;">
-                                -
+
+                            <div
+                                style="
+                                    margin-top:7px;
+                                    font-weight:500;
+                                "
+                            >
+                                {{ $approvalStep2?->approver?->name ?? '-' }}
                             </div>
+
                         </td>
 
                     </tr>
 
                 </table>
+
+            </div>
+
+
+            {{-- =========================================================
+                 CONTROLLED DOCUMENT FOOTER
+            ========================================================= --}}
+
+            <div
+                style="
+                    margin-top:0;
+                    padding:0 28px 18px;
+                    font-size:9px;
+                    color:#475569;
+                "
+            >
+
+                {{-- =====================================================
+                     DOCUMENT CONTROL TABLE
+                ====================================================== --}}
+
+                <table
+                    style="
+                        width:100%;
+                        border-collapse:collapse;
+                        table-layout:fixed;
+                    "
+                >
+
+                    <tr>
+
+                        {{-- PRINTED ON --}}
+
+                        <td
+                            style="
+                                width:33.33%;
+                                border:1px solid #b8c4d1;
+                                padding:5px 7px;
+                                text-align:center;
+                                vertical-align:top;
+                                line-height:1.35;
+                            "
+                        >
+                            <div style="font-weight:700;">
+                                Printed On
+                            </div>
+
+                            <div>
+                                {{ now()->format('d M Y H:i:s') }}
+                            </div>
+                        </td>
+
+
+                        {{-- PAGE --}}
+
+                        <td
+                            style="
+                                width:33.33%;
+                                border:1px solid #b8c4d1;
+                                padding:5px 7px;
+                                text-align:right;
+                                vertical-align:top;
+                                line-height:1.35;
+                            "
+                        >
+                            <div style="font-weight:700;">
+                                Page
+                            </div>
+
+                            <div>
+                                1 of 1
+                            </div>
+                        </td>
+
+                    </tr>
+
+
+                    <tr>
+
+                        {{-- GENERATED BY --}}
+
+                        <td
+                            style="
+                                border:1px solid #b8c4d1;
+                                padding:5px 7px;
+                                text-align:center;
+                                vertical-align:top;
+                                line-height:1.35;
+                            "
+                        >
+                            Generated by Nexus ERP 2.0
+                        </td>
+
+
+                        {{-- VERSION --}}
+
+                        <td
+                            style="
+                                border:1px solid #b8c4d1;
+                                padding:5px 7px;
+                                text-align:right;
+                                vertical-align:top;
+                                line-height:1.35;
+                            "
+                        >
+                            Version 1.0
+                        </td>
+
+                    </tr>
+
+                </table>
+
+
+                {{-- =====================================================
+                     CONTROLLED DOCUMENT DISCLAIMER
+                ====================================================== --}}
+
+                <div
+                    style="
+                        margin-top:7px;
+                        font-size:8px;
+                        font-style:italic;
+                        color:#94a3b8;
+                        line-height:1.4;
+                        text-align: center;
+                    "
+                >
+                    This Material Requisition is generated electronically by
+                    Nexus ERP 2.0. Printed copies are considered uncontrolled
+                    unless verified against the system.
+                </div>
 
             </div>
 
@@ -1457,4 +2003,8 @@ $printClass = $pdfMode
         }
     </style>
 
+@if (! $pdfMode)
+
 </x-filament-panels::page>
+
+@endif

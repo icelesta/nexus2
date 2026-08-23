@@ -17,7 +17,11 @@
 
     width:380px;
 
+    max-width:380px;
+
     margin-left:auto;
+
+    margin-right:0;
 
     border-collapse:collapse;
 
@@ -63,7 +67,30 @@
 
 }
 
+
+/* ==========================================================
+   PRINT
+   Prevent global print table rule from stretching summary
+   ========================================================== */
+
+@media print{
+
+    .po-summary-table{
+
+        width:380px !important;
+
+        max-width:380px !important;
+
+        margin-left:auto !important;
+
+        margin-right:0 !important;
+
+    }
+
+}
+
 </style>
+
 
 <div class="po-summary">
 
@@ -81,6 +108,7 @@
 
         </tr>
 
+
         <tr>
 
             <td class="summary-label">
@@ -92,6 +120,7 @@
             </td>
 
         </tr>
+
 
         <tr>
 
@@ -105,6 +134,7 @@
 
         </tr>
 
+
         <tr>
 
             <td class="summary-label">
@@ -116,6 +146,7 @@
             </td>
 
         </tr>
+
 
         <tr>
 

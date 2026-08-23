@@ -9,6 +9,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -109,6 +110,21 @@ class PurchaseOrderForm
                                             )
                                     )
                                     ->columnSpan(2),
+
+                                TextInput::make('payment_method')
+                                    ->label('Payment')
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->placeholder('Enter payment method...')
+                                    ->columnSpan(2),
+
+                                Placeholder::make('payment_instruction_display')
+                                    ->label('Payment Instruction')
+                                    ->content(
+                                        fn (?PurchaseOrder $record): string =>
+                                            $record?->payment_instruction ?? '-'
+                                    )
+                                    ->columnSpan(4),
 
                                 /*
                                 |--------------------------------------------------------------------------

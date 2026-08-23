@@ -20,7 +20,9 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Throwable;
 use Filament\Support\Icons\Heroicon;
 
@@ -31,6 +33,214 @@ class PurchaseRequisitionTable
     ): Table {
 
         return $table
+
+            /*
+            |--------------------------------------------------------------------------
+            | GLOBAL TRANSACTION FILTER
+            |--------------------------------------------------------------------------
+            |
+            | Display the reusable Global Transaction Filter in the
+            | table header.
+            |
+            | IMPORTANT:
+            |
+            | This only renders the filter UI.
+            | Existing MR visibility/security logic remains untouched.
+            |
+            */
+
+            ->header(
+                fn ($livewire) => view(
+                    'filament.components.global-transaction-filters',
+                    [
+                        'livewire' => $livewire,
+                    ]
+                )
+            )
+
+            /*
+            |--------------------------------------------------------------------------
+            | DATA VISIBILITY
+            |--------------------------------------------------------------------------
+            |
+            | Nexus ERP 2.0 Material Requisition Visibility Rule:
+            |
+            | 1. Super Admin
+            |    -> All Material Requisitions
+            |
+            | 2. Purchasing PIC
+            |    -> All Material Requisitions
+            |
+            | 3. Purchasing Manager
+            |    -> All Material Requisitions
+            |
+            | 4. Approval PIC
+            |    -> Material Requisitions currently waiting for
+            |       approval by one of the user's active roles.
+            |
+            | 5. Ordinary Department User
+            |    -> Only Material Requisitions belonging to
+            |       the user's own Department.
+            |
+            |--------------------------------------------------------------------------
+            */
+
+            ->modifyQueryUsing(
+                function (
+                    Builder $query,
+                    \App\Filament\Resources\PurchaseRequisitions\Pages\ListPurchaseRequisitions $livewire,
+                ): Builder {
+
+                    $user = auth()->user();
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | SAFETY
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if (! $user) {
+
+                        return $query->whereRaw('1 = 0');
+
+                    }
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | EXISTING DATA VISIBILITY
+                    |--------------------------------------------------------------------------
+                    |
+                    | DO NOT CHANGE EXISTING VISIBILITY CONCEPT.
+                    |
+                    */
+
+                    if (
+                        ! $user->hasAnyRole([
+                            'Super Admin',
+                            'Administrator',
+                            'Purchasing PIC',
+                            'Purchasing Manager',
+                        ])
+                    ) {
+
+                        if ($user->department_id) {
+
+                            $query->where(
+                                'purchase_requisitions.department_id',
+                                $user->department_id
+                            );
+
+                        } else {
+
+                            return $query->whereRaw('1 = 0');
+
+                        }
+
+                    }
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | GTF-1.1-C
+                    | GLOBAL TRANSACTION FILTER — MR
+                    |--------------------------------------------------------------------------
+                    |
+                    | Only users allowed to use Global Transaction Filters
+                    | can apply these filters.
+                    |
+                    */
+
+                    if ($livewire->canUseGlobalTransactionFilters()) {
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | Branch
+                        |--------------------------------------------------------------------------
+                        */
+
+                        if ($livewire->globalBranchFilter !== null) {
+
+                            $query->where(
+                                'purchase_requisitions.branch_id',
+                                $livewire->globalBranchFilter
+                            );
+
+                        }
+
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | Department
+                        |--------------------------------------------------------------------------
+                        */
+
+                        if ($livewire->globalDepartmentFilter !== null) {
+
+                            $query->where(
+                                'purchase_requisitions.department_id',
+                                $livewire->globalDepartmentFilter
+                            );
+
+                        }
+
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | Request Date From
+                        |--------------------------------------------------------------------------
+                        */
+
+                        if (filled($livewire->globalDateFrom)) {
+
+                            $query->whereDate(
+                                'purchase_requisitions.request_date',
+                                '>=',
+                                $livewire->globalDateFrom
+                            );
+
+                        }
+
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | Request Date To
+                        |--------------------------------------------------------------------------
+                        */
+
+                        if (filled($livewire->globalDateTo)) {
+
+                            $query->whereDate(
+                                'purchase_requisitions.request_date',
+                                '<=',
+                                $livewire->globalDateTo
+                            );
+
+                        }
+
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | MR Status
+                        |--------------------------------------------------------------------------
+                        */
+
+                        if (filled($livewire->globalStatusFilter)) {
+
+                            $query->where(
+                                'purchase_requisitions.status',
+                                $livewire->globalStatusFilter
+                            );
+
+                        }
+
+                    }
+
+
+                    return $query;
+
+                }
+            )
 
             /*
             |--------------------------------------------------------------------------
@@ -97,6 +307,7 @@ class PurchaseRequisitionTable
                                 return $record->status;
                             }
 
+
                             /*
                             |--------------------------------------------------------------------------
                             | Approval Master
@@ -132,6 +343,7 @@ class PurchaseRequisitionTable
                                     (int) $totalApprovals
                                 );
 
+
                             /*
                             |--------------------------------------------------------------------------
                             | Approval Transaction
@@ -151,6 +363,7 @@ class PurchaseRequisitionTable
                                     ->latest('id')
                                     ->first();
 
+
                             /*
                             |--------------------------------------------------------------------------
                             | No Approval Transaction
@@ -160,6 +373,7 @@ class PurchaseRequisitionTable
                             if (! $transaction) {
                                 return $record->status;
                             }
+
 
                             /*
                             |--------------------------------------------------------------------------
@@ -172,6 +386,7 @@ class PurchaseRequisitionTable
                             ) {
                                 return 'Rejected';
                             }
+
 
                             /*
                             |--------------------------------------------------------------------------
@@ -196,6 +411,7 @@ class PurchaseRequisitionTable
                                     )
                                     ->count();
 
+
                             /*
                             |--------------------------------------------------------------------------
                             | No Approval Completed Yet
@@ -212,6 +428,7 @@ class PurchaseRequisitionTable
                             ) {
                                 return 'Waiting Approval';
                             }
+
 
                             /*
                             |--------------------------------------------------------------------------
@@ -247,6 +464,7 @@ class PurchaseRequisitionTable
                                     );
                                 }
                             }
+
 
                             /*
                             |--------------------------------------------------------------------------
@@ -441,7 +659,6 @@ class PurchaseRequisitionTable
                                     ? 'Material Requisition cannot be edited after submission.'
                                     : 'Edit Material Requisition'
                         ),
-
 
                     Action::make('submit')
                         ->label('Submit')
