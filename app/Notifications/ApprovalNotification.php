@@ -114,6 +114,18 @@ class ApprovalNotification extends Notification
 
     protected function getTitle(): string
     {
+        $documentLabel = match ($this->documentType) {
+
+            'MATERIAL_REQUISITION' =>
+                'Material Requisition',
+
+            'PURCHASE_ORDER' =>
+                'Purchase Order',
+
+            default =>
+                'Document',
+        };
+
         return match ($this->event) {
 
             self::APPROVAL_REQUIRED =>
@@ -123,10 +135,10 @@ class ApprovalNotification extends Notification
                 'Approval Level Completed',
 
             self::FINAL_APPROVED =>
-                'Material Requisition Approved',
+                "{$documentLabel} Approved",
 
             self::REJECTED =>
-                'Material Requisition Rejected',
+                "{$documentLabel} Rejected",
 
             default =>
                 'Approval Notification',

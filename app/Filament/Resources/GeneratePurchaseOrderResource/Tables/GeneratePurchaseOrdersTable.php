@@ -110,6 +110,10 @@ class GeneratePurchaseOrdersTable
                 TextColumn::make('created_at')
                     ->label('Created')
                     ->dateTime('d M Y H:i')
+                    ->timezone(
+                        fn (): string =>
+                            \App\Support\Timezone\UserTimezone::timezone()
+                    )
                     ->sortable(),
 
             ])

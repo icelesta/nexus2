@@ -107,7 +107,10 @@
                                 <span>•</span>
 
                                 <span>
-                                    {{ $activity->completed_at->format('d M Y H:i') }}
+                                    {{ \App\Support\Timezone\UserTimezone::format(
+                                        $activity->completed_at,
+                                        'd M Y H:i'
+                                    ) }}
                                 </span>
 
                             @endif

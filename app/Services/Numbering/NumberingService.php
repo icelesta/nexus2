@@ -101,7 +101,6 @@ class NumberingService
         ));
     }
 
-
     /**
      * Find numbering by scope.
      */
@@ -133,9 +132,6 @@ class NumberingService
             ->lockForUpdate()
             ->first();
     }
-
-
-    
 
     /**
      * Validate numbering configuration.
@@ -169,9 +165,10 @@ class NumberingService
         }
     }
 
-
     /**
      * Reset running number if required.
+     *
+     * Reset periods are evaluated using the Company timezone.
      */
     protected function resetIfNeeded(
         TransactionNumbering $numbering,
@@ -181,18 +178,23 @@ class NumberingService
             return;
         }
 
-        $now = now();
+        $now = $numbering->numberingNow();
+
+        $lastGenerated = $numbering->last_generated_at
+            ->setTimezone(
+                $numbering->numberingTimezone()
+            );
 
         $shouldReset = match ($numbering->reset_type) {
 
             TransactionNumbering::RESET_DAILY =>
-                ! $numbering->last_generated_at->isSameDay($now),
+                ! $lastGenerated->isSameDay($now),
 
             TransactionNumbering::RESET_MONTHLY =>
-                ! $numbering->last_generated_at->isSameMonth($now),
+                ! $lastGenerated->isSameMonth($now),
 
             TransactionNumbering::RESET_YEARLY =>
-                ! $numbering->last_generated_at->isSameYear($now),
+                ! $lastGenerated->isSameYear($now),
 
             default => false,
 
@@ -252,11 +254,15 @@ class NumberingService
 
     /**
      * Format document number.
+     *
+     * Date tokens use the Company timezone.
      */
     protected function formatNumber(
         TransactionNumbering $numbering,
         string $running,
     ): string {
+
+        $now = $numbering->numberingNow();
 
         $number = strtr(
 
@@ -268,13 +274,13 @@ class NumberingService
 
                 '{SUFFIX}' => strtoupper($numbering->suffix ?? ''),
 
-                '{YYYY}' => now()->format('Y'),
+                '{YYYY}' => $now->format('Y'),
 
-                '{YY}' => now()->format('y'),
+                '{YY}' => $now->format('y'),
 
-                '{MM}' => now()->format('m'),
+                '{MM}' => $now->format('m'),
 
-                '{DD}' => now()->format('d'),
+                '{DD}' => $now->format('d'),
 
                 '{RUNNING}' => $running,
 
@@ -307,6 +313,8 @@ class NumberingService
 
     /**
      * Increment running counter.
+     *
+     * The stored timestamp remains UTC.
      */
     protected function incrementCounter(
         TransactionNumbering $numbering,

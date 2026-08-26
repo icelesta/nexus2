@@ -43,7 +43,8 @@ class FiscalYearObserver
         |--------------------------------------------------------------------------
         */
 
-        $fiscalYear->is_closed ??= false;
+        $fiscalYear->status ??= 'Open';
+        $fiscalYear->is_default ??= false;
         $fiscalYear->is_active ??= true;
     }
 

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services\Notifications;
 
 use App\Models\ApprovalTransaction;
+
+use App\Models\PurchaseOrder;
 use App\Models\PurchaseRequisition;
 use App\Models\User;
 use App\Notifications\ApprovalNotification;
@@ -302,19 +304,27 @@ class NotificationService
 
     protected function findDocument(
         ApprovalTransaction $transaction,
-    ): ?PurchaseRequisition {
+    ): PurchaseRequisition|PurchaseOrder|null {
 
-        if (
+        return match (
             $transaction->document_type
-            !== 'MATERIAL_REQUISITION'
         ) {
-            return null;
-        }
 
-        return PurchaseRequisition::query()
-            ->find(
-                $transaction->document_id
-            );
+            'MATERIAL_REQUISITION' =>
+                PurchaseRequisition::query()
+                    ->find(
+                        $transaction->document_id
+                    ),
+
+            'PURCHASE_ORDER' =>
+                PurchaseOrder::query()
+                    ->find(
+                        $transaction->document_id
+                    ),
+
+            default =>
+                null,
+        };
     }
 
     /*
@@ -324,7 +334,7 @@ class NotificationService
     */
 
     protected function documentRequester(
-        PurchaseRequisition $document,
+        PurchaseRequisition|PurchaseOrder $document,
     ): ?User {
 
         return User::query()

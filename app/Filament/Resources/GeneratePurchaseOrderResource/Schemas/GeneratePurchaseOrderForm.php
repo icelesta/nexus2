@@ -311,7 +311,8 @@ class GeneratePurchaseOrderForm
 
                 $actedAt =
                     $step->acted_at
-                    ? $step->acted_at->format(
+                    ? \App\Support\Timezone\UserTimezone::format(
+                        $step->acted_at,
                         'd M Y H:i'
                     )
                     : '-';

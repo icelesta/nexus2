@@ -1297,7 +1297,7 @@
                         >
                             Submitted at
                             <br>
-                            {{ $approvalTransaction->submitted_at->format('d M Y H:i:s') }}
+                            {{ \App\Support\Timezone\UserTimezone::format($approvalTransaction->submitted_at, 'd M Y H:i:s') }}
                         </div>
 
                     @else
@@ -1392,7 +1392,7 @@
                         >
                             Approved at
                             <br>
-                            {{ $approvalStep1->acted_at->format('d M Y H:i:s') }}
+                            {{ \App\Support\Timezone\UserTimezone::format($approvalStep1->acted_at, 'd M Y H:i:s') }}
                         </div>
 
                     @else
@@ -1487,7 +1487,7 @@
                         >
                             Approved at
                             <br>
-                            {{ $approvalStep2->acted_at->format('d M Y H:i:s') }}
+                            {{ \App\Support\Timezone\UserTimezone::format($approvalStep2->acted_at, 'd M Y H:i:s') }}
                         </div>
 
                     @else
@@ -1587,7 +1587,7 @@
 
                     <br>
 
-                    {{ now()->format('d M Y H:i:s') }}
+                    {{ \App\Support\Timezone\UserTimezone::now()->format('d M Y H:i:s') }}
 
                 </td>
 

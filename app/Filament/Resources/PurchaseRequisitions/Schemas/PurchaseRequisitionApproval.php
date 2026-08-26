@@ -9,6 +9,7 @@ use App\Models\ApprovalTransaction;
 use Filament\Forms\Components\Placeholder;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use App\Support\Timezone\UserTimezone;
 
 class PurchaseRequisitionApproval
 {
@@ -492,10 +493,7 @@ class PurchaseRequisitionApproval
                                                 ? e(
                                                     $actedAt
                                                         ->timezone(
-                                                            config(
-                                                                'app.timezone',
-                                                                'Asia/Jakarta'
-                                                            )
+                                                            UserTimezone::timezone()
                                                         )
                                                         ->format(
                                                             'd M Y H:i'
@@ -655,10 +653,7 @@ class PurchaseRequisitionApproval
                                         ? 'Completed — '
                                             . $record->created_at
                                                 ->timezone(
-                                                    config(
-                                                        'app.timezone',
-                                                        'Asia/Jakarta'
-                                                    )
+                                                    UserTimezone::timezone()
                                                 )
                                                 ->format(
                                                     'd M Y H:i'
@@ -675,10 +670,7 @@ class PurchaseRequisitionApproval
                                         ? 'Completed — '
                                             . $record->submitted_at
                                                 ->timezone(
-                                                    config(
-                                                        'app.timezone',
-                                                        'Asia/Jakarta'
-                                                    )
+                                                    UserTimezone::timezone()
                                                 )
                                                 ->format(
                                                     'd M Y H:i'
@@ -809,10 +801,7 @@ class PurchaseRequisitionApproval
                                     $record?->submitted_at
                                         ? $record->submitted_at
                                             ->timezone(
-                                                config(
-                                                    'app.timezone',
-                                                    'Asia/Jakarta'
-                                                )
+                                                UserTimezone::timezone()
                                             )
                                             ->format(
                                                 'd M Y H:i'
@@ -890,10 +879,7 @@ class PurchaseRequisitionApproval
                                     return $actedAt
                                         ? $actedAt
                                             ->timezone(
-                                                config(
-                                                    'app.timezone',
-                                                    'Asia/Jakarta'
-                                                )
+                                                UserTimezone::timezone()
                                             )
                                             ->format(
                                                 'd M Y H:i'

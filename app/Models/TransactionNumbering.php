@@ -63,22 +63,22 @@ class TransactionNumbering extends Model
     {
         return [
 
-        'company_id' => 'integer',
-        'business_unit_id' => 'integer',
-        'branch_id' => 'integer',
+            'company_id' => 'integer',
+            'business_unit_id' => 'integer',
+            'branch_id' => 'integer',
 
-        'running_digits' => 'integer',
-        'start_number' => 'integer',
-        'sort_order' => 'integer',
-        'current_number' => 'integer',
+            'running_digits' => 'integer',
+            'start_number' => 'integer',
+            'sort_order' => 'integer',
+            'current_number' => 'integer',
 
-        'is_active' => 'boolean',
+            'is_active' => 'boolean',
 
-        'last_generated_at' => 'datetime',
+            'last_generated_at' => 'datetime',
 
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'deleted_at' => 'datetime',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
+            'deleted_at' => 'datetime',
 
         ];
     }
@@ -135,7 +135,7 @@ class TransactionNumbering extends Model
             User::class,
             'deleted_by'
         );
-    }    
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -205,6 +205,7 @@ class TransactionNumbering extends Model
             ->orderBy('document_type')
             ->orderBy('document_name');
     }
+
     /*
     |--------------------------------------------------------------------------
     | Accessors
@@ -241,10 +242,45 @@ class TransactionNumbering extends Model
         );
     }
 
+    /**
+     * Get the timezone used for transaction numbering.
+     *
+     * Company timezone is the business timezone.
+     * UTC is used as a safe fallback.
+     */
+    public function numberingTimezone(): string
+    {
+        $timezone = $this->company?->timezone;
+
+        if (! filled($timezone)) {
+            return 'UTC';
+        }
+
+        try {
+            new \DateTimeZone($timezone);
+
+            return $timezone;
+        } catch (\Throwable) {
+            return 'UTC';
+        }
+    }
+
+    /**
+     * Get current date/time in the numbering timezone.
+     */
+    public function numberingNow(): \Carbon\Carbon
+    {
+        return now()->setTimezone(
+            $this->numberingTimezone()
+        );
+    }
+
     public function formattedPreview(): string
     {
         $pattern = $this->format_pattern
-        ?: '{PREFIX}/{YYYY}/{MM}/{RUNNING}';
+            ?: '{PREFIX}/{YYYY}/{MM}/{RUNNING}';
+
+        $now = $this->numberingNow();
 
         return strtr($pattern, [
 
@@ -252,13 +288,13 @@ class TransactionNumbering extends Model
 
             '{SUFFIX}' => strtoupper($this->suffix ?? ''),
 
-            '{YYYY}' => now()->format('Y'),
+            '{YYYY}' => $now->format('Y'),
 
-            '{YY}' => now()->format('y'),
+            '{YY}' => $now->format('y'),
 
-            '{MM}' => now()->format('m'),
+            '{MM}' => $now->format('m'),
 
-            '{DD}' => now()->format('d'),
+            '{DD}' => $now->format('d'),
 
             '{RUNNING}' => $this->nextRunningNumber(),
 
@@ -296,9 +332,10 @@ class TransactionNumbering extends Model
     public const MODULE_FINANCE = 'FINANCE';
 
     public const RESET_NEVER = 'Never';
+
     public const RESET_DAILY = 'Daily';
+
     public const RESET_MONTHLY = 'Monthly';
+
     public const RESET_YEARLY = 'Yearly';
-
-
 }

@@ -175,14 +175,32 @@ class ApprovalTransactionService
 
             /*
             |--------------------------------------------------------------------------
+            | Notify Initial Approval Level
+            |--------------------------------------------------------------------------
+            |
+            | The approval transaction and its snapshot steps
+            | must exist before notifying the first approver.
+            |
+            */
+
+            $transaction = $transaction->fresh([
+                'approvalMaster',
+                'steps',
+            ]);
+
+            app(
+                \App\Services\Notifications\NotificationService::class
+            )->notifyApprovalRequired(
+                $transaction
+            );
+
+            /*
+            |--------------------------------------------------------------------------
             | Return
             |--------------------------------------------------------------------------
             */
 
-            return $transaction->load([
-                'approvalMaster',
-                'steps',
-            ]);
+            return $transaction;
         });
     }
 
@@ -1577,10 +1595,36 @@ class ApprovalTransactionService
                     |--------------------------------------------------------------------------
                     */
 
-                    return $transaction->fresh([
+                    $transaction = $transaction->fresh([
                         'approvalMaster',
                         'steps',
                     ]);
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Rejected Notification
+                    |--------------------------------------------------------------------------
+                    |
+                    | Notify the PO requester after the PO has successfully
+                    | entered the Rejected state.
+                    |
+                    */
+
+                    app(
+                        \App\Services\Notifications\NotificationService::class
+                    )->notifyRejected(
+                        $transaction,
+                        $approver,
+                        $remarks,
+                    );
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Return Fresh Transaction
+                    |--------------------------------------------------------------------------
+                    */
+
+                    return $transaction;
                 }
 
                 /*

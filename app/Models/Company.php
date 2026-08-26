@@ -25,6 +25,8 @@ class Company extends Model
 
         'address',
 
+        'timezone',
+
         'is_active',
 
         'created_by',

@@ -76,7 +76,7 @@
 
                 <strong>Printed On</strong><br>
 
-                {{ now()->format('d M Y H:i') }}
+                {{ \App\Support\Timezone\UserTimezone::now()->format('d M Y H:i') }}
 
             </td>
 

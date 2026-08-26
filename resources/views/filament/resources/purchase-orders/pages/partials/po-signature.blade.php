@@ -199,7 +199,13 @@
 
                 <div class="signature-date">
 
-                    {{ optional($purchaseOrder->generated_at)->format('d M Y H:i') }}
+                    {{ $purchaseOrder->generated_at
+                        ? \App\Support\Timezone\UserTimezone::format(
+                            $purchaseOrder->generated_at,
+                            'd M Y H:i'
+                        )
+                        : '-'
+                    }}
 
                 </div>
 
@@ -236,7 +242,13 @@
 
                 <div class="signature-date">
 
-                    {{ optional($purchaseOrder->approved_at)->format('d M Y H:i') }}
+                    {{ $purchaseOrder->approved_at
+                        ? \App\Support\Timezone\UserTimezone::format(
+                            $purchaseOrder->approved_at,
+                            'd M Y H:i'
+                        )
+                        : '-'
+                    }}
 
                 </div>
 

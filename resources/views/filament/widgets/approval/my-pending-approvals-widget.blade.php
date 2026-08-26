@@ -138,7 +138,10 @@
 
                                         <span>
                                             Submitted
-                                            {{ $transaction->submitted_at->format('d M Y H:i') }}
+                                            {{ \App\Support\Timezone\UserTimezone::format(
+                                                $transaction->submitted_at,
+                                                'd M Y H:i'
+                                            ) }}
                                         </span>
 
                                     @endif
