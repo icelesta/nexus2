@@ -8,6 +8,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Storage;
+use App\Support\Timezone\UserTimezone;
 
 class AssignmentMaterialRequisitionInfolist
 {
@@ -197,7 +198,14 @@ class AssignmentMaterialRequisitionInfolist
 
                                 TextEntry::make('created_at')
                                     ->label('Uploaded At')
-                                    ->dateTime(),
+                                    ->formatStateUsing(
+                                        fn ($state) => $state
+                                            ? UserTimezone::format(
+                                                $state,
+                                                'd M Y H:i:s'
+                                            )
+                                            : '-'
+                                    ),
 
                                 /*
                                 |--------------------------------------------------------------------------
@@ -290,14 +298,28 @@ class AssignmentMaterialRequisitionInfolist
 
                                         TextEntry::make('created_at')
                                             ->label('Created At')
-                                            ->since(),
+                                            ->formatStateUsing(
+                                                fn ($state) => $state
+                                                    ? UserTimezone::format(
+                                                        $state,
+                                                        'd M Y H:i:s'
+                                                    )
+                                                    : '-'
+                                            ),
 
                                         TextEntry::make('updatedBy.name')
                                             ->label('Updated By'),
 
                                         TextEntry::make('updated_at')
                                             ->label('Updated At')
-                                            ->since(),
+                                            ->formatStateUsing(
+                                                fn ($state) => $state
+                                                    ? UserTimezone::format(
+                                                        $state,
+                                                        'd M Y H:i:s'
+                                                    )
+                                                    : '-'
+                                            ),
 
                                     ]),
 

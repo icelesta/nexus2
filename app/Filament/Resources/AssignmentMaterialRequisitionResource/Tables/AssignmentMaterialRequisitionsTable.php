@@ -7,6 +7,10 @@ namespace App\Filament\Resources\AssignmentMaterialRequisitionResource\Tables;
 use App\Models\ApprovalMaster;
 use App\Models\ApprovalTransaction;
 use App\Models\AssignmentMaterialRequisition;
+use App\Models\Department;
+
+use App\Support\Timezone\UserTimezone;
+use Carbon\Carbon;
 
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
@@ -138,14 +142,18 @@ class AssignmentMaterialRequisitionsTable
                         filled($livewire->globalDateFrom)
                     ) {
 
-                        $query->whereDate(
+                        $from = Carbon::parse(
+                            $livewire->globalDateFrom,
+                            UserTimezone::timezone()
+                        )->startOfDay()->utc();
+
+                        $query->where(
                             'assignment_material_requisitions.assigned_at',
                             '>=',
-                            $livewire->globalDateFrom
+                            $from
                         );
 
                     }
-
 
                     /*
                     |--------------------------------------------------------------------------
@@ -157,10 +165,15 @@ class AssignmentMaterialRequisitionsTable
                         filled($livewire->globalDateTo)
                     ) {
 
-                        $query->whereDate(
+                        $to = Carbon::parse(
+                            $livewire->globalDateTo,
+                            UserTimezone::timezone()
+                        )->endOfDay()->utc();
+
+                        $query->where(
                             'assignment_material_requisitions.assigned_at',
                             '<=',
-                            $livewire->globalDateTo
+                            $to
                         );
 
                     }
@@ -801,6 +814,7 @@ class AssignmentMaterialRequisitionsTable
                             ->label('Until'),
 
                     ])
+
                     ->query(
                         function (
                             $query,
@@ -815,10 +829,13 @@ class AssignmentMaterialRequisitionsTable
                                         $query,
                                         $date
                                     ) =>
-                                        $query->whereDate(
+                                        $query->where(
                                             'assigned_at',
                                             '>=',
-                                            $date
+                                            Carbon::parse(
+                                                $date,
+                                                UserTimezone::timezone()
+                                            )->startOfDay()->utc()
                                         )
                                 )
 
@@ -828,10 +845,13 @@ class AssignmentMaterialRequisitionsTable
                                         $query,
                                         $date
                                     ) =>
-                                        $query->whereDate(
+                                        $query->where(
                                             'assigned_at',
                                             '<=',
-                                            $date
+                                            Carbon::parse(
+                                                $date,
+                                                UserTimezone::timezone()
+                                            )->endOfDay()->utc()
                                         )
                                 );
 
