@@ -74,7 +74,13 @@
                     </td>
 
                     <td>
-                        : {{ optional($this->record->created_at)->format('d M Y H:i') }}
+                        : {{ $this->record->created_at
+                            ? \App\Support\Timezone\UserTimezone::format(
+                                $this->record->created_at,
+                                'd M Y H:i:s'
+                            )
+                            : '-'
+                        }}
                     </td>
 
                 </tr>
@@ -86,7 +92,13 @@
                     </td>
 
                     <td>
-                        : {{ optional($this->record->updated_at)->format('d M Y H:i') }}
+                        : {{ $this->record->updated_at
+                            ? \App\Support\Timezone\UserTimezone::format(
+                                $this->record->updated_at,
+                                'd M Y H:i:s'
+                            )
+                            : '-'
+                        }}
                     </td>
 
                 </tr>
