@@ -16,6 +16,8 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
+use App\Support\Timezone\UserTimezone;
+
 class PurchaseRequisitionHeader
 {
     public static function configure(
@@ -491,17 +493,26 @@ class PurchaseRequisitionHeader
 
                 Placeholder::make('created_at')
                     ->label('Created At')
-                    ->content(fn ($record) => $record?->created_at?->format('d M Y H:i') ?? '-')
-                    ->columnSpan(3),
-
-                Placeholder::make('updated_by')
-                    ->label('Last Updated By')
-                    ->content(fn ($record) => $record?->updater?->name ?? '-')
+                    ->content(
+                        fn ($record) => $record?->created_at
+                            ? UserTimezone::format(
+                                $record->created_at,
+                                'd M Y H:i:s'
+                            )
+                            : '-'
+                    )
                     ->columnSpan(3),
 
                 Placeholder::make('updated_at')
                     ->label('Last Updated At')
-                    ->content(fn ($record) => $record?->updated_at?->format('d M Y H:i') ?? '-')
+                    ->content(
+                        fn ($record) => $record?->updated_at
+                            ? UserTimezone::format(
+                                $record->updated_at,
+                                'd M Y H:i:s'
+                            )
+                            : '-'
+                    )
                     ->columnSpan(3),
 
             ])
