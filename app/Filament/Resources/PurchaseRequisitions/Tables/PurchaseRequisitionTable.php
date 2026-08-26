@@ -26,6 +26,9 @@ use Illuminate\Support\Facades\DB;
 use Throwable;
 use Filament\Support\Icons\Heroicon;
 
+use App\Support\Timezone\UserTimezone;
+use Carbon\Carbon;
+
 class PurchaseRequisitionTable
 {
     public static function configure(
@@ -193,10 +196,15 @@ class PurchaseRequisitionTable
 
                         if (filled($livewire->globalDateFrom)) {
 
-                            $query->whereDate(
+                            $from = Carbon::parse(
+                                $livewire->globalDateFrom,
+                                UserTimezone::timezone()
+                            )->startOfDay()->utc();
+
+                            $query->where(
                                 'purchase_requisitions.request_date',
                                 '>=',
-                                $livewire->globalDateFrom
+                                $from
                             );
 
                         }
@@ -210,10 +218,15 @@ class PurchaseRequisitionTable
 
                         if (filled($livewire->globalDateTo)) {
 
-                            $query->whereDate(
+                            $to = Carbon::parse(
+                                $livewire->globalDateTo,
+                                UserTimezone::timezone()
+                            )->endOfDay()->utc();
+
+                            $query->where(
                                 'purchase_requisitions.request_date',
                                 '<=',
-                                $livewire->globalDateTo
+                                $to
                             );
 
                         }

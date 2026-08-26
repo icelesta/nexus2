@@ -17,6 +17,8 @@ use Filament\Actions\ViewAction;
 
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use App\Support\Timezone\UserTimezone;
+use Carbon\Carbon;
 
 use Illuminate\Database\Eloquent\Builder;
 
@@ -111,10 +113,15 @@ class PurchaseOrdersTable
                         filled($livewire->globalDateFrom)
                     ) {
 
-                        $query->whereDate(
+                        $from = Carbon::parse(
+                            $livewire->globalDateFrom,
+                            UserTimezone::timezone()
+                        )->startOfDay()->utc();
+
+                        $query->where(
                             'purchase_orders.document_date',
                             '>=',
-                            $livewire->globalDateFrom
+                            $from
                         );
 
                     }
@@ -130,10 +137,15 @@ class PurchaseOrdersTable
                         filled($livewire->globalDateTo)
                     ) {
 
-                        $query->whereDate(
+                        $to = Carbon::parse(
+                            $livewire->globalDateTo,
+                            UserTimezone::timezone()
+                        )->endOfDay()->utc();
+
+                        $query->where(
                             'purchase_orders.document_date',
                             '<=',
-                            $livewire->globalDateTo
+                            $to
                         );
 
                     }
