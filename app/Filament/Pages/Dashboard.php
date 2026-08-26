@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
-//use App\Filament\Widgets\LowStockWidget;
-use App\Filament\Widgets\WelcomeWidget;
-use App\Filament\Widgets\ItemStatsWidget;
-use Filament\Pages\Dashboard as BaseDashboard;
 use App\Filament\Widgets\Approval\ApprovalKpiWidget;
 use App\Filament\Widgets\Approval\MyPendingApprovalsWidget;
 use App\Filament\Widgets\Approval\RecentApprovalActivityWidget;
+use App\Filament\Widgets\ItemStatsWidget;
+use App\Filament\Widgets\WelcomeWidget;
+use Filament\Pages\Dashboard as BaseDashboard;
 
 class Dashboard extends BaseDashboard
 {
@@ -24,37 +23,78 @@ class Dashboard extends BaseDashboard
 
     protected static ?string $title = 'Welcome To Nexus ERP System';
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | DASHBOARD GRID
+    |--------------------------------------------------------------------------
+    |
+    | Keep the outer dashboard grid to ONE column.
+    |
+    | Each widget therefore receives the full dashboard width.
+    |
+    | Internal layouts are controlled by the widgets themselves.
+    |
+    */
+
+    public function getColumns(): int | array
+    {
+        return 1;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | WIDGETS
+    |--------------------------------------------------------------------------
+    */
+
     public function getWidgets(): array
     {
         return [
-            WelcomeWidget::class,
 
             /*
             |--------------------------------------------------------------------------
-            | Approval Center
+            | HERO / WELCOME
+            |--------------------------------------------------------------------------
+            |
+            | Greeting + BMS Global Hero Banner
+            |
+            */
+
+            WelcomeWidget::class,
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | APPROVAL CENTER
             |--------------------------------------------------------------------------
             */
 
             ApprovalKpiWidget::class,
+
             ItemStatsWidget::class,
 
             MyPendingApprovalsWidget::class,
+
             RecentApprovalActivityWidget::class,
+
 
             /*
             |--------------------------------------------------------------------------
-            | Inventory
+            | INVENTORY
             |--------------------------------------------------------------------------
             */
 
-            
             // LowStockWidget::class,
+
         ];
     }
 
+
     /*
     |--------------------------------------------------------------------------
-    | Layout
+    | PAGE WIDTH
     |--------------------------------------------------------------------------
     */
 
@@ -63,9 +103,10 @@ class Dashboard extends BaseDashboard
         return null;
     }
 
+
     /*
     |--------------------------------------------------------------------------
-    | Heading
+    | PAGE HEADING
     |--------------------------------------------------------------------------
     */
 
@@ -73,6 +114,7 @@ class Dashboard extends BaseDashboard
     {
         return '';
     }
+
 
     public function getSubheading(): ?string
     {
