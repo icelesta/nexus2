@@ -1,19 +1,22 @@
 {{-- ==========================================================
 | Purchase Order Footer
 | Nexus ERP 2.0
+| Compact Corporate Layout
 ========================================================== --}}
 
 <style>
 
 .document-footer{
 
-    margin-top:35px;
+    margin-top:17px;
 
-    padding-top:12px;
+    padding-top:6px;
 
     border-top:1px solid #d9d9d9;
 
-    font-size:11px;
+    font-size:8px;
+
+    line-height:1.1;
 
     color:#6b7280;
 
@@ -29,9 +32,11 @@
 
 .document-footer td{
 
-    padding:4px 0;
+    padding:2px 0;
 
-    vertical-align:top;
+    vertical-align:middle;
+
+    line-height:1.1;
 
 }
 
@@ -50,21 +55,29 @@
 .footer-right{
 
     text-align:right;
-    padding-right: 20px !important;
+
+    padding-right:10px !important;
 
 }
 
 .footer-note{
 
-    margin-top:10px;
+    margin-top:4px;
+
+    font-size:6.5px;
+
+    line-height:1.1;
 
     font-style:italic;
 
     color:#9ca3af;
 
+    text-align:center;
+
 }
 
 </style>
+
 
 <div class="document-footer">
 
@@ -108,7 +121,7 @@
 
     </table>
 
-    <div class="footer-note" align="center">
+    <div class="footer-note">
 
         This Purchase Order is generated electronically by Nexus ERP 2.0.
         Printed copies are considered uncontrolled unless verified against the system.

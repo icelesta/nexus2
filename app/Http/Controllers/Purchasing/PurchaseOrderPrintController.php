@@ -33,6 +33,9 @@ class PurchaseOrderPrintController extends Controller
     private const DOCUMENT_VIEW =
         'filament.resources.purchase-orders.pages.partials.preview-purchase-order';
 
+    private const PDF_DOCUMENT_VIEW =
+    'filament.resources.purchase-orders.pages.partials.print-layout';
+
 
     /*
     |--------------------------------------------------------------------------
@@ -128,9 +131,9 @@ class PurchaseOrderPrintController extends Controller
      * because Preview is the single source of truth
      * for the Purchase Order visual document.
      */
-    public function export(
-        PurchaseOrder $purchaseOrder,
-    ): Response {
+        public function export(
+            PurchaseOrder $purchaseOrder,
+        ): Response {
 
         /*
         |--------------------------------------------------------------------------
@@ -165,10 +168,9 @@ class PurchaseOrderPrintController extends Controller
         */
 
         $pdf = Pdf::loadView(
-            self::DOCUMENT_VIEW,
+            self::PDF_DOCUMENT_VIEW,
             $data,
         );
-
 
         /*
         |--------------------------------------------------------------------------
@@ -182,7 +184,7 @@ class PurchaseOrderPrintController extends Controller
 
         $pdf->setOption([
             'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled'      => true,
+            'isRemoteEnabled' => false,
             'defaultFont'          => 'Arial',
             'dpi'                  => 96,
         ]);
@@ -225,8 +227,16 @@ class PurchaseOrderPrintController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        return $pdf->download(
-            "{$fileName}.pdf",
+        $pdfContent = $pdf->output();
+
+        return response(
+            $pdfContent,
+            200,
+            [
+                'Content-Type'        => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $fileName . '.pdf"',
+                'Content-Length'      => strlen($pdfContent),
+            ],
         );
     }
 }

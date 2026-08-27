@@ -101,31 +101,13 @@
 }
 
 .signature-table td {
-
-    width: 50%;
-
-    text-align: center;
-
-    vertical-align: top;
-
-    padding: 7px 12px 12px;
-
-    border: 1px solid #b8c3cf;
-
-    height: 125px;
-
+    padding: 5px 8px 8px;
+    height: 105px;
 }
 
 .signature-title {
-
-    font-size: 13px;
-
-    font-weight: 600;
-
-    color: #374151;
-
-    margin-bottom: 42px;
-
+    font-size: 9pt;
+    margin-bottom: 32px;
 }
 
 .signature-line {
@@ -141,33 +123,15 @@
 }
 
 .signature-name {
-
-    font-weight: 600;
-
-    font-size: 13px;
-
-    color: #111827;
-
+    font-size: 8.5pt;
 }
 
 .signature-position {
-
-    font-size: 11px;
-
-    color: #6b7280;
-
-    margin-top: 2px;
-
+    font-size: 7.5pt;
 }
 
 .signature-date {
-
-    font-size: 11px;
-
-    color: #9ca3af;
-
-    margin-top: 3px;
-
+    font-size: 7.5pt;
 }
 
 </style>

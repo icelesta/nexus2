@@ -11,6 +11,7 @@ use App\Http\Controllers\PurchaseRequisitionPdfController;
 
 use App\Models\AssignmentMaterialRequisitionDocument;
 use Illuminate\Support\Facades\Storage;
+use Filament\Http\Middleware\Authenticate;
 
 
 /*
@@ -49,11 +50,13 @@ Route::get('/', function () {
 |
 */
 
+
 Route::middleware([
     'web',
-    'auth',
+    Authenticate::class,
 ])
     ->prefix('purchase-orders')
+
     ->name('purchase-orders.')
     ->group(function () {
 

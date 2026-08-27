@@ -340,7 +340,7 @@
                         </div>
 
                         <div class="mt-2 text-sm text-amber-600">
-                            Buyer Assignment
+                            Purchasing PIC Assignment
                         </div>
 
                     </div>

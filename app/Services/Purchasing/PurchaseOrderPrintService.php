@@ -8,11 +8,6 @@ use App\Models\PurchaseOrder;
 
 class PurchaseOrderPrintService
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Build Purchase Order Print Data
-    |--------------------------------------------------------------------------
-    */
 
     /**
      * Build all data required by Preview / Print / PDF.
