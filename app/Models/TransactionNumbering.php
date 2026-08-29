@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Department;
 
 class TransactionNumbering extends Model
 {
@@ -24,8 +25,11 @@ class TransactionNumbering extends Model
         'company_id',
         'business_unit_id',
         'branch_id',
+        'department_id',
 
         'document_type',
+
+
         'document_name',
 
         'prefix',
@@ -104,6 +108,15 @@ class TransactionNumbering extends Model
             'branch_id'
         );
     }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(
+            Department::class,
+            'department_id'
+        );
+    }
+    
 
     public function businessUnit(): BelongsTo
     {

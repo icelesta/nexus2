@@ -521,13 +521,32 @@ class AssignmentMaterialRequisition extends Model
         );
     } 
 
+    /**
+     * Purchase Orders generated from this Assignment Material Requisition.
+     *
+     * One AMR may generate multiple Purchase Orders,
+     * typically one Purchase Order per selected Supplier.
+     */
+    public function purchaseOrders(): HasMany
+    {
+        return $this->hasMany(
+            PurchaseOrder::class,
+            'assignment_material_requisition_id'
+        );
+    }
+
+    /**
+     * Legacy single Purchase Order relationship.
+     *
+     * @deprecated Use purchaseOrders() for the multi-supplier workflow.
+     */
     public function purchaseOrder(): HasOne
     {
         return $this->hasOne(
             PurchaseOrder::class,
             'assignment_material_requisition_id'
         );
-    }  
+    }
 
     /*
     |--------------------------------------------------------------------------

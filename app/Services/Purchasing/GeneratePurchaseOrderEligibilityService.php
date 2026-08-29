@@ -704,16 +704,15 @@ class GeneratePurchaseOrderEligibilityService
                 'No supplier has been assigned to the Assignment items.';
         }
 
-        if ($supplierIds->count() > 1) {
+        if ($supplierIds->isEmpty()) {
 
             $errors[] =
-                'Purchase Order can only be generated when all items use the same supplier.';
+                'Purchase Order cannot be generated because no supplier has been assigned to the AMR items.';
         }
 
         return [
 
-            'passed' =>
-                $supplierIds->count() === 1,
+            'passed' => $supplierIds->count() >= 1,
 
             'supplier_id' =>
                 $supplierIds->first(),

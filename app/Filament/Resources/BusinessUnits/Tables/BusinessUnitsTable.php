@@ -2,8 +2,9 @@
 
 namespace App\Filament\Resources\BusinessUnits\Tables;
 
+use App\Filament\Concerns\HasProtectedDeleteAction;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
@@ -12,18 +13,13 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
-use App\Filament\Concerns\HasProtectedDeleteAction;
-
-
 class BusinessUnitsTable
 {
-
     use HasProtectedDeleteAction;
 
     public static function configure(Table $table): Table
     {
         return $table
-
             ->defaultSort('sort_order')
 
             ->columns([
@@ -72,15 +68,33 @@ class BusinessUnitsTable
                     ->label('Sort')
                     ->sortable(),
 
+                /*
+                |--------------------------------------------------------------------------
+                | Audit
+                |--------------------------------------------------------------------------
+                */
+
+                TextColumn::make('creator.name')
+                    ->label('Created By')
+                    ->searchable()
+                    ->sortable()
+                    ->placeholder('-'),
+
                 TextColumn::make('created_at')
-                    ->label('Created')
-                    ->dateTime('d M Y H:i')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->label('Created Date')
+                    ->dateTime('d M Y H:i:s')
+                    ->sortable(),
+
+                TextColumn::make('updater.name')
+                    ->label('Updated By')
+                    ->searchable()
+                    ->sortable()
+                    ->placeholder('-'),
 
                 TextColumn::make('updated_at')
-                    ->label('Updated')
-                    ->dateTime('d M Y H:i')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->label('Updated Date')
+                    ->dateTime('d M Y H:i:s')
+                    ->sortable(),
 
             ])
 
@@ -102,12 +116,18 @@ class BusinessUnitsTable
 
             ->recordActions([
 
-                ViewAction::make(),
+                ActionGroup::make([
 
-                EditAction::make(),
+                    ViewAction::make(),
 
-                self::deleteAction()
-                    ->requiresConfirmation(),
+                    EditAction::make(),
+
+                    self::deleteAction()
+                        ->requiresConfirmation(),
+
+                ])
+                    ->label('Action')
+                    ->button(),
 
             ])
 

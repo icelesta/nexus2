@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Roles;
 
-use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use App\Filament\Resources\Roles\Pages\CreateRole;
 use App\Filament\Resources\Roles\Pages\EditRole;
 use App\Filament\Resources\Roles\Pages\ListRoles;
 use App\Filament\Resources\Roles\Pages\ViewRole;
+use App\Models\Role;
+use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use BezhanSalleh\FilamentShield\Support\Utils;
 use BezhanSalleh\FilamentShield\Traits\HasShieldFormComponents;
 use BezhanSalleh\PluginEssentials\Concerns\Resource as Essentials;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -53,8 +55,13 @@ class RoleResource extends Resource
                                 TextInput::make('name')
                                     ->label(__('filament-shield::filament-shield.field.name'))
                                     ->unique(
-                                        ignoreRecord: true, /** @phpstan-ignore-next-line */
-                                        modifyRuleUsing: fn (Unique $rule): Unique => Utils::isTenancyEnabled() ? $rule->where(Utils::getTenantModelForeignKey(), Filament::getTenant()?->id) : $rule
+                                        ignoreRecord: true,
+                                        modifyRuleUsing: fn (Unique $rule): Unique => Utils::isTenancyEnabled()
+                                            ? $rule->where(
+                                                Utils::getTenantModelForeignKey(),
+                                                Filament::getTenant()?->id
+                                            )
+                                            : $rule
                                     )
                                     ->required()
                                     ->maxLength(255),
@@ -70,9 +77,27 @@ class RoleResource extends Resource
                                     ->placeholder(__('filament-shield::filament-shield.field.team.placeholder'))
                                     /** @phpstan-ignore-next-line */
                                     ->default(Filament::getTenant()?->id)
-                                    ->options(fn (): array => in_array(Utils::getTenantModel(), [null, '', '0'], true) ? [] : Utils::getTenantModel()::pluck('name', 'id')->toArray())
-                                    ->visible(fn (): bool => static::shield()->isCentralApp() && Utils::isTenancyEnabled())
-                                    ->dehydrated(fn (): bool => static::shield()->isCentralApp() && Utils::isTenancyEnabled()),
+                                    ->options(
+                                        fn (): array => in_array(
+                                            Utils::getTenantModel(),
+                                            [null, '', '0'],
+                                            true
+                                        )
+                                            ? []
+                                            : Utils::getTenantModel()::pluck(
+                                                'name',
+                                                'id'
+                                            )->toArray()
+                                    )
+                                    ->visible(
+                                        fn (): bool => static::shield()->isCentralApp()
+                                            && Utils::isTenancyEnabled()
+                                    )
+                                    ->dehydrated(
+                                        fn (): bool => static::shield()->isCentralApp()
+                                            && Utils::isTenancyEnabled()
+                                    ),
+
                                 static::getSelectAllFormComponent(),
 
                             ])
@@ -83,6 +108,7 @@ class RoleResource extends Resource
                             ->columnSpanFull(),
                     ])
                     ->columnSpanFull(),
+
                 static::getShieldFormComponents(),
             ]);
     }
@@ -95,34 +121,75 @@ class RoleResource extends Resource
                 TextColumn::make('name')
                     ->weight(FontWeight::Medium)
                     ->label(__('filament-shield::filament-shield.column.name'))
-                    ->formatStateUsing(fn (string $state): string => Str::headline($state))
+                    ->formatStateUsing(
+                        fn (string $state): string => Str::headline($state)
+                    )
                     ->searchable(),
+
                 TextColumn::make('guard_name')
                     ->badge()
                     ->color('warning')
                     ->label(__('filament-shield::filament-shield.column.guard_name')),
+
                 TextColumn::make('team.name')
                     ->default('Global')
                     ->badge()
-                    ->color(fn (mixed $state): string => str($state)->contains('Global') ? 'gray' : 'primary')
+                    ->color(
+                        fn (mixed $state): string => str($state)->contains('Global')
+                            ? 'gray'
+                            : 'primary'
+                    )
                     ->label(__('filament-shield::filament-shield.column.team'))
                     ->searchable()
-                    ->visible(fn (): bool => static::shield()->isCentralApp() && Utils::isTenancyEnabled()),
+                    ->visible(
+                        fn (): bool => static::shield()->isCentralApp()
+                            && Utils::isTenancyEnabled()
+                    ),
+
                 TextColumn::make('permissions_count')
                     ->badge()
                     ->label(__('filament-shield::filament-shield.column.permissions'))
                     ->counts('permissions')
                     ->color('primary'),
+
+                /*
+                |--------------------------------------------------------------------------
+                | AUDIT TRAIL
+                |--------------------------------------------------------------------------
+                */
+
+                TextColumn::make('createdBy.name')
+                    ->label('Created By')
+                    ->default('-')
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('created_at')
+                    ->label('Created Date')
+                    ->dateTime()
+                    ->sortable(),
+
+                TextColumn::make('updatedBy.name')
+                    ->label('Updated By')
+                    ->default('-')
+                    ->searchable()
+                    ->sortable(),
+
                 TextColumn::make('updated_at')
-                    ->label(__('filament-shield::filament-shield.column.updated_at'))
-                    ->dateTime(),
+                    ->label('Updated Date')
+                    ->dateTime()
+                    ->sortable(),
             ])
             ->filters([
                 //
             ])
             ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
+                ActionGroup::make([
+                    EditAction::make(),
+                    DeleteAction::make(),
+                ])
+                    ->label('Action')
+                    ->button(),
             ])
             ->toolbarActions([
                 DeleteBulkAction::make(),

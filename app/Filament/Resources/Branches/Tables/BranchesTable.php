@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Branches\Tables;
 
+use App\Filament\Concerns\HasProtectedDeleteAction;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -11,11 +13,8 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-use App\Filament\Concerns\HasProtectedDeleteAction;
-
 class BranchesTable
 {
-
     use HasProtectedDeleteAction;
 
     public static function configure(Table $table): Table
@@ -52,6 +51,12 @@ class BranchesTable
                     ->label('Active')
                     ->boolean(),
 
+                /*
+                |--------------------------------------------------------------------------
+                | Audit
+                |--------------------------------------------------------------------------
+                */
+
                 TextColumn::make('created_at')
                     ->label('Created Date')
                     ->dateTime('d M Y H:i')
@@ -60,7 +65,8 @@ class BranchesTable
                 TextColumn::make('creator.name')
                     ->label('Created By')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->placeholder('-'),
 
                 TextColumn::make('updated_at')
                     ->label('Updated Date')
@@ -70,7 +76,8 @@ class BranchesTable
                 TextColumn::make('updater.name')
                     ->label('Updated By')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->placeholder('-'),
 
             ])
 
@@ -80,12 +87,18 @@ class BranchesTable
 
             ->recordActions([
 
-                ViewAction::make(),
+                ActionGroup::make([
 
-                EditAction::make(),
+                    ViewAction::make(),
 
-                self::deleteAction()
-                    ->requiresConfirmation(),
+                    EditAction::make(),
+
+                    self::deleteAction()
+                        ->requiresConfirmation(),
+
+                ])
+                    ->label('Action')
+                    ->button(),
 
             ])
 

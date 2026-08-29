@@ -277,8 +277,6 @@ class ItemForm
 
                             ->previewable(true)
 
-                            ->live()
-
                             ->columnSpanFull(),
 
                     ])

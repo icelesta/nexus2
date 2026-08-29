@@ -25,139 +25,102 @@ class PurchaseOrderForm
             ->components([
 
             /*
-                /*
-                |--------------------------------------------------------------------------
-                | Purchase Order Information
-                |--------------------------------------------------------------------------
-                */
+            |--------------------------------------------------------------------------
+            | Purchase Order Information
+            |--------------------------------------------------------------------------
+            */
 
-                Section::make('Purchase Order Information')
-                    ->description(
-                        'General information of this Purchase Order document.'
-                    )
-                    ->columnSpanFull()
-                    ->extraAttributes([
-                        'class' => 'po-section',
-                    ])
-                    ->collapsible(false)
-                    ->compact(false)
-                    ->schema([
+            Section::make('Purchase Order Information')
+                ->description('General information of this Purchase Order document.')
+                ->schema([
 
-                        Grid::make(12)
-                            ->extraAttributes([
-                                'class' => 'gap-y-4',
-                            ])
-                            ->schema([
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Row 1
+                    |--------------------------------------------------------------------------
+                    */
 
-                                /*
-                                |--------------------------------------------------------------------------
-                                | ROW 1
-                                |--------------------------------------------------------------------------
-                                | 12 Columns:
-                                |
-                                | Document Status : 2
-                                | Purchasing PIC  : 2
-                                | Supplier        : 4
-                                | Currency        : 2
-                                | Exchange Rate   : 2
-                                |
-                                | Total = 12
-                                |--------------------------------------------------------------------------
-                                */
+                    Grid::make(12)
+                        ->schema([
 
-                                Placeholder::make('status_display')
-                                    ->label('Document Status')
-                                    ->content(
-                                        fn (?PurchaseOrder $record) =>
-                                            $record?->status
-                                                ?? PurchaseOrder::STATUS_DRAFT
-                                    )
-                                    ->columnSpan(2),
+                            Placeholder::make('document_status')
+                                ->label('Document Status')
+                                ->content(fn ($record) =>
+                                    $record?->status ?? '-'
+                                )
+                                ->columnSpan(2),
 
-                                Placeholder::make('buyer_display')
-                                    ->label('Purchasing PIC')
-                                    ->content(
-                                        fn () =>
-                                            auth()->user()?->name ?? '-'
-                                    )
-                                    ->columnSpan(2),
+                            Placeholder::make('purchasing_pic')
+                                ->label('Purchasing PIC')
+                                ->content(fn ($record) =>
+                                    $record?->purchasingPic?->name
+                                        ?? auth()->user()?->name
+                                        ?? '-'
+                                )
+                                ->columnSpan(2),
 
-                                Placeholder::make('supplier_display')
-                                    ->label('Supplier')
-                                    ->content(
-                                        fn (?PurchaseOrder $record) =>
-                                            $record?->supplier?->supplier_name ?? '-'
-                                    )
-                                    ->columnSpan(4),
+                            Placeholder::make('supplier')
+                                ->label('Supplier')
+                                ->content(fn ($record) =>
+                                    $record?->supplier?->supplier_name
+                                        ?? '-'
+                                )
+                                ->columnSpan(4),
 
-                                Placeholder::make('currency_display')
-                                    ->label('Currency')
-                                    ->content(
-                                        fn (?PurchaseOrder $record) =>
-                                            $record?->currency?->currency_code ?? '-'
-                                    )
-                                    ->columnSpan(2),
+                            Placeholder::make('currency')
+                                ->label('Currency')
+                                ->content(fn ($record) =>
+                                    $record?->currency?->currency_code
+                                        ?? $record?->currency_code
+                                        ?? '-'
+                                )
+                                ->columnSpan(2),
 
-                                Placeholder::make('exchange_rate_display')
-                                    ->label('Exchange Rate')
-                                    ->content(
-                                        fn (?PurchaseOrder $record) =>
-                                            number_format(
-                                                (float) (
-                                                    $record?->exchange_rate ?? 1
-                                                ),
-                                                4
-                                            )
-                                    )
-                                    ->columnSpan(2),
+                            Placeholder::make('exchange_rate')
+                                ->label('Exchange Rate')
+                                ->content(fn ($record) =>
+                                    $record?->exchange_rate !== null
+                                        ? number_format(
+                                            (float) $record->exchange_rate,
+                                            4,
+                                            '.',
+                                            ''
+                                        )
+                                        : '-'
+                                )
+                                ->columnSpan(2),
 
-                                TextInput::make('payment_method')
-                                    ->label('Payment')
-                                    ->required()
-                                    ->maxLength(255)
-                                    ->placeholder('Enter payment method...')
-                                    ->columnSpan(2),
+                        ]),
 
-                                Placeholder::make('payment_instruction_display')
-                                    ->label('Payment Instruction')
-                                    ->content(
-                                        fn (?PurchaseOrder $record): string =>
-                                            $record?->payment_instruction ?? '-'
-                                    )
-                                    ->columnSpan(4),
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Row 2
+                    |--------------------------------------------------------------------------
+                    */
 
-                                /*
-                                |--------------------------------------------------------------------------
-                                | ROW 2
-                                |--------------------------------------------------------------------------
-                                | 12 Columns:
-                                |
-                                | Expected Delivery Date : 4
-                                | Remarks                : 8
-                                |
-                                | Total = 12
-                                |--------------------------------------------------------------------------
-                                */
+                    Grid::make(12)
+                        ->schema([
 
-                                DatePicker::make('expected_delivery_date')
-                                    ->label('Expected Delivery Date')
-                                    ->native(false)
-                                    ->displayFormat('d M Y')
-                                    ->closeOnDateSelection()
-                                    ->columnSpan(4),
+                            Placeholder::make('payment_instruction_display')
+                                ->label('Payment Instruction')
+                                ->content(fn ($record) =>
+                                    $record?->payment_instruction ?? '-'
+                                )
+                                ->columnSpan(3),
 
-                                Textarea::make('remarks')
-                                    ->label('Remarks')
-                                    ->rows(2)
-                                    ->autosize()
-                                    ->placeholder(
-                                        'Additional notes for this Purchase Order...'
-                                    )
-                                    ->columnSpan(8),
+                            DatePicker::make('expected_delivery_date')
+                                ->label('Expected Delivery Date')
+                                ->columnSpan(3),
 
-                            ]),
+                            Textarea::make('remarks')
+                                ->label('Remarks')
+                                ->rows(2)
+                                ->columnSpan(6),
 
-                    ]),
+                        ]),
+
+                ])
+                ->columnSpanFull(),
 
                 /*
                 |--------------------------------------------------------------------------

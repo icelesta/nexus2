@@ -10,6 +10,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 
+use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\DeleteAction;
@@ -72,42 +73,42 @@ class UsersTable
                 |--------------------------------------------------------------------------
                 */
 
-                TextColumn::make('company.display_name')
+                TextColumn::make('company.company_name')
                     ->label('Company')
                     ->badge()
                     ->sortable()
                     ->searchable()
                     ->toggleable(),
 
-                TextColumn::make('branch.display_name')
+                TextColumn::make('branch.branch_name')
                     ->label('Branch')
                     ->badge()
                     ->sortable()
                     ->toggleable(),
 
-                TextColumn::make('businessUnit.display_name')
+                TextColumn::make('businessUnit.business_unit_name')
                     ->label('Business Unit')
                     ->badge()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('department.display_name')
+                TextColumn::make('department.department_name')
                     ->label('Department')
                     ->badge()
                     ->sortable()
                     ->toggleable(),
 
-                TextColumn::make('section.display_name')
+                TextColumn::make('section.section_name')
                     ->label('Section')
                     ->badge()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('costCenter.display_name')
+                TextColumn::make('costCenter.cost_center_name')
                     ->label('Cost Center')
                     ->badge()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('profitCenter.display_name')
+                TextColumn::make('profitCenter.profit_center_name')
                     ->label('Profit Center')
                     ->badge()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -143,35 +144,37 @@ class UsersTable
                 |--------------------------------------------------------------------------
                 */
 
+                TextColumn::make('creator.name')
+                    ->label('Created By')
+                    ->placeholder('-')
+                    ->sortable()
+                    ->searchable(),
+
+                TextColumn::make('created_at')
+                    ->label('Created Date')
+                    ->dateTime('d M Y H:i:s')
+                    ->sortable(),
+
+                TextColumn::make('updater.name')
+                    ->label('Updated By')
+                    ->placeholder('-')
+                    ->sortable()
+                    ->searchable(),
+
+                TextColumn::make('updated_at')
+                    ->label('Updated Date')
+                    ->dateTime('d M Y H:i:s')
+                    ->sortable(),
+
                 TextColumn::make('last_login_at')
                     ->label('Last Login')
                     ->since()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('created_at')
-                    ->label('Created')
-                    ->dateTime('d M Y H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('creator.name')
-                    ->label('Created By')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('updated_at')
-                    ->label('Updated')
-                    ->dateTime('d M Y H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('updater.name')
-                    ->label('Updated By')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
             ])
 
-             ->filters([
+            ->filters([
 
                 SelectFilter::make('company')
                     ->relationship('company', 'company_name')
@@ -224,12 +227,19 @@ class UsersTable
 
             ->recordActions([
 
-                ViewAction::make(),
+                ActionGroup::make([
 
-                EditAction::make(),
+                    ViewAction::make(),
 
-                DeleteAction::make()
-                    ->requiresConfirmation(),
+                    EditAction::make(),
+
+                    DeleteAction::make()
+                        ->requiresConfirmation(),
+
+                ])
+                    ->label('Action')
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->button(),
 
             ])
 

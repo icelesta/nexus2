@@ -419,7 +419,7 @@ class EditGeneratePurchaseOrder extends EditRecord
             |--------------------------------------------------------------------------
             */
 
-            $purchaseOrder =
+            $purchaseOrders =
                 app(
                     GeneratePurchaseOrderService::class
                 )->generate(
@@ -432,11 +432,17 @@ class EditGeneratePurchaseOrder extends EditRecord
             |--------------------------------------------------------------------------
             */
 
+            $purchaseOrderCount = count($purchaseOrders);
+
+            $purchaseOrderNumbers = collect($purchaseOrders)
+                ->pluck('document_no')
+                ->implode(', ');
+
             Notification::make()
                 ->success()
                 ->title('Purchase Order Generated')
                 ->body(
-                    "Purchase Order {$purchaseOrder->document_no} has been generated successfully."
+                    "{$purchaseOrderCount} Purchase Order(s) generated successfully: {$purchaseOrderNumbers}."
                 )
                 ->send();
 

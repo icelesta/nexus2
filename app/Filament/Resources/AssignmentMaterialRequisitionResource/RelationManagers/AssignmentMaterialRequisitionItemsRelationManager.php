@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\AssignmentMaterialRequisitionResource\RelationManagers;
 
 use App\Models\AssignmentMaterialRequisitionItem;
+use App\Services\Purchasing\AssignmentMaterialRequisitionItemService; 
 
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
@@ -57,15 +58,28 @@ class AssignmentMaterialRequisitionItemsRelationManager extends RelationManager
                     ->preload()
                     ->required(),
 
-                TextInput::make('assigned_qty')
+                TextInput::make('unit_price')
+                    ->label('Unit Price')
                     ->numeric()
-                    ->minValue(0.0001)
-                    ->default(1)
+                    ->minValue(0)
+                    ->prefix('Rp')
                     ->required(),
 
                 Select::make('supplier_id')
-                    ->relationship('supplier', 'name')
-                    ->searchable()
+                    ->relationship(
+                        name: 'supplier',
+                        titleAttribute: 'supplier_name',
+                        modifyQueryUsing: fn ($query) => $query
+                            ->where('is_active', true)
+                            ->where('is_blacklisted', false)
+                            ->where('allow_purchase', true)
+                            ->orderBy('supplier_code'),
+                    )
+                    ->getOptionLabelFromRecordUsing(
+                        fn (\App\Models\Supplier $record): string =>
+                            "{$record->supplier_code} - {$record->supplier_name}"
+                    )
+                    ->searchable(['supplier_code', 'supplier_name'])
                     ->preload()
                     ->placeholder('Select Supplier'),
 
@@ -96,9 +110,14 @@ class AssignmentMaterialRequisitionItemsRelationManager extends RelationManager
                     ->searchable()
                     ->wrap(),
 
-                TextColumn::make('supplier.name')
+                TextColumn::make('supplier.supplier_name')
                     ->label('Supplier')
-                    ->placeholder('-')
+                    ->formatStateUsing(
+                        fn ($state, AssignmentMaterialRequisitionItem $record): string =>
+                            $record->supplier
+                                ? "{$record->supplier->supplier_code} - {$state}"
+                                : '-'
+                    )
                     ->searchable(),
 
                 TextColumn::make('assigned_qty')
@@ -163,7 +182,25 @@ class AssignmentMaterialRequisitionItemsRelationManager extends RelationManager
                     ->authorize(fn (Model $record): bool => auth()->user()->can(
                         'update',
                         $record,
-                    )),
+                    ))
+                    ->using(function (
+                        Model $record,
+                        array $data,
+                    ): Model {
+
+                        $service = app(
+                            AssignmentMaterialRequisitionItemService::class
+                        );
+
+                        return $service->updateAssignmentItem(
+                            itemId: (int) $record->getKey(),
+                            supplierId: isset($data['supplier_id'])
+                                ? (int) $data['supplier_id']
+                                : null,
+                            assignedQty: (float) $data['assigned_qty'],
+                            unitPrice: (float) $data['unit_price'],
+                        );
+                    }),
 
                 DeleteAction::make()
                     ->visible(fn (Model $record): bool => $record->canDelete())

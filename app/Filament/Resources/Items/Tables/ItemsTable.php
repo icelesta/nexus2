@@ -11,6 +11,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\ViewAction;
+use Filament\Actions\ActionGroup;
 
 use Filament\Support\Colors\Color;
 
@@ -22,6 +23,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Columns\ViewColumn;
+
 
 class ItemsTable
 {
@@ -250,22 +252,27 @@ class ItemsTable
 
             ->recordActions([
 
-                ViewAction::make()
-                    ->icon('heroicon-o-eye')
-                    ->tooltip('View'),
+                ActionGroup::make([
 
-                EditAction::make()
-                    ->icon('heroicon-o-pencil-square')
-                    ->color('warning')
-                    ->tooltip('Edit'),
+                    ViewAction::make()
+                        ->icon('heroicon-o-eye'),
 
-                DeleteAction::make()
-                    ->requiresConfirmation(),
+                    EditAction::make()
+                        ->icon('heroicon-o-pencil-square')
+                        ->color('warning'),
 
-                RestoreAction::make(),
+                    DeleteAction::make()
+                        ->requiresConfirmation(),
 
-                ForceDeleteAction::make()
-                    ->requiresConfirmation(),
+                    RestoreAction::make(),
+
+                    ForceDeleteAction::make()
+                        ->requiresConfirmation(),
+
+                ])
+                    ->label('Action')
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->button(),
 
             ])
 

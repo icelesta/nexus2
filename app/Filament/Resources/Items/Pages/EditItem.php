@@ -8,6 +8,7 @@ use App\Filament\Resources\Items\ItemResource;
 use Filament\Actions\DeleteAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Actions\Action;
 
 class EditItem extends EditRecord
 {
@@ -20,10 +21,13 @@ class EditItem extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-
             DeleteAction::make()
                 ->requiresConfirmation(),
 
+            $this->getSaveFormAction()
+                ->formId('form'),
+
+            $this->getCancelFormAction(),
         ];
     }
 
@@ -44,13 +48,17 @@ class EditItem extends EditRecord
 
     protected function getRedirectUrl(): string
     {
-        return static::getResource()::getUrl('edit', [
-            'record' => $this->record,
-        ]);
+        return static::getResource()::getUrl('index');
     }
 
     public function hasUnsavedDataChangesAlert(): bool
     {
         return true;
     }
+
+    protected function getFormActions(): array
+    {
+        return [];
+    }
+    
 }

@@ -47,6 +47,7 @@ class PurchaseRequisitionObserver
                 companyId: $purchaseRequisition->company_id,
                 businessUnitId: $purchaseRequisition->business_unit_id,
                 branchId: $purchaseRequisition->branch_id,
+                departmentId: $purchaseRequisition->department_id,
             );
 
         }

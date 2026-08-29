@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Numbering;
 
+use App\Models\Branch;
+use App\Models\Department;
 use App\Models\TransactionNumbering;
 use RuntimeException;
 use Illuminate\Support\Facades\DB;
@@ -18,20 +20,23 @@ class NumberingService
         ?int $companyId = null,
         ?int $businessUnitId = null,
         ?int $branchId = null,
-    ): string {
+        ?int $departmentId = null,
+    ): string
+    {
 
         return DB::transaction(function () use (
             $documentType,
             $companyId,
             $businessUnitId,
             $branchId,
+            $departmentId,
         ) {
-
             $numbering = $this->findConfiguration(
                 $documentType,
                 $companyId,
                 $businessUnitId,
                 $branchId,
+                $departmentId,
             );
 
             $this->validateConfiguration(
@@ -43,7 +48,8 @@ class NumberingService
             );
 
             $documentNumber = $this->buildNumber(
-                $numbering
+                $numbering,
+                $departmentId,
             );
 
             $this->incrementCounter(
@@ -63,31 +69,42 @@ class NumberingService
         ?int $companyId,
         ?int $businessUnitId,
         ?int $branchId,
+        ?int $departmentId,
     ): TransactionNumbering {
 
         $scopes = [
 
-            // Level 1
-            [$companyId, $businessUnitId, $branchId],
+            // Level 1 — Company + Business Unit + Branch + Department
+            [$companyId, $businessUnitId, $branchId, $departmentId],
 
-            // Level 2
-            [$companyId, $businessUnitId, null],
+            // Level 2 — Company + Branch
+            [$companyId, null, $branchId, null],
 
-            // Level 3
-            [$companyId, null, null],
+            // Level 3 — Company + Branch + Department
+            [$companyId, null, $branchId, $departmentId],
 
-            // Level 4
-            [null, null, null],
+            // Level 4 — Company + Business Unit + Branch
+            [$companyId, $businessUnitId, $branchId, null],
+
+            // Level 5 — Company + Business Unit
+            [$companyId, $businessUnitId, null, null],
+
+            // Level 6 — Company
+            [$companyId, null, null, null],
+
+            // Level 7 — Global
+            [null, null, null, null],
 
         ];
 
-        foreach ($scopes as [$company, $businessUnit, $branch]) {
+        foreach ($scopes as [$company, $businessUnit, $branch, $department]) {
 
             $numbering = $this->findByScope(
                 $documentType,
                 $company,
                 $businessUnit,
                 $branch,
+                $department,
             );
 
             if ($numbering instanceof TransactionNumbering) {
@@ -109,6 +126,7 @@ class NumberingService
         ?int $companyId,
         ?int $businessUnitId,
         ?int $branchId,
+        ?int $departmentId,
     ): ?TransactionNumbering {
 
         return TransactionNumbering::query()
@@ -128,6 +146,12 @@ class NumberingService
                 fn ($query) => $query->where('branch_id', $branchId),
                 fn ($query) => $query->whereNull('branch_id'),
             )
+            ->when(
+                $departmentId !== null,
+                fn ($query) => $query->where('department_id', $departmentId),
+                fn ($query) => $query->whereNull('department_id'),
+            )
+
             ->documentType($documentType)
             ->lockForUpdate()
             ->first();
@@ -241,14 +265,13 @@ class NumberingService
      */
     protected function buildNumber(
         TransactionNumbering $numbering,
+        ?int $departmentId = null,
     ): string {
 
         return $this->formatNumber(
-
             $numbering,
-
             $this->nextRunningNumber($numbering),
-
+            $departmentId,
         );
     }
 
@@ -260,9 +283,16 @@ class NumberingService
     protected function formatNumber(
         TransactionNumbering $numbering,
         string $running,
+        ?int $departmentId = null,
     ): string {
 
         $now = $numbering->numberingNow();
+
+        $branchCode = $numbering->branch?->branch_code ?? '';
+
+        $departmentCode = Department::query()
+            ->whereKey($departmentId)
+            ->value('department_code') ?? '';
 
         $number = strtr(
 
@@ -273,6 +303,14 @@ class NumberingService
                 '{PREFIX}' => strtoupper($numbering->prefix ?? ''),
 
                 '{SUFFIX}' => strtoupper($numbering->suffix ?? ''),
+
+                '{BRANCH_CODE}' => strtoupper($branchCode),
+
+                '{DEPARTMENT_CODE}' => strtoupper($departmentCode),
+
+                '{DOCUMENT_TYPE}' => strtoupper(
+                        $numbering->prefix ?? ''
+                    ),
 
                 '{YYYY}' => $now->format('Y'),
 

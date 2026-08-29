@@ -41,7 +41,7 @@ class GeneratePurchaseOrderService
      */
     public function generate(
         int $assignmentId,
-    ): PurchaseOrder {
+    ): array {
 
         return $this->db->transaction(function () use (
             $assignmentId,
@@ -59,34 +59,52 @@ class GeneratePurchaseOrderService
 
             /*
             |--------------------------------------------------------------------------
-            | Create Purchase Order Header
+            | Group Assignment Items by Supplier
             |--------------------------------------------------------------------------
             */
 
-            $purchaseOrder = $this->generateHeader(
-                $assignment,
-            );
+            $itemGroups = $assignment->items
+                ->groupBy('supplier_id');
 
             /*
             |--------------------------------------------------------------------------
-            | Copy Assignment Items
+            | Generate Purchase Orders
             |--------------------------------------------------------------------------
             */
 
-            $this->generateItems(
-                $assignment,
-                $purchaseOrder,
-            );
+            $purchaseOrders = [];
 
-            /*
-            |--------------------------------------------------------------------------
-            | Refresh Header Summary
-            |--------------------------------------------------------------------------
-            */
+            foreach ($itemGroups as $supplierId => $items) {
 
-            $this->refreshTotals(
-                $purchaseOrder,
-            );
+                $purchaseOrder = $this->generateHeader(
+                    $assignment,
+                    (int) $supplierId,
+                );
+
+                /*
+                |--------------------------------------------------------------------------
+                | Copy Supplier Items
+                |--------------------------------------------------------------------------
+                */
+
+                $this->generateItems(
+                    $items,
+                    $purchaseOrder,
+                );
+
+                /*
+                |--------------------------------------------------------------------------
+                | Refresh Header Summary
+                |--------------------------------------------------------------------------
+                */
+
+                $this->refreshTotals(
+                    $purchaseOrder,
+                );
+
+                $purchaseOrders[] =
+                    $purchaseOrder->refresh();
+            }
 
             /*
             |--------------------------------------------------------------------------
@@ -96,7 +114,7 @@ class GeneratePurchaseOrderService
 
             $this->updateAssignment(
                 $assignment,
-                $purchaseOrder,
+                $purchaseOrders,
             );
 
             /*
@@ -105,7 +123,7 @@ class GeneratePurchaseOrderService
             |--------------------------------------------------------------------------
             */
 
-            return $purchaseOrder->refresh();
+            return $purchaseOrders;
 
         });
 
@@ -287,24 +305,27 @@ class GeneratePurchaseOrderService
         |--------------------------------------------------------------------------
         | Duplicate Validation
         |--------------------------------------------------------------------------
+        |
+        | One AMR may generate multiple Purchase Orders,
+        | typically one Purchase Order per selected Supplier.
+        |
+        | Therefore the legacy single-value purchase_order_id
+        | must NOT be used as the source of truth.
+        |
+        | The current multi-supplier relationship is:
+        |
+        |     assignment_material_requisition
+        |              ↓
+        |        purchase_orders
+        |
         */
 
         if (
-            $assignment->purchase_order_id
+            $assignment->purchaseOrders()->exists()
         ) {
 
             throw new RuntimeException(
                 'Purchase Order has already been generated for this Assignment Material Requisition.'
-            );
-        }
-
-        if (
-            method_exists($assignment, 'purchaseOrder')
-            && $assignment->purchaseOrder()->exists()
-        ) {
-
-            throw new RuntimeException(
-                'Purchase Order has already been generated.'
             );
         }
 
@@ -369,6 +390,7 @@ class GeneratePurchaseOrderService
      */
     protected function generateHeader(
         AssignmentMaterialRequisition $assignment,
+        int $supplierId,
     ): PurchaseOrder {
 
         /*
@@ -377,20 +399,8 @@ class GeneratePurchaseOrderService
         |--------------------------------------------------------------------------
         */
 
-        $supplierId = $assignment->items()
-            ->select('supplier_id')
-            ->distinct()
-            ->pluck('supplier_id');
-
-        if ($supplierId->count() !== 1) {
-
-            throw new RuntimeException(
-                'Purchase Order can only be generated when all items use the same supplier.'
-            );
-        }
-
-        $supplier = \App\Models\Supplier::query()
-            ->findOrFail($supplierId->first());
+        $supplier = Supplier::query()
+            ->findOrFail($supplierId);
 
         $paymentTermId = $supplier->payment_term_id;
 
@@ -409,6 +419,8 @@ class GeneratePurchaseOrderService
             businessUnitId: $assignment->business_unit_id,
 
             branchId: $assignment->branch_id,
+
+            departmentId: $assignment->department_id,
 
         );
 
@@ -454,7 +466,7 @@ class GeneratePurchaseOrderService
             */
 
             'supplier_id'
-                => $supplierId->first(),
+                => $supplierId,
 
             'payment_term_id'
                 => $paymentTermId,
@@ -593,19 +605,10 @@ class GeneratePurchaseOrderService
      * Generate Purchase Order Items.
      */
     protected function generateItems(
-        AssignmentMaterialRequisition $assignment,
+        $items,
         PurchaseOrder $purchaseOrder,
     ): void {
 
-        /*
-        |--------------------------------------------------------------------------
-        | Load Items
-        |--------------------------------------------------------------------------
-        */
-
-        $assignment->loadMissing([
-            'items',
-        ]);
 
         /*
         |--------------------------------------------------------------------------
@@ -613,7 +616,7 @@ class GeneratePurchaseOrderService
         |--------------------------------------------------------------------------
         */
 
-        foreach ($assignment->items as $assignmentItem) {
+        foreach ($items as $assignmentItem) {
 
             $purchaseOrder->items()->create([
 
@@ -900,16 +903,24 @@ class GeneratePurchaseOrderService
     |--------------------------------------------------------------------------
     */
 
-    /**
-     * Update Assignment after Purchase Order generation.
-     */
     protected function updateAssignment(
         AssignmentMaterialRequisition $assignment,
-        PurchaseOrder $purchaseOrder
+        array $purchaseOrders,
     ): void {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Multi-Supplier PO Generation
+        |--------------------------------------------------------------------------
+        |
+        | AMR -> Purchase Orders is now one-to-many.
+        |
+        | The legacy purchase_order_id field is intentionally
+        | not updated here.
+        |
+        */
+
         $assignment->update([
-            'purchase_order_id' => $purchaseOrder->getKey(),
-            'status' => AssignmentMaterialRequisition::STATUS_COMPLETED,
             'updated_by' => auth()->id(),
         ]);
     }
