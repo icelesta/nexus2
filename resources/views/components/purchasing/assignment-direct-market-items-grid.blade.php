@@ -1,16 +1,6 @@
 <div>
     <x-filament::section>
 
-        <x-slot name="heading">
-            Assignment Items
-        </x-slot>
-
-        @if ($this->canEdit)
-            <x-slot name="description">
-                Assign supplier, quantity and pricing for each Direct Market item.
-            </x-slot>
-        @endif
-
         <div class="flex items-start justify-between gap-6">
 
             <div>
@@ -351,7 +341,32 @@
 
 
                                 <td class="border px-2 py-1.5 text-right font-semibold">
-                                    Rp {{ number_format((float) $item->grand_total, 2) }}
+                                    @php
+                                        $rowAssignedQty = (float) (
+                                            $this->assignedQty[$item->id]
+                                            ?? $item->assigned_qty
+                                            ?? 0
+                                        );
+
+                                        $rowUnitPrice = (float) (
+                                            $this->unitPrices[$item->id]
+                                            ?? $item->unit_price
+                                            ?? 0
+                                        );
+
+                                        $rowDiscountAmount = (float) (
+                                            $this->discountAmounts[$item->id]
+                                            ?? $item->discount_amount
+                                            ?? 0
+                                        );
+
+                                        $rowAmount = max(
+                                            0,
+                                            ($rowAssignedQty * $rowUnitPrice) - $rowDiscountAmount
+                                        );
+                                    @endphp
+
+                                    Rp {{ number_format($rowAmount, 2) }}
                                 </td>
 
                                 @if ($this->canEdit)
@@ -382,15 +397,16 @@
                                                 Save & Close
                                             </x-filament::button>
 
-                                            <x-filament::button
-                                                color="gray"
-                                                size="xs"
-                                                icon="heroicon-o-x-mark"
-                                                wire:click="cancelEdit"
+                                            <button
+                                                type="button"
+                                                wire:click="resetPricing({{ $item->id }})"
+                                                wire:loading.attr="disabled"
+                                                wire:target="resetPricing({{ $item->id }})"
                                                 class="min-w-[92px] justify-center rounded-lg"
                                             >
-                                                Cancel
-                                            </x-filament::button>
+                                                <x-heroicon-o-arrow-path class="h-4 w-4" />
+                                                Reset
+                                            </button>
 
                                         </div>
 

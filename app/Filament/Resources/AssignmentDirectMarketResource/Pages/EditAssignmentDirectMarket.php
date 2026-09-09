@@ -226,20 +226,40 @@ class EditAssignmentDirectMarket extends EditRecord
 
     protected function submitAssignment(): void
     {
-        app(
-            AssignmentDirectMarketService::class
-        )
-            ->submit(
-                $this->record->id
+        try {
+
+            app(
+                AssignmentDirectMarketService::class
+            )
+                ->submit(
+                    $this->record->id
+                );
+
+            $this->refreshRecord();
+
+            $this->success(
+                'Assignment Direct Market submitted successfully.'
             );
 
-        $this->refreshRecord();
+            $this->redirectToEdit();
 
-        $this->success(
-            'Assignment Direct Market submitted successfully.'
-        );
+        } catch (\RuntimeException $e) {
 
-        $this->redirectToEdit();
+            Notification::make()
+                ->danger()
+                ->title(
+                    'Submit Tidak Dapat Dilanjutkan'
+                )
+                ->body(
+                    'Assignment Items belum lengkap. '
+                    . 'Pastikan Supplier dan Unit Price sudah diisi '
+                    . 'sebelum melakukan Submit.'
+                )
+                ->persistent()
+                ->send();
+
+            return;
+        }
     }
 
     protected function handleRecordUpdate(

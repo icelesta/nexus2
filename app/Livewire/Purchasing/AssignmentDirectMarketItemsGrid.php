@@ -5,13 +5,12 @@ declare(strict_types=1);
 namespace App\Livewire\Purchasing;
 
 use App\Models\AdmLimitMaster;
-use Filament\Notifications\Notification;
-
 use App\Models\AssignmentDirectMarket;
 use App\Models\AssignmentDirectMarketItem;
 use App\Models\Supplier;
 use App\Models\TaxMaster;
 use App\Services\Purchasing\AssignmentDirectMarketService;
+use Filament\Notifications\Notification;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Component;
@@ -76,12 +75,19 @@ class AssignmentDirectMarketItemsGrid extends Component
     /**
      * Discount Amount.
      */
-    public array $discountAmounts = [];    
+    public array $discountAmounts = [];
+
+    /**
+     * Last persisted pricing values for the row currently being edited.
+     *
+     * Reset must restore exactly these values.
+     */
+    public array $pricingSnapshots = [];
 
     /**
      * Lead Time in Days.
      */
-    public array $leadTimes = [];    
+    public array $leadTimes = [];
 
     /**
      * Mount Component.
@@ -90,7 +96,6 @@ class AssignmentDirectMarketItemsGrid extends Component
         AssignmentDirectMarket $assignment,
         bool $readonly = false,
     ): void {
-
         $this->assignment = $assignment;
         $this->readonly = $readonly;
 
@@ -136,10 +141,10 @@ class AssignmentDirectMarketItemsGrid extends Component
                 (float) $item->discount_percent;
 
             $this->discountAmounts[$item->id] =
-                (float) $item->discount_amount;                
+                (float) $item->discount_amount;
 
             $this->leadTimes[$item->id] =
-                (int) ($item->lead_time_days ?? 0);                
+                (int) ($item->lead_time_days ?? 0);
 
             $this->selectedTax[$item->id] =
                 $item->tax_id;
@@ -223,7 +228,6 @@ class AssignmentDirectMarketItemsGrid extends Component
     protected function findItem(
         int $itemId,
     ): ?AssignmentDirectMarketItem {
-
         return AssignmentDirectMarketItem::query()
             ->with([
                 'directMarketItem.item',
@@ -259,6 +263,42 @@ class AssignmentDirectMarketItemsGrid extends Component
 
         $this->editingRow = $item->id;
 
+        /*
+        |--------------------------------------------------------------------------
+        | LOAD CURRENT PERSISTED VALUES
+        |--------------------------------------------------------------------------
+        */
+
+        $unitPrice = (float) $item->unit_price;
+        $discountPercent = (float) $item->discount_percent;
+        $discountAmount = (float) $item->discount_amount;
+
+        /*
+        |--------------------------------------------------------------------------
+        | CREATE RESET SNAPSHOT
+        |--------------------------------------------------------------------------
+        |
+        | These are the values that Reset must restore to.
+        |
+        */
+
+        $this->pricingSnapshots[$item->id] = [
+            'unit_price' =>
+                $unitPrice,
+
+            'discount_percent' =>
+                $discountPercent,
+
+            'discount_amount' =>
+                $discountAmount,
+        ];
+
+        /*
+        |--------------------------------------------------------------------------
+        | LOAD EDIT STATE
+        |--------------------------------------------------------------------------
+        */
+
         $this->selectedSupplier[$item->id] =
             $item->supplier_id;
 
@@ -266,16 +306,16 @@ class AssignmentDirectMarketItemsGrid extends Component
             (float) $item->assigned_qty;
 
         $this->unitPrices[$item->id] =
-            (float) $item->unit_price;
+            $unitPrice;
 
         $this->discountPercents[$item->id] =
-            (float) $item->discount_percent;
+            $discountPercent;
 
         $this->discountAmounts[$item->id] =
-            (float) $item->discount_amount;            
+            $discountAmount;
 
         $this->leadTimes[$item->id] =
-            (int) ($item->lead_time_days ?? 0);            
+            (int) ($item->lead_time_days ?? 0);
 
         $this->selectedTax[$item->id] =
             $item->tax_id;
@@ -283,14 +323,31 @@ class AssignmentDirectMarketItemsGrid extends Component
 
     /**
      * Cancel Editing.
+     *
+     * Discard all unsaved Livewire values and restore
+     * the current row from the persisted database state.
      */
     public function cancelEdit(): void
     {
-        if (! $this->canEdit) {
-            return;
-        }
+        $itemId = $this->editingRow;
+
+        /*
+        |--------------------------------------------------------------------------
+        | CLOSE EDIT MODE FIRST
+        |--------------------------------------------------------------------------
+        |
+        | Cancellation must always be allowed.
+        | Do not block Cancel with canEdit().
+        |
+        */
 
         $this->editingRow = null;
+
+        /*
+        |--------------------------------------------------------------------------
+        | CLEAR UNSAVED LIVEWIRE STATE
+        |--------------------------------------------------------------------------
+        */
 
         $this->selectedSupplier = [];
 
@@ -306,6 +363,16 @@ class AssignmentDirectMarketItemsGrid extends Component
 
         $this->selectedTax = [];
 
+        /*
+        |--------------------------------------------------------------------------
+        | RESTORE PERSISTED DATABASE STATE
+        |--------------------------------------------------------------------------
+        |
+        | loadItems() queries the database again and repopulates
+        | all editable arrays from the persisted values.
+        |
+        */
+
         $this->loadItems();
     }
 
@@ -315,7 +382,6 @@ class AssignmentDirectMarketItemsGrid extends Component
     protected function saveRow(
         int $itemId,
     ): void {
-
         if (! $this->canEdit) {
             return;
         }
@@ -362,7 +428,6 @@ class AssignmentDirectMarketItemsGrid extends Component
         )->updateItemPricing(
             itemId: $itemId,
             data: [
-
                 'assigned_qty' =>
                     $assignedQty,
 
@@ -383,7 +448,6 @@ class AssignmentDirectMarketItemsGrid extends Component
 
                 'tax_id' =>
                     $taxId,
-
             ],
         );
 
@@ -399,7 +463,6 @@ class AssignmentDirectMarketItemsGrid extends Component
     public function updateRow(
         int $itemId,
     ): void {
-
         $this->saveRow($itemId);
 
         if ($this->canEdit) {
@@ -412,17 +475,26 @@ class AssignmentDirectMarketItemsGrid extends Component
      *
      * The current edited row is projected using the
      * current Livewire values before anything is saved.
+     *
+     * Limit rule:
+     *
+     *     Total < Limit  = ALLOW
+     *     Total >= Limit = BLOCK
+     *
+     * This method never writes to the database.
      */
     protected function validateAdmLimitBeforeClose(
         int $itemId,
     ): bool {
+        if (! $this->canEdit) {
+            return false;
+        }
 
         $limitMaster = AdmLimitMaster::query()
             ->active()
             ->first();
 
         if ($limitMaster === null) {
-
             Notification::make()
                 ->danger()
                 ->title('ADM Limit Master Not Configured')
@@ -476,6 +548,13 @@ class AssignmentDirectMarketItemsGrid extends Component
         |--------------------------------------------------------------------------
         | SAME PRICING BASIS AS ADM SERVICE
         |--------------------------------------------------------------------------
+        |
+        | Gross      = Assigned Qty × Unit Price
+        | Discount   = Gross × Discount %
+        | Net        = Gross - Discount Amount
+        | Tax        = Net × Tax %
+        | Grand      = Net + Tax
+        |
         */
 
         $grossAmount = round(
@@ -484,17 +563,14 @@ class AssignmentDirectMarketItemsGrid extends Component
         );
 
         if ($discountPercent > 0) {
-
             $discountAmount = round(
                 $grossAmount * ($discountPercent / 100),
                 2
             );
-
         } elseif (
             $discountAmount > 0
             && $grossAmount > 0
         ) {
-
             $discountPercent = round(
                 ($discountAmount / $grossAmount) * 100,
                 2
@@ -511,10 +587,12 @@ class AssignmentDirectMarketItemsGrid extends Component
 
         /*
         |--------------------------------------------------------------------------
-        | Tax
+        | TAX
         |--------------------------------------------------------------------------
         |
-        | Keep existing ADM tax behavior unchanged.
+        | Keep the existing ADM tax behavior unchanged.
+        | The actual pricing service uses the item's persisted
+        | tax_percent when no tax_percent is explicitly supplied.
         |
         */
 
@@ -536,6 +614,10 @@ class AssignmentDirectMarketItemsGrid extends Component
         |--------------------------------------------------------------------------
         | PROJECTED ADM TOTAL
         |--------------------------------------------------------------------------
+        |
+        | Replace the currently persisted value of the edited
+        | item with the projected value from Livewire.
+        |
         */
 
         $currentTotal = round(
@@ -567,13 +649,12 @@ class AssignmentDirectMarketItemsGrid extends Component
         | LIMIT RULE
         |--------------------------------------------------------------------------
         |
-        | < limit  = ALLOW
-        | >= limit = BLOCK
+        | Below limit = ALLOW
+        | At or above limit = BLOCK
         |
         */
 
         if ($projectedTotal >= $limitAmount) {
-
             Notification::make()
                 ->danger()
                 ->title('ADM Limit Exceeded')
@@ -604,15 +685,16 @@ class AssignmentDirectMarketItemsGrid extends Component
         return true;
     }
 
-
     /**
      * Save Assignment Direct Market Item
      * and close the current row editing mode.
+     *
+     * ADM Limit validation MUST happen before saveRow()
+     * so a rejected amount is never persisted.
      */
     public function saveAndClose(
         int $itemId,
     ): void {
-
         /*
         |--------------------------------------------------------------------------
         | ADM LIMIT CHECK
@@ -649,16 +731,13 @@ class AssignmentDirectMarketItemsGrid extends Component
 
         $this->loadItems();
     }
-    /**
-     * Render Component.
-     */
-    public function render(): View
-    {
-        return view(
-            'components.purchasing.assignment-direct-market-items-grid',
-        );
-    }
 
+    /**
+     * Get active ADM limit amount.
+     *
+     * Used by the Assignment Items header to display
+     * the current configured ADM limit.
+     */
     protected function getAdmLimitAmount(): ?float
     {
         $limitAmount = AdmLimitMaster::query()
@@ -669,5 +748,47 @@ class AssignmentDirectMarketItemsGrid extends Component
             ? (float) $limitAmount
             : null;
     }
-    
+
+
+    /**
+     * Render Component.
+     */
+    public function render(): View
+    {
+        return view(
+            'components.purchasing.assignment-direct-market-items-grid',
+        );
+    }
+
+    /**
+     * Reset Pricing.
+     *
+     * Reset pricing inputs to zero.
+     *
+     * Only:
+     * - Unit Price
+     * - Discount %
+     * - Discount Amount
+     *
+     * Other row values are intentionally untouched.
+     */
+    public function resetPricing(int $itemId): void
+    {
+        if (! $this->canEdit) {
+            return;
+        }
+
+        if ($this->editingRow !== $itemId) {
+            return;
+        }
+
+        // Reset Supplier
+        $this->selectedSupplier[$itemId] = null;
+
+        // Reset Pricing
+        $this->unitPrices[$itemId] = 0;
+        $this->discountPercents[$itemId] = 0;
+        $this->discountAmounts[$itemId] = 0;
+    }
+
 }

@@ -638,6 +638,33 @@ class AssignmentDirectMarketService
 
                 /*
                 |--------------------------------------------------------------------------
+                | Validate Supplier
+                |--------------------------------------------------------------------------
+                */
+
+                if (blank($item->supplier_id)) {
+                    throw new RuntimeException(
+                        "Assignment Direct Market [{$assignment->document_no}] "
+                        . 'contains an item without a supplier.'
+                    );
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Validate Unit Price
+                |--------------------------------------------------------------------------
+                */
+
+                if ((float) $item->unit_price <= 0) {
+                    throw new RuntimeException(
+                        "Assignment Direct Market [{$assignment->document_no}] "
+                        . 'contains an item without a valid unit price.'
+                    );
+                }
+                
+
+                /*
+                |--------------------------------------------------------------------------
                 | Authenticated User
                 |--------------------------------------------------------------------------
                 */
