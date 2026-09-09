@@ -69,11 +69,37 @@ class MyPendingApprovalsWidget extends Widget
     */
 
     public function getDocumentUrl(
-        int $documentId
+        $transaction
     ): string {
-        return url(
-            '/admin/purchase-requisitions/' . $documentId
-        );
+        return match ($transaction->document_type) {
+
+            'ASSIGNMENT_DIRECT_MARKET' =>
+                url(
+                    '/admin/assignment-direct-markets/'
+                    . $transaction->document_id
+                ),
+
+            'DIRECT_MARKET' =>
+                url(
+                    '/admin/direct-markets/'
+                    . $transaction->document_id
+                ),
+
+            'PURCHASE_ORDER' =>
+                url(
+                    '/admin/purchase-orders/'
+                    . $transaction->document_id
+                ),
+
+            'MATERIAL_REQUISITION' =>
+                url(
+                    '/admin/purchase-requisitions/'
+                    . $transaction->document_id
+                ),
+
+            default =>
+                '#',
+        };
     }
 
     public function getCurrentRole(

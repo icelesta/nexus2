@@ -324,6 +324,10 @@ class TransactionNumbering extends Model
 
     public const DOC_ASSIGNMENT_MATERIAL = 'ASSIGNMENT_MATERIAL';
 
+    public const DOC_ASSIGNMENT_DIRECT_MARKET = 'ASSIGNMENT_DIRECT_MARKET';
+
+    public const DOC_DIRECT_MARKET = 'DIRECT_MARKET';
+
     public const DOC_REQUEST_FOR_QUOTATION = 'REQUEST_FOR_QUOTATION';
 
     public const DOC_PURCHASE_ORDER = 'PURCHASE_ORDER';

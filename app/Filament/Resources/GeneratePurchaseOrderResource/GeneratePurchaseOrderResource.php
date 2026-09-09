@@ -42,7 +42,9 @@ class GeneratePurchaseOrderResource extends Resource
     protected static ?int $navigationSort = 45;
 
     protected static ?string $navigationLabel =
-        'Generate Purchase Order';
+        'Generate PO';
+
+    protected static ?string $navigationParentItem = 'Material Requisition';
 
     protected static ?string $modelLabel =
         'Generate Purchase Order';

@@ -165,7 +165,7 @@
                                     color="primary"
                                     icon="heroicon-m-arrow-top-right-on-square"
                                     :href="$this->getDocumentUrl(
-                                        (int) $transaction->document_id
+                                        $transaction
                                     )"
                                 >
                                     View & Approve

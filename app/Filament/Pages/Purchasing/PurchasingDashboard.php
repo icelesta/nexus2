@@ -24,7 +24,7 @@ class PurchasingDashboard extends Page
     /**
      * Navigation
      */
-    protected static ?string $navigationLabel = 'Dashboard';
+    protected static ?string $navigationLabel = 'Dashboard Purchasing';
 
     protected static string|UnitEnum|null $navigationGroup = 'Purchasing';
 

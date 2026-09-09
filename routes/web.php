@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
+use App\Filament\Resources\DirectMarkets\Pages\PrintDirectMarket;
 
 use App\Http\Controllers\NotificationController;
 
@@ -191,3 +192,18 @@ Route::middleware('auth')
     )
         ->middleware(['web', 'auth'])
         ->name('purchasing.amr.documents.download');
+
+
+    Route::get(
+        '/admin/direct-markets/{record}/print/pdf',
+        function (int|string $record) {
+
+            $page = app(PrintDirectMarket::class);
+
+            $page->mount($record);
+
+            return $page->exportPdf();
+        }
+    )
+        ->name('direct-markets.print.pdf')
+        ->middleware(['web', 'auth']);     

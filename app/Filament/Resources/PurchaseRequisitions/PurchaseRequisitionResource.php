@@ -26,7 +26,9 @@ class PurchaseRequisitionResource extends Resource
         'heroicon-o-document-text';
 
     protected static ?string $navigationLabel =
-        'Material Requisition';
+        'Create MR';
+
+    protected static ?string $navigationParentItem = 'Material Requisition';
 
     protected static UnitEnum|string|null $navigationGroup =
         'Purchasing';
@@ -36,6 +38,10 @@ class PurchaseRequisitionResource extends Resource
     protected static ?string $recordTitleAttribute =
         'pr_no';
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return true;
+    }
 
     /*
     |--------------------------------------------------------------------------

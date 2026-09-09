@@ -36,7 +36,8 @@ class ApprovalTransactionService
             $documentId,
             $documentNo,
             $createdBy,
-            $startingLevel
+            $startingLevel,
+            $approvalModule
         ) {
 
             /*
@@ -46,7 +47,7 @@ class ApprovalTransactionService
             */
 
             $master = $this->getActiveMaster(
-                $documentType
+                $approvalModule ?? $documentType
             );
 
             /*
@@ -378,7 +379,16 @@ class ApprovalTransactionService
         $steps = $master->steps
             ->sortBy('approval_level');
 
-        if ($transaction->document_type === 'MATERIAL_REQUISITION') {
+        if (
+            in_array(
+                $transaction->document_type,
+                [
+                    'MATERIAL_REQUISITION',
+                    'DIRECT_MARKET',
+                ],
+                true
+            )
+        ) {
             $steps = $steps->take(1);
         }
 
@@ -1033,6 +1043,8 @@ class ApprovalTransactionService
                                 $approver->getKey(),
                         ]);
 
+
+
                         $transaction = $transaction->fresh([
                             'approvalMaster',
                             'steps',
@@ -1162,37 +1174,60 @@ class ApprovalTransactionService
                     return $transaction;
                 }
 
-                /*
-                |--------------------------------------------------------------------------
-                | NON-MATERIAL REQUISITION WORKFLOW
-                |--------------------------------------------------------------------------
-                |
-                | Preserve generic Approval Engine behavior for:
-                | PURCHASE_ORDER
-                | GOODS_RECEIPT
-                | Other configured document types.
-                |--------------------------------------------------------------------------
-                */
+                if (
+                    $transaction->document_type === 'DIRECT_MARKET'
+                ) {
+                    $directMarket = \App\Models\DirectMarket::query()
+                        ->lockForUpdate()
+                        ->find(
+                            (int) $transaction->document_id
+                        );
 
-                $nextStep = $this->getNextStep(
-                    $transaction
-                );
+                    if (! $directMarket) {
+                        throw new RuntimeException(
+                            "Direct Market [{$transaction->document_id}] not found."
+                        );
+                    }
 
-                /*
-                |--------------------------------------------------------------------------
-                | FINAL APPROVAL
-                |--------------------------------------------------------------------------
-                |
-                | No next configured step means the current step
-                | is the final approval level.
-                |
-                */
-
-                if (! $nextStep) {
+                    if (
+                        $directMarket->status
+                        !== \App\Models\DirectMarket::STATUS_SUBMITTED
+                    ) {
+                        throw new RuntimeException(
+                            "Direct Market [{$directMarket->dm_no}] "
+                            . 'is not in Submitted status for approval.'
+                        );
+                    }
 
                     /*
                     |--------------------------------------------------------------------------
-                    | Approval Transaction → APPROVED
+                    | Approve Direct Market
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $directMarket->update([
+                        'status' =>
+                            \App\Models\DirectMarket::STATUS_APPROVED,
+
+                        'updated_by' =>
+                            $approver->getKey(),
+                    ]);
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Create Assignment Direct Market
+                    |--------------------------------------------------------------------------
+                    */
+
+                    app(
+                        \App\Services\Purchasing\AssignmentDirectMarketService::class
+                    )->createFromApprovedDirectMarket(
+                        (int) $directMarket->getKey()
+                    );
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Finalize DM Approval Transaction
                     |--------------------------------------------------------------------------
                     */
 
@@ -1207,48 +1242,131 @@ class ApprovalTransactionService
                             $approver->getKey(),
                     ]);
 
-                    /*
-                    |--------------------------------------------------------------------------
-                    | Material Requisition Integration
-                    |--------------------------------------------------------------------------
-                    */
+                    $transaction = $transaction->fresh([
+                        'approvalMaster',
+                        'steps',
+                    ]);
 
-                    if (
-                        $transaction->document_type
-                        === 'MATERIAL_REQUISITION'
-                    ) {
+                    app(
+                        \App\Services\Notifications\NotificationService::class
+                    )->notifyFinalApproved(
+                        $transaction
+                    );
 
-                        /*
-                        |--------------------------------------------------------------------------
-                        | Approve Material Requisition
-                        |--------------------------------------------------------------------------
-                        */
+                    return $transaction;
+                }
 
-                        $purchaseRequisitionService =
-                            app(
-                                PurchaseRequisitionService::class
-                            );
-
-                        $purchaseRequisitionService->approve(
+                if ($transaction->document_type === 'ASSIGNMENT_DIRECT_MARKET') {
+                    $assignment = \App\Models\AssignmentDirectMarket::query()
+                        ->lockForUpdate()
+                        ->find(
                             (int) $transaction->document_id
                         );
 
-                        /*
-                        |--------------------------------------------------------------------------
-                        | Create Assignment Material Requisition
-                        |--------------------------------------------------------------------------
-                        */
-
-                        $assignmentService =
-                            app(
-                                AssignmentMaterialRequisitionService::class
-                            );
-
-                        $assignmentService
-                            ->createFromApprovedPurchaseRequisition(
-                                (int) $transaction->document_id
-                            );
+                    if (! $assignment) {
+                        throw new RuntimeException(
+                            "Assignment Direct Market [{$transaction->document_id}] not found."
+                        );
                     }
+
+                    if (
+                        $assignment->status
+                        !== \App\Models\AssignmentDirectMarket::STATUS_WAITING_APPROVAL
+                    ) {
+                        throw new RuntimeException(
+                            "Assignment Direct Market [{$assignment->document_no}] is not in Waiting Approval status for approval."
+                        );
+                    }
+
+                    $assignment->update([
+                        'status' =>
+                            \App\Models\AssignmentDirectMarket::STATUS_APPROVED,
+
+                        'updated_by' =>
+                            $approver->getKey(),
+                    ]);
+
+                    $transaction->update([
+                        'status' =>
+                            'APPROVED',
+
+                        'completed_at' =>
+                            now(),
+
+                        'updated_by' =>
+                            $approver->getKey(),
+                    ]);
+
+                    $transaction = $transaction->fresh([
+                        'approvalMaster',
+                        'steps',
+                    ]);
+
+                    app(
+                        \App\Services\Notifications\NotificationService::class
+                    )->notifyFinalApproved(
+                        $transaction
+                    );
+
+                    return $transaction;
+                }
+
+                $nextStep = $this->getNextStep(
+                    $transaction
+                );
+
+                if (! $nextStep) {
+
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Approval Transaction → APPROVED
+                |--------------------------------------------------------------------------
+                */
+
+                $transaction->update([
+                    'status' =>
+                        'APPROVED',
+
+                    'completed_at' =>
+                        now(),
+
+                    'updated_by' =>
+                        $approver->getKey(),
+                ]);
+
+                /*
+                |--------------------------------------------------------------------------
+                | Material Requisition Integration
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    $transaction->document_type
+                    === 'MATERIAL_REQUISITION'
+                ) {
+
+                    $purchaseRequisitionService =
+                        app(
+                            PurchaseRequisitionService::class
+                        );
+
+                    $purchaseRequisitionService->approve(
+                        (int) $transaction->document_id
+                    );
+
+                    $assignmentService =
+                        app(
+                            AssignmentMaterialRequisitionService::class
+                        );
+
+                    $assignmentService
+                        ->createFromApprovedPurchaseRequisition(
+                            (int) $transaction->document_id
+                        );
+                }
+
 
                     /*
                     |--------------------------------------------------------------------------

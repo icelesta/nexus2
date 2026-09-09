@@ -45,7 +45,6 @@ class PurchaseRequisitionForm
                             ->minDate(fn (Get $get) => $get('request_date'))
                             ->required(),
 
-
                         Select::make('company_id')
                             ->label('Company')
                             ->relationship('company', 'company_name')
@@ -57,7 +56,6 @@ class PurchaseRequisitionForm
                             ->preload()
                             ->live()
                             ->required(),
-                            
 
                         Select::make('branch_id')
                             ->label('Branch')
@@ -68,9 +66,7 @@ class PurchaseRequisitionForm
                             )
                             ->searchable()
                             ->preload()
-                            ->required(),                       
-
-
+                            ->required(),
 
                         Select::make('business_unit_id')
                             ->label('Business Unit')
@@ -88,6 +84,9 @@ class PurchaseRequisitionForm
                             ->relationship('department', 'department_name')
                             ->searchable()
                             ->preload()
+                            ->default(auth()->user()?->department_id)
+                            ->disabled()
+                            ->dehydrated()
                             ->required(),
 
                         Select::make('section_id')
@@ -141,7 +140,7 @@ class PurchaseRequisitionForm
                             ->columnSpanFull(),
 
                     ])
-                    ->columns(2)
+                    ->columns(4)
                     ->columnSpanFull()
                     ->collapsible(false),
 
@@ -155,8 +154,6 @@ class PurchaseRequisitionForm
                     ->description('List of requested items.')
                     ->headerActions([
                         PurchaseRequisitionItemActions::add(),
-                        PurchaseRequisitionItemActions::import(),
-                        PurchaseRequisitionItemActions::copy(),
                         PurchaseRequisitionItemActions::clear(),
                     ])
                     ->schema([

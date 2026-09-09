@@ -39,7 +39,7 @@ class PurchaseOrderResource extends Resource
 
     protected static ?int $navigationSort = 50;
 
-    protected static ?string $navigationLabel = 'Purchase Order';
+    protected static ?string $navigationLabel = 'Purchase Order (PO)';
 
     protected static ?string $modelLabel = 'Purchase Order';
 

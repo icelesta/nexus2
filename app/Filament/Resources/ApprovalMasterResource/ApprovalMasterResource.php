@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\ApprovalMasterResource;
 
-use App\Filament\Resources\ApprovalMasterResource\RelationManagers\ApprovalStepsRelationManager;
-
 use App\Filament\Resources\ApprovalMasterResource\Pages\CreateApprovalMaster;
 use App\Filament\Resources\ApprovalMasterResource\Pages\EditApprovalMaster;
 use App\Filament\Resources\ApprovalMasterResource\Pages\ListApprovalMasters;
 use App\Filament\Resources\ApprovalMasterResource\Pages\ViewApprovalMaster;
+use App\Filament\Resources\ApprovalMasterResource\RelationManagers\ApprovalStepsRelationManager;
 use App\Filament\Resources\ApprovalMasterResource\Schemas\ApprovalMasterForm;
 use App\Filament\Resources\ApprovalMasterResource\Tables\ApprovalMastersTable;
 use App\Models\ApprovalMaster;
@@ -30,12 +29,6 @@ class ApprovalMasterResource extends Resource
     */
 
     protected static ?string $model = ApprovalMaster::class;
-
-    /*
-    |--------------------------------------------------------------------------
-    | Slug
-    |--------------------------------------------------------------------------
-    */
 
     protected static ?string $slug = 'approval-masters';
 
@@ -91,9 +84,10 @@ class ApprovalMasterResource extends Resource
     public static function getRelations(): array
     {
         return [
-            \App\Filament\Resources\ApprovalMasterResource\RelationManagers\ApprovalStepsRelationManager::class,
+            ApprovalStepsRelationManager::class,
         ];
     }
+
     /*
     |--------------------------------------------------------------------------
     | Pages
@@ -103,10 +97,10 @@ class ApprovalMasterResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => ListApprovalMasters::route('/'),
+            'index' => ListApprovalMasters::route('/'),
             'create' => CreateApprovalMaster::route('/create'),
-            'view'   => ViewApprovalMaster::route('/{record}'),
-            'edit'   => EditApprovalMaster::route('/{record}/edit'),
+            'view' => ViewApprovalMaster::route('/{record}'),
+            'edit' => EditApprovalMaster::route('/{record}/edit'),
         ];
     }
 
@@ -136,6 +130,4 @@ class ApprovalMasterResource extends Resource
     {
         return parent::getEloquentQuery();
     }
-
-
 }

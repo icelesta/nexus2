@@ -13,10 +13,13 @@ use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\MenuItem;
+use Filament\Navigation\NavigationItem;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\View\PanelsRenderHook;
+use App\Filament\Resources\PurchaseRequisitions\PurchaseRequisitionResource;
+use App\Filament\Resources\DirectMarkets\DirectMarketResource;
 
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -41,6 +44,30 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+
+            ->navigationGroups([
+                'Purchasing',
+                'Logistics',
+                'Setup Master',
+            ])            
+            
+            ->navigationItems([
+                NavigationItem::make('Material Requisition')
+                    ->label('Material Requisition')
+                    ->icon('heroicon-o-document-text')
+                    ->group('Purchasing')
+                    ->sort(2)
+                    ->url(fn (): string => PurchaseRequisitionResource::getUrl()),
+
+                NavigationItem::make('Direct Market')
+                    ->label('Direct Market')
+                    ->icon('heroicon-o-shopping-cart')
+                    ->group('Purchasing')
+                    ->sort(3)
+                    ->url(fn (): string => DirectMarketResource::getUrl()),
+            ])
+
+
 
 
             /*
@@ -301,5 +328,8 @@ class AdminPanelProvider extends PanelProvider
                     ),
 
             ]);
+
+
+
     }
 }

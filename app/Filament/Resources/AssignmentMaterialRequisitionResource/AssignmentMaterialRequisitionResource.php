@@ -41,7 +41,9 @@ class AssignmentMaterialRequisitionResource extends Resource
 
     protected static ?int $navigationSort = 40;
 
-    protected static ?string $navigationLabel = 'Assignment Material Requisition';
+    protected static ?string $navigationLabel = 'Assignment MR';
+
+    protected static ?string $navigationParentItem = 'Material Requisition';
 
     protected static ?string $modelLabel = 'Assignment Material Requisition';
 
