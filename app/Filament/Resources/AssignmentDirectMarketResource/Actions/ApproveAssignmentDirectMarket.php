@@ -9,6 +9,7 @@ use App\Models\AssignmentDirectMarket;
 use App\Services\Approval\ApprovalTransactionService;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
+use Livewire\Component;
 use Throwable;
 
 class ApproveAssignmentDirectMarket
@@ -94,7 +95,8 @@ class ApproveAssignmentDirectMarket
 
             ->action(
                 function (
-                    AssignmentDirectMarket $record
+                    AssignmentDirectMarket $record,
+                    Component $livewire
                 ): void {
 
                     try {
@@ -204,6 +206,22 @@ class ApproveAssignmentDirectMarket
                                 )
                                 ->send();
                         }
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | AUTO REFRESH CURRENT PAGE
+                        |--------------------------------------------------------------------------
+                        |
+                        | Refresh the record owned by the current
+                        | Assignment Direct Market View page.
+                        |
+                        | This keeps the existing approval business logic
+                        | completely unchanged.
+                        |
+                        |--------------------------------------------------------------------------
+                        */
+
+                        $livewire->getRecord()->refresh();
 
                     } catch (Throwable $exception) {
 

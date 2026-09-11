@@ -70,17 +70,37 @@ if (is_file($logoPath)) {
 
     <style>
 
+        /*
+        |--------------------------------------------------------------------------
+        | PAGE
+        |--------------------------------------------------------------------------
+        */
+
         @page {
             margin: 20px 25px 25px 25px;
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | BODY
+        |--------------------------------------------------------------------------
+        */
+
         body {
             margin: 0;
             padding: 0;
+
             font-family: DejaVu Sans, sans-serif;
             font-size: 9px;
+
             color: #111827;
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | GLOBAL TABLE
+        |--------------------------------------------------------------------------
+        */
 
         table {
             border-collapse: collapse;
@@ -93,18 +113,43 @@ if (is_file($logoPath)) {
         .border {
             border: 1px solid #7d93aa;
         }
+        /*
+        |--------------------------------------------------------------------------
+        | HEADER
+        |--------------------------------------------------------------------------
+        |
+        | Golden layout:
+        |
+        |   LOGO | COMPANY INFORMATION | DIRECT MARKET
+        |
+        |    10% |         65%         |     25%
+        |
+        */
 
         .header-table {
             width: 100%;
+
             table-layout: fixed;
+
             border: 1px solid #7d93aa;
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | HEADER - LOGO
+        |--------------------------------------------------------------------------
+        */
+
         .logo-cell {
-            width: 90px;
+            width: 10%;
+
             height: 105px;
+
+            padding: 0;
+
             text-align: center;
             vertical-align: middle;
+
             border-right: 1px solid #7d93aa;
         }
 
@@ -113,57 +158,145 @@ if (is_file($logoPath)) {
             height: 62px;
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | HEADER - COMPANY
+        |--------------------------------------------------------------------------
+        */
+
         .company-cell {
-            padding: 14px;
+            width: 65%;
+
+            padding: 12px 16px;
+
             vertical-align: middle;
         }
 
         .company-name {
-            font-size: 17px;
+            font-size: 16px;
+
             font-weight: bold;
+
             color: #12385d;
+
+            white-space: nowrap;
         }
 
         .company-detail {
             margin-top: 5px;
+
             font-size: 8px;
+
             line-height: 1.4;
         }
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | HEADER - DOCUMENT
+        |--------------------------------------------------------------------------
+        */
+
         .title-cell {
-            width: 180px;
+            width: 25%;
+
             padding: 0;
+
             vertical-align: top;
+
             border-left: 1px solid #7d93aa;
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | DOCUMENT TITLE
+        |--------------------------------------------------------------------------
+        */
+
         .title {
-            padding: 10px;
+            padding: 9px 6px;
+
             background: #12385d;
+
             color: #ffffff;
+
             text-align: center;
-            font-size: 14px;
+
+            font-size: 13px;
+
             font-weight: bold;
+
+            line-height: 1.15;
         }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | DOCUMENT INFORMATION
+        |--------------------------------------------------------------------------
+        |
+        | The label/value columns are explicitly controlled so the
+        | Number and Status values stay comfortably inside the
+        | right document column.
+        |
+        */
 
         .doc-info {
             width: 100%;
+
+            table-layout: fixed;
         }
 
         .doc-info td {
-            padding: 6px;
-            font-size: 8px;
+            padding: 6px 5px;
+
+            font-size: 7.5px;
+
+            vertical-align: middle;
+
             border-bottom: 1px solid #d7dee7;
         }
 
-        .doc-label {
-            width: 65px;
-            font-weight: bold;
+        .doc-info tr:last-child td {
+            border-bottom: 0;
         }
 
-        .doc-value {
+        /*
+        |--------------------------------------------------------------------------
+        | DOCUMENT LABEL
+        |--------------------------------------------------------------------------
+        */
+
+        .doc-label {
+            width: 32%;
+
             font-weight: bold;
+
+            white-space: nowrap;
+
+            text-align: left;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | DOCUMENT VALUE
+        |--------------------------------------------------------------------------
+        */
+
+        .doc-value {
+            width: 68%;
+
+            padding-left: 2px !important;
+
+            font-weight: bold;
+
             color: #12385d;
+
+            text-align: left;
+
+            white-space: nowrap;
+
+            overflow: hidden;
         }
 
         .section-table {
@@ -320,6 +453,12 @@ if (is_file($logoPath)) {
 
 <table class="header-table">
 
+    <colgroup>
+        <col style="width:10%;">
+        <col style="width:70%;">
+        <col style="width:20%;">
+    </colgroup>
+
     <tr>
 
         <td class="logo-cell">
@@ -466,10 +605,189 @@ if (is_file($logoPath)) {
 
 </table>
 
-
 {{-- =========================================================
      ITEMS
 ========================================================= --}}
+
+@php
+
+    /*
+    |--------------------------------------------------------------------------
+    | DIRECT MARKET ITEMS
+    |--------------------------------------------------------------------------
+    |
+    | Preview / View is the Golden Reference.
+    |
+    | BASIC:
+    | # | ITEM CODE | ITEM NAME | ITEM REMARK | UOM |
+    | REQUESTED QTY | REQUIRED DATE
+    |
+    | COMMERCIAL:
+    | # | ITEM CODE | ITEM NAME | ITEM REMARK | UOM |
+    | REQUESTED QTY | ASSIGNED QTY | SUPPLIER |
+    | UNIT PRICE | DISC % | DISC AMT | AMOUNT
+    |
+    | DELIVERY LOCATION is intentionally excluded.
+    |
+    */
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | DIRECT MARKET ITEMS
+    |--------------------------------------------------------------------------
+    */
+
+    $directMarketItems =
+        $record?->items ?? collect();
+
+    $directMarketItems->loadMissing([
+        'item',
+        'uom',
+    ]);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | LATEST ASSIGNMENT DIRECT MARKET
+    |--------------------------------------------------------------------------
+    */
+
+    $assignment =
+        \App\Models\AssignmentDirectMarket::query()
+            ->with([
+                'items.directMarketItem',
+                'items.item',
+                'items.uom',
+                'items.supplier',
+                'items.tax',
+            ])
+            ->where(
+                'direct_market_id',
+                $record?->getKey()
+            )
+            ->latest('id')
+            ->first();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ADM APPROVAL TRANSACTION
+    |--------------------------------------------------------------------------
+    */
+
+    $assignmentApprovalTransaction =
+        $assignment
+            ? \App\Models\ApprovalTransaction::query()
+                ->with([
+                    'steps.approver',
+                ])
+                ->where(
+                    'document_type',
+                    'ASSIGNMENT_DIRECT_MARKET'
+                )
+                ->where(
+                    'document_id',
+                    $assignment->getKey()
+                )
+                ->latest('id')
+                ->first()
+            : null;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | FINAL ADM APPROVAL
+    |--------------------------------------------------------------------------
+    */
+
+    $admApproved = false;
+
+    if (
+        $assignment
+        &&
+        strtoupper(
+            (string) $assignment->status
+        ) === 'APPROVED'
+        &&
+        $assignmentApprovalTransaction
+        &&
+        strtoupper(
+            (string) $assignmentApprovalTransaction->status
+        ) === 'APPROVED'
+    ) {
+
+        $approvalSteps =
+            $assignmentApprovalTransaction->steps;
+
+        $totalApprovalSteps =
+            $approvalSteps->count();
+
+        $approvedApprovalSteps =
+            $approvalSteps->filter(
+                fn ($step) =>
+                    strtoupper(
+                        (string) $step->status
+                    ) === 'APPROVED'
+            )->count();
+
+        $admApproved =
+            $totalApprovalSteps > 0
+            &&
+            $approvedApprovalSteps === $totalApprovalSteps;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ASSIGNMENT ITEMS
+    |--------------------------------------------------------------------------
+    */
+
+    $assignmentItems =
+        $assignment?->items
+            ?->keyBy('direct_market_item_id')
+        ?? collect();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SUMMARY
+    |--------------------------------------------------------------------------
+    */
+
+    $totalLines =
+        $directMarketItems->count();
+
+    $totalRequestedQty =
+        $directMarketItems->sum(
+            fn ($item) =>
+                (float) $item->qty
+        );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | COMMERCIAL TOTAL
+    |--------------------------------------------------------------------------
+    */
+
+    $commercialAmount = 0;
+
+    if ($admApproved) {
+
+        $commercialAmount =
+            $assignmentItems->sum(
+                fn ($assignmentItem) =>
+                    (float) (
+                        $assignmentItem->grand_total
+                        ?? 0
+                    )
+            );
+    }
+
+@endphp
+
 
 <div class="items-section">
 
@@ -477,93 +795,553 @@ if (is_file($logoPath)) {
         DIRECT MARKET ITEMS
     </div>
 
-    <table class="items-table">
+
+    <table
+        class="items-table"
+        style="
+            width:100%;
+            table-layout:fixed;
+            border:1px solid #d7dee7;
+        "
+    >
 
         <thead>
 
             <tr>
 
-                <th style="width:4%;">
+                {{-- =====================================================
+                     NO
+                ====================================================== --}}
+
+                <th
+                    style="
+                        width:4%;
+                        padding:6px 2px;
+                        text-align:center;
+                        vertical-align:middle;
+                        white-space:nowrap;
+                        border:1px solid #d7dee7;
+                    "
+                >
                     NO
                 </th>
 
-                <th style="width:10%;">
+
+                {{-- =====================================================
+                     ITEM CODE
+                ====================================================== --}}
+
+                <th
+                    style="
+                        width:8%;
+                        padding:6px 3px;
+                        text-align:center;
+                        vertical-align:middle;
+                        white-space:nowrap;
+                        border:1px solid #d7dee7;
+                    "
+                >
                     ITEM CODE
                 </th>
 
-                <th style="width:19%;">
+
+                {{-- =====================================================
+                     ITEM NAME
+                ====================================================== --}}
+
+                <th
+                    style="
+                        width:14%;
+                        padding:6px 3px;
+                        text-align:center;
+                        vertical-align:middle;
+                        border:1px solid #d7dee7;
+                    "
+                >
                     ITEM NAME
                 </th>
 
-                <th style="width:19%;">
-                    DESCRIPTION
+
+                {{-- =====================================================
+                     ITEM REMARK
+                ====================================================== --}}
+
+                <th
+                    style="
+                        width:14%;
+                        padding:6px 3px;
+                        text-align:center;
+                        vertical-align:middle;
+                        border:1px solid #d7dee7;
+                    "
+                >
+                    ITEM REMARK
                 </th>
 
-                <th style="width:7%;">
-                    QTY
-                </th>
 
-                <th style="width:7%;">
+                {{-- =====================================================
+                     UOM
+                ====================================================== --}}
+
+                <th
+                    style="
+                        width:5%;
+                        padding:6px 2px;
+                        text-align:center;
+                        vertical-align:middle;
+                        white-space:nowrap;
+                        border:1px solid #d7dee7;
+                    "
+                >
                     UOM
                 </th>
 
-                <th style="width:11%;">
-                    REQUIRED DATE
-                </th>
 
-                <th style="width:23%;">
-                    DELIVERY LOCATION
-                </th>
+                @if (! $admApproved)
+
+                    {{-- =================================================
+                         REQUESTED QTY
+                    ================================================== --}}
+
+                    <th
+                        style="
+                            width:16%;
+                            padding:5px 2px;
+                            text-align:center;
+                            vertical-align:middle;
+                            border:1px solid #d7dee7;
+                            line-height:1.15;
+                        "
+                    >
+                        REQUESTED<br>
+                        QTY
+                    </th>
+
+
+                    {{-- =================================================
+                         REQUIRED DATE
+                    ================================================== --}}
+
+                    <th
+                        style="
+                            width:39%;
+                            padding:6px 3px;
+                            text-align:center;
+                            vertical-align:middle;
+                            border:1px solid #d7dee7;
+                        "
+                    >
+                        REQUIRED DATE
+                    </th>
+
+                @else
+
+                    {{-- =================================================
+                         REQUESTED QTY
+                    ================================================== --}}
+
+                    <th
+                        style="
+                            width:8%;
+                            padding:5px 2px;
+                            text-align:center;
+                            vertical-align:middle;
+                            border:1px solid #d7dee7;
+                            line-height:1.15;
+                        "
+                    >
+                        REQUESTED<br>
+                        QTY
+                    </th>
+
+
+                    {{-- =================================================
+                         ASSIGNED QTY
+                    ================================================== --}}
+
+                    <th
+                        style="
+                            width:8%;
+                            padding:5px 2px;
+                            text-align:center;
+                            vertical-align:middle;
+                            border:1px solid #d7dee7;
+                            line-height:1.15;
+                        "
+                    >
+                        ASSIGNED<br>
+                        QTY
+                    </th>
+
+
+                    {{-- =================================================
+                         SUPPLIER
+                    ================================================== --}}
+
+                    <th
+                        style="
+                            width:10%;
+                            padding:6px 3px;
+                            text-align:center;
+                            vertical-align:middle;
+                            border:1px solid #d7dee7;
+                        "
+                    >
+                        SUPPLIER
+                    </th>
+
+
+                    {{-- =================================================
+                         UNIT PRICE
+                    ================================================== --}}
+
+                    <th
+                        style="
+                            width:8%;
+                            padding:6px 2px;
+                            text-align:center;
+                            vertical-align:middle;
+                            white-space:nowrap;
+                            border:1px solid #d7dee7;
+                        "
+                    >
+                        UNIT PRICE
+                    </th>
+
+
+                    {{-- =================================================
+                         DISC %
+                    ================================================== --}}
+
+                    <th
+                        style="
+                            width:5%;
+                            padding:6px 2px;
+                            text-align:center;
+                            vertical-align:middle;
+                            white-space:nowrap;
+                            border:1px solid #d7dee7;
+                        "
+                    >
+                        DISC %
+                    </th>
+
+
+                    {{-- =================================================
+                         DISC AMT
+                    ================================================== --}}
+
+                    <th
+                        style="
+                            width:7%;
+                            padding:6px 2px;
+                            text-align:center;
+                            vertical-align:middle;
+                            white-space:nowrap;
+                            border:1px solid #d7dee7;
+                        "
+                    >
+                        DISC AMT
+                    </th>
+
+
+                    {{-- =================================================
+                         AMOUNT
+                    ================================================== --}}
+
+                    <th
+                        style="
+                            width:9%;
+                            padding:6px 2px;
+                            text-align:center;
+                            vertical-align:middle;
+                            white-space:nowrap;
+                            border:1px solid #d7dee7;
+                            border-left:1px solid #9caabd;
+                            border-right:1px solid #9caabd;
+                        "
+                    >
+                        AMOUNT
+                    </th>
+
+                @endif
 
             </tr>
 
         </thead>
 
+
         <tbody>
 
-            @forelse ($record->items as $index => $item)
+            @forelse (
+                $directMarketItems
+                as $index => $item
+            )
+
+                @php
+
+                    $assignmentItem =
+                        $assignmentItems->get(
+                            $item->getKey()
+                        );
+
+                @endphp
+
 
                 <tr>
 
-                    <td class="center">
+                    {{-- =================================================
+                         NO
+                    ================================================== --}}
+
+                    <td
+                        class="center"
+                        style="
+                            border:1px solid #e2e8f0;
+                        "
+                    >
                         {{ $index + 1 }}
                     </td>
 
-                    <td>
+
+                    {{-- =================================================
+                         ITEM CODE
+                    ================================================== --}}
+
+                    <td
+                        style="
+                            border:1px solid #e2e8f0;
+                        "
+                    >
                         {{ $item->item?->item_code ?? '-' }}
                     </td>
 
-                    <td>
+
+                    {{-- =================================================
+                         ITEM NAME
+                    ================================================== --}}
+
+                    <td
+                        style="
+                            border:1px solid #e2e8f0;
+                        "
+                    >
                         {{ $item->item?->item_name ?? '-' }}
                     </td>
 
-                    <td>
+
+                    {{-- =================================================
+                         ITEM REMARK
+                    ================================================== --}}
+
+                    <td
+                        style="
+                            border:1px solid #e2e8f0;
+                        "
+                    >
                         {{ $item->remarks ?? '-' }}
                     </td>
 
-                    <td class="right">
-                        {{ number_format((float) $item->qty, 2) }}
-                    </td>
 
-                    <td class="center">
+                    {{-- =================================================
+                         UOM
+                    ================================================== --}}
+
+                    <td
+                        class="center"
+                        style="
+                            border:1px solid #e2e8f0;
+                        "
+                    >
                         {{ $item->uom?->uom_name ?? '-' }}
                     </td>
 
-                    <td class="center">
 
-                        {{
-                            $item->required_date
-                                ? \Carbon\Carbon::parse(
-                                    $item->required_date
-                                )->format('d-M-Y')
-                                : '-'
-                        }}
+                    @if (! $admApproved)
 
-                    </td>
+                        {{-- =================================================
+                             REQUESTED QTY
+                        ================================================== --}}
 
-                    <td>
-                        {{ $item->delivery_location ?? '-' }}
-                    </td>
+                        <td
+                            class="right"
+                            style="
+                                border:1px solid #e2e8f0;
+                                white-space:nowrap;
+                            "
+                        >
+                            {{ number_format(
+                                (float) $item->qty,
+                                2
+                            ) }}
+                        </td>
+
+
+                        {{-- =================================================
+                             REQUIRED DATE
+                        ================================================== --}}
+
+                        <td
+                            class="center"
+                            style="
+                                border:1px solid #e2e8f0;
+                                white-space:nowrap;
+                            "
+                        >
+                            {{
+                                $item->required_date
+                                    ? \Carbon\Carbon::parse(
+                                        $item->required_date
+                                    )->format('d-M-Y')
+                                    : '-'
+                            }}
+                        </td>
+
+                    @else
+
+                        {{-- =================================================
+                             REQUESTED QTY
+                        ================================================== --}}
+
+                        <td
+                            class="right"
+                            style="
+                                border:1px solid #e2e8f0;
+                                white-space:nowrap;
+                            "
+                        >
+                            {{ number_format(
+                                (float) $item->qty,
+                                2
+                            ) }}
+                        </td>
+
+
+                        {{-- =================================================
+                             ASSIGNED QTY
+                        ================================================== --}}
+
+                        <td
+                            class="right"
+                            style="
+                                border:1px solid #e2e8f0;
+                                white-space:nowrap;
+                            "
+                        >
+                            {{ number_format(
+                                (float) (
+                                    $assignmentItem?->assigned_qty
+                                    ?? 0
+                                ),
+                                2
+                            ) }}
+                        </td>
+
+
+                        {{-- =================================================
+                             SUPPLIER
+                        ================================================== --}}
+
+                        <td
+                            style="
+                                border:1px solid #e2e8f0;
+                            "
+                        >
+                            {{
+                                $assignmentItem
+                                    ?->supplier
+                                    ?->supplier_name
+                                ?? '-'
+                            }}
+                        </td>
+
+
+                        {{-- =================================================
+                             UNIT PRICE
+                        ================================================== --}}
+
+                        <td
+                            class="right"
+                            style="
+                                border:1px solid #e2e8f0;
+                                white-space:nowrap;
+                            "
+                        >
+                            {{ number_format(
+                                (float) (
+                                    $assignmentItem?->unit_price
+                                    ?? 0
+                                ),
+                                2
+                            ) }}
+                        </td>
+
+
+                        {{-- =================================================
+                             DISC %
+                        ================================================== --}}
+
+                        <td
+                            class="right"
+                            style="
+                                border:1px solid #e2e8f0;
+                                white-space:nowrap;
+                            "
+                        >
+                            {{ number_format(
+                                (float) (
+                                    $assignmentItem?->discount_percent
+                                    ?? 0
+                                ),
+                                2
+                            ) }}%
+                        </td>
+
+
+                        {{-- =================================================
+                             DISC AMT
+                        ================================================== --}}
+
+                        <td
+                            class="right"
+                            style="
+                                border:1px solid #e2e8f0;
+                                white-space:nowrap;
+                            "
+                        >
+                            {{ number_format(
+                                (float) (
+                                    $assignmentItem?->discount_amount
+                                    ?? 0
+                                ),
+                                2
+                            ) }}
+                        </td>
+
+
+                        {{-- =================================================
+                             AMOUNT
+                        ================================================== --}}
+
+                        <td
+                            class="right"
+                            style="
+                                border:1px solid #e2e8f0;
+                                border-left:1px solid #9caabd;
+                                border-right:1px solid #9caabd;
+                                white-space:nowrap;
+                            "
+                        >
+                            {{ number_format(
+                                (float) (
+                                    $assignmentItem?->grand_total
+                                    ?? 0
+                                ),
+                                2
+                            ) }}
+                        </td>
+
+                    @endif
 
                 </tr>
 
@@ -572,8 +1350,11 @@ if (is_file($logoPath)) {
                 <tr>
 
                     <td
-                        colspan="8"
+                        colspan="{{ $admApproved ? 12 : 7 }}"
                         class="center"
+                        style="
+                            border:1px solid #d7dee7;
+                        "
                     >
                         No Direct Market items available.
                     </td>
@@ -584,53 +1365,357 @@ if (is_file($logoPath)) {
 
         </tbody>
 
+
+        {{-- =============================================================
+             TOTAL
+        ============================================================= --}}
+
+        @if ($totalLines > 0)
+
+            <tfoot>
+
+                <tr>
+
+                    {{-- TOTAL LABEL --}}
+
+                    <td
+                        colspan="5"
+                        class="right"
+                        style="
+                            padding:6px 4px;
+                            font-weight:bold;
+                            border:1px solid #d7dee7;
+                            background:#f4f7fa;
+                        "
+                    >
+                        TOTAL
+                    </td>
+
+
+                    @if (! $admApproved)
+
+                        {{-- REQUESTED QTY TOTAL --}}
+
+                        <td
+                            class="right"
+                            style="
+                                padding:6px 4px;
+                                font-weight:bold;
+                                border:1px solid #d7dee7;
+                                background:#f4f7fa;
+                                white-space:nowrap;
+                            "
+                        >
+                            {{ number_format(
+                                $totalRequestedQty,
+                                2
+                            ) }}
+                        </td>
+
+
+                        {{-- REQUIRED DATE EMPTY --}}
+
+                        <td
+                            style="
+                                border:1px solid #d7dee7;
+                                background:#f4f7fa;
+                            "
+                        ></td>
+
+                    @else
+
+                        {{-- REQUESTED QTY TOTAL --}}
+
+                        <td
+                            class="right"
+                            style="
+                                padding:6px 3px;
+                                font-weight:bold;
+                                border:1px solid #d7dee7;
+                                background:#f4f7fa;
+                                white-space:nowrap;
+                            "
+                        >
+                            {{ number_format(
+                                $totalRequestedQty,
+                                2
+                            ) }}
+                        </td>
+
+
+                        {{-- ASSIGNED QTY TOTAL --}}
+
+                        <td
+                            class="right"
+                            style="
+                                padding:6px 3px;
+                                font-weight:bold;
+                                border:1px solid #d7dee7;
+                                background:#f4f7fa;
+                                white-space:nowrap;
+                            "
+                        >
+                            {{ number_format(
+                                $assignmentItems->sum(
+                                    fn ($assignmentItem) =>
+                                        (float) (
+                                            $assignmentItem
+                                                ->assigned_qty
+                                            ?? 0
+                                        )
+                                ),
+                                2
+                            ) }}
+                        </td>
+
+
+                        {{-- SUPPLIER + COMMERCIAL COLUMNS --}}
+
+                        <td
+                            colspan="5"
+                            style="
+                                border:1px solid #d7dee7;
+                                background:#f4f7fa;
+                            "
+                        ></td>
+
+
+                        {{-- AMOUNT TOTAL --}}
+
+                        <td
+                            class="right"
+                            style="
+                                padding:6px 3px;
+                                font-weight:bold;
+                                border:1px solid #d7dee7;
+                                border-left:1px solid #9caabd;
+                                border-right:1px solid #9caabd;
+                                background:#f4f7fa;
+                                white-space:nowrap;
+                            "
+                        >
+                            {{ number_format(
+                                $commercialAmount,
+                                2
+                            ) }}
+                        </td>
+
+                    @endif
+
+                </tr>
+
+            </tfoot>
+
+        @endif
+
     </table>
 
 </div>
 
-
 {{-- =========================================================
-     APPROVAL
+     APPROVAL / SIGNATURE
 ========================================================= --}}
 
 @php
 
-$approvalTransaction =
-    \App\Models\ApprovalTransaction::query()
-        ->with([
-            'creator',
-            'steps.approver',
-        ])
-        ->where(
-            'document_type',
-            'DIRECT_MARKET'
-        )
-        ->where(
-            'document_id',
-            $record->getKey()
-        )
-        ->latest('id')
-        ->first();
+    /*
+    |--------------------------------------------------------------------------
+    | DIRECT MARKET APPROVAL TRANSACTION
+    |--------------------------------------------------------------------------
+    |
+    | Level 1 belongs to Direct Market.
+    |
+    */
 
-$approvalStep1 =
-    $approvalTransaction
-        ?->steps
-        ->first(
-            fn ($step) =>
-                (int) $step->approval_level === 1
-                &&
-                $step->status === 'APPROVED'
-        );
+    $directMarketApprovalTransaction =
+        \App\Models\ApprovalTransaction::query()
+            ->with([
+                'creator',
+                'steps.approver',
+            ])
+            ->where(
+                'document_type',
+                'DIRECT_MARKET'
+            )
+            ->where(
+                'document_id',
+                $record->getKey()
+            )
+            ->latest('id')
+            ->first();
 
-$approvalStep2 =
-    $approvalTransaction
-        ?->steps
-        ->first(
-            fn ($step) =>
-                (int) $step->approval_level === 2
-                &&
-                $step->status === 'APPROVED'
-        );
+
+    /*
+    |--------------------------------------------------------------------------
+    | DIRECT MARKET APPROVAL LEVEL 1
+    |--------------------------------------------------------------------------
+    |
+    | Find the latest acted Level 1 step.
+    |
+    | APPROVED / REJECTED are displayed.
+    | Pending / unacted remains "-".
+    |
+    */
+
+    $approvalStep1 =
+        $directMarketApprovalTransaction
+            ?->steps
+            ->filter(
+                fn ($step) =>
+                    (int) $step->approval_level === 1
+                    &&
+                    in_array(
+                        strtoupper(
+                            (string) $step->status
+                        ),
+                        [
+                            'APPROVED',
+                            'REJECTED',
+                        ],
+                        true
+                    )
+            )
+            ->sortByDesc('id')
+            ->first();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | LATEST ASSIGNMENT DIRECT MARKET
+    |--------------------------------------------------------------------------
+    |
+    | Level 2 belongs to ADM.
+    |
+    */
+
+    $assignment =
+        \App\Models\AssignmentDirectMarket::query()
+            ->where(
+                'direct_market_id',
+                $record->getKey()
+            )
+            ->latest('id')
+            ->first();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ASSIGNMENT DIRECT MARKET APPROVAL TRANSACTION
+    |--------------------------------------------------------------------------
+    */
+
+    $assignmentApprovalTransaction =
+        $assignment
+            ? \App\Models\ApprovalTransaction::query()
+                ->with([
+                    'steps.approver',
+                ])
+                ->where(
+                    'document_type',
+                    'ASSIGNMENT_DIRECT_MARKET'
+                )
+                ->where(
+                    'document_id',
+                    $assignment->getKey()
+                )
+                ->latest('id')
+                ->first()
+            : null;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ASSIGNMENT DIRECT MARKET APPROVAL LEVEL 2
+    |--------------------------------------------------------------------------
+    |
+    | Only an acted Level 2 step is shown.
+    |
+    | APPROVED / REJECTED are displayed.
+    | Pending / unacted remains "-".
+    |
+    */
+
+    $approvalStep2 =
+        $assignmentApprovalTransaction
+            ?->steps
+            ->filter(
+                fn ($step) =>
+                    (int) $step->approval_level === 2
+                    &&
+                    in_array(
+                        strtoupper(
+                            (string) $step->status
+                        ),
+                        [
+                            'APPROVED',
+                            'REJECTED',
+                        ],
+                        true
+                    )
+            )
+            ->sortByDesc('id')
+            ->first();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | APPROVAL DISPLAY HELPERS
+    |--------------------------------------------------------------------------
+    */
+
+    $approvalStep1Status =
+        $approvalStep1
+            ? strtoupper(
+                (string) $approvalStep1->status
+            )
+            : null;
+
+
+    $approvalStep2Status =
+        $approvalStep2
+            ? strtoupper(
+                (string) $approvalStep2->status
+            )
+            : null;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | STATUS CLASS
+    |--------------------------------------------------------------------------
+    */
+
+    $approvalStatusClass = function (
+        ?string $status
+    ): string {
+
+        return $status === 'REJECTED'
+            ? 'approval-rejected'
+            : 'approval-approved';
+    };
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | STATUS LABEL
+    |--------------------------------------------------------------------------
+    */
+
+    $approvalStatusLabel = function (
+        ?string $status
+    ): string {
+
+        return in_array(
+            $status,
+            [
+                'APPROVED',
+                'REJECTED',
+            ],
+            true
+        )
+            ? $status
+            : '-';
+    };
 
 @endphp
 
@@ -641,13 +1726,21 @@ $approvalStep2 =
 
         <tr>
 
+            {{-- =========================================================
+                 REQUESTED BY
+            ========================================================== --}}
+
             <td>
 
                 <strong>
                     Requested By
                 </strong>
 
-                @if ($approvalTransaction?->submitted_at)
+
+                @if (
+                    $directMarketApprovalTransaction
+                    ?->submitted_at
+                )
 
                     <div style="margin-top:18px;">
                         Submitted at
@@ -656,29 +1749,43 @@ $approvalStep2 =
                     <div>
                         {{
                             \App\Support\Timezone\UserTimezone::format(
-                                $approvalTransaction->submitted_at,
+                                $directMarketApprovalTransaction->submitted_at,
                                 'd M Y H:i:s'
                             )
                         }}
                     </div>
 
+                @else
+
+                    <div style="margin-top:18px;">
+                        -
+                    </div>
+
                 @endif
+
 
                 <div class="signature-space"></div>
 
                 <div class="signature-line"></div>
 
+
                 <div class="signature-name">
+
                     {{
-                        $approvalTransaction
+                        $directMarketApprovalTransaction
                             ?->creator
                             ?->name
                         ?? '-'
                     }}
+
                 </div>
 
             </td>
 
+
+            {{-- =========================================================
+                 APPROVAL LEVEL 1
+            ========================================================== --}}
 
             <td>
 
@@ -686,44 +1793,106 @@ $approvalStep2 =
                     Approved By
                 </strong>
 
-                @if (
-                    $approvalStep1
-                    &&
-                    $approvalStep1->approver
-                    &&
-                    $approvalStep1->acted_at
-                )
 
-                    <div style="margin-top:18px;">
-                        Approved at
+                @if ($approvalStep1)
+
+                    <div
+                        style="
+                            margin-top:18px;
+                            color:
+                                {{
+                                    $approvalStep1Status === 'REJECTED'
+                                        ? '#dc2626'
+                                        : '#64748b'
+                                }};
+                        "
+                    >
+
+                        {{
+                            $approvalStep1Status === 'REJECTED'
+                                ? 'Rejected at'
+                                : 'Approved at'
+                        }}
+
                     </div>
 
-                    <div>
+
+                    @if ($approvalStep1->acted_at)
+
+                        <div
+                            style="
+                                color:
+                                    {{
+                                        $approvalStep1Status === 'REJECTED'
+                                            ? '#dc2626'
+                                            : '#64748b'
+                                    }};
+                            "
+                        >
+                            {{
+                                \App\Support\Timezone\UserTimezone::format(
+                                    $approvalStep1->acted_at,
+                                    'd M Y H:i:s'
+                                )
+                            }}
+                        </div>
+
+                    @endif
+
+
+                    <div
+                        class="{{
+                            $approvalStatusClass(
+                                $approvalStep1Status
+                            )
+                        }}"
+                        style="margin-top:2px;"
+                    >
                         {{
-                            \App\Support\Timezone\UserTimezone::format(
-                                $approvalStep1->acted_at,
-                                'd M Y H:i:s'
+                            $approvalStatusLabel(
+                                $approvalStep1Status
                             )
                         }}
                     </div>
 
+                @else
+
+                    <div style="margin-top:18px;">
+                        -
+                    </div>
+
                 @endif
+
 
                 <div class="signature-space"></div>
 
                 <div class="signature-line"></div>
 
-                <div class="signature-name">
+
+                <div
+                    class="signature-name"
+                    {{
+                        $approvalStep1Status === 'REJECTED'
+                            ? 'style=color:#dc2626;'
+                            : ''
+                    }}
+                >
+
                     {{
                         $approvalStep1
                             ?->approver
                             ?->name
                         ?? '-'
                     }}
+
                 </div>
 
             </td>
 
+
+            {{-- =========================================================
+                 APPROVAL LEVEL 2
+            ========================================================== --}}
 
             <td>
 
@@ -731,40 +1900,102 @@ $approvalStep2 =
                     Approved By
                 </strong>
 
-                @if (
-                    $approvalStep2
-                    &&
-                    $approvalStep2->approver
-                    &&
-                    $approvalStep2->acted_at
-                )
 
-                    <div style="margin-top:18px;">
-                        Approved at
+                @if ($approvalStep2)
+
+                    <div
+                        style="
+                            margin-top:18px;
+                            color:
+                                {{
+                                    $approvalStep2Status === 'REJECTED'
+                                        ? '#dc2626'
+                                        : '#64748b'
+                                }};
+                        "
+                    >
+
+                        {{
+                            $approvalStep2Status === 'REJECTED'
+                                ? 'Rejected at'
+                                : 'Approved at'
+                        }}
+
                     </div>
 
-                    <div>
+
+                    @if ($approvalStep2->acted_at)
+
+                        <div
+                            style="
+                                color:
+                                    {{
+                                        $approvalStep2Status === 'REJECTED'
+                                            ? '#dc2626'
+                                            : '#64748b'
+                                    }};
+                            "
+                        >
+
+                            {{
+                                \App\Support\Timezone\UserTimezone::format(
+                                    $approvalStep2->acted_at,
+                                    'd M Y H:i:s'
+                                )
+                            }}
+
+                        </div>
+
+                    @endif
+
+
+                    <div
+                        class="{{
+                            $approvalStatusClass(
+                                $approvalStep2Status
+                            )
+                        }}"
+                        style="margin-top:2px;"
+                    >
+
                         {{
-                            \App\Support\Timezone\UserTimezone::format(
-                                $approvalStep2->acted_at,
-                                'd M Y H:i:s'
+                            $approvalStatusLabel(
+                                $approvalStep2Status
                             )
                         }}
+
+                    </div>
+
+                @else
+
+                    <div style="margin-top:18px;">
+                        -
                     </div>
 
                 @endif
+
 
                 <div class="signature-space"></div>
 
                 <div class="signature-line"></div>
 
-                <div class="signature-name">
+
+                <div
+                    class="signature-name"
+                    {{
+                        $approvalStep2Status === 'REJECTED'
+                            ? 'style=color:#dc2626;'
+                            : ''
+                    }}
+                >
+
                     {{
                         $approvalStep2
                             ?->approver
                             ?->name
                         ?? '-'
                     }}
+
                 </div>
 
             </td>

@@ -164,6 +164,10 @@ class RejectDirectMarket
                             $data['remarks'] ?? null
                         );
 
+                        $record->update([
+                            'status' => DirectMarket::STATUS_REJECTED,
+                        ]);
+
                         Notification::make()
                             ->success()
                             ->title(

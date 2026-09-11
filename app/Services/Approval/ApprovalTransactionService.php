@@ -369,10 +369,11 @@ class ApprovalTransactionService
         |
         | MR uses only the first configured approval level.
         |
-        | The next approval level is intentionally NOT snapshotted into
-        | the MR transaction. It will be activated later from AMR submit.
+        | Direct Market also uses only the first configured approval level.
         |
-        | Other document types continue to snapshot all configured levels.
+        | Assignment Direct Market is different:
+        | Level 1 is inherited from the approved Direct Market transaction,
+        | while Level 2 becomes the active ADM approval level.
         |
         */
 
@@ -392,9 +393,86 @@ class ApprovalTransactionService
             $steps = $steps->take(1);
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | ADM: Resolve Approved Direct Market Level 1
+        |--------------------------------------------------------------------------
+        |
+        | ADM has its own approval transaction.
+        |
+        | However, Approval Level 1 / Dept Head has already been completed
+        | during Direct Market approval.
+        |
+        | Therefore ADM Level 1 is snapshotted as APPROVED from the
+        | original Direct Market approval step.
+        |
+        */
+
+        $directMarketApprovalStep = null;
+
+        if (
+            $transaction->document_type
+            === 'ASSIGNMENT_DIRECT_MARKET'
+        ) {
+
+            $assignment =
+                \App\Models\AssignmentDirectMarket::query()
+                    ->findOrFail(
+                        (int) $transaction->document_id
+                    );
+
+            $directMarketTransaction =
+                \App\Models\ApprovalTransaction::query()
+                    ->with([
+                        'steps' => fn ($query) =>
+                            $query
+                                ->where(
+                                    'approval_level',
+                                    1
+                                )
+                                ->where(
+                                    'status',
+                                    'APPROVED'
+                                )
+                                ->latest('acted_at'),
+                    ])
+                    ->where(
+                        'document_type',
+                        'DIRECT_MARKET'
+                    )
+                    ->where(
+                        'document_id',
+                        (int) $assignment->direct_market_id
+                    )
+                    ->where(
+                        'status',
+                        'APPROVED'
+                    )
+                    ->latest('id')
+                    ->first();
+
+            $directMarketApprovalStep =
+                $directMarketTransaction
+                    ?->steps
+                    ?->first();
+
+            if (! $directMarketApprovalStep) {
+                throw new \RuntimeException(
+                    "Approved Direct Market approval Level 1 "
+                    . "was not found for Assignment Direct Market "
+                    . "[{$transaction->document_id}]."
+                );
+            }
+        }
+
         foreach ($steps as $masterStep) {
 
             $role = $masterStep->role;
+
+            $isInheritedAdmLevelOne =
+                $transaction->document_type
+                === 'ASSIGNMENT_DIRECT_MARKET'
+                && (int) $masterStep->approval_level === 1;
 
             $transaction->steps()->create([
                 /*
@@ -436,15 +514,30 @@ class ApprovalTransactionService
                 |--------------------------------------------------------------------------
                 */
 
-                'status' => 'PENDING',
+                'status' =>
+                    $isInheritedAdmLevelOne
+                        ? 'APPROVED'
+                        : 'PENDING',
 
-                'action' => null,
+                'action' =>
+                    $isInheritedAdmLevelOne
+                        ? $directMarketApprovalStep->action
+                        : null,
 
-                'approved_by' => null,
+                'approved_by' =>
+                    $isInheritedAdmLevelOne
+                        ? $directMarketApprovalStep->approved_by
+                        : null,
 
-                'acted_at' => null,
+                'acted_at' =>
+                    $isInheritedAdmLevelOne
+                        ? $directMarketApprovalStep->acted_at
+                        : null,
 
-                'remarks' => null,
+                'remarks' =>
+                    $isInheritedAdmLevelOne
+                        ? $directMarketApprovalStep->remarks
+                        : null,
             ]);
         }
     }

@@ -159,6 +159,7 @@ class DirectMarketForm
                                     )
                                     ->searchable()
                                     ->preload()
+                                    ->required()
                                     ->columnSpan(3),
 
                                 /*
@@ -179,6 +180,7 @@ class DirectMarketForm
                                     )
                                     ->searchable()
                                     ->preload()
+                                    ->required()
                                     ->columnSpan(3),
 
                                 /*
@@ -222,6 +224,7 @@ class DirectMarketForm
                                         'cost_center_name'
                                     )
                                     ->searchable()
+                                    ->required()
                                     ->preload()
                                     ->columnSpan(3),
 

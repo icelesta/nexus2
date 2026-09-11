@@ -78,6 +78,14 @@ class AssignmentDirectMarketItemsGrid extends Component
     public array $discountAmounts = [];
 
     /**
+     * Discount Input Source.
+     *
+     * percent = Discount % is authoritative.
+     * amount  = Discount Amount is authoritative.
+     */
+    public array $discountInputSource = [];
+
+    /**
      * Last persisted pricing values for the row currently being edited.
      *
      * Reset must restore exactly these values.
@@ -142,6 +150,30 @@ class AssignmentDirectMarketItemsGrid extends Component
 
             $this->discountAmounts[$item->id] =
                 (float) $item->discount_amount;
+
+            $grossAmount = round(
+                (float) $item->assigned_qty
+                * (float) $item->unit_price,
+                2
+            );
+
+            $calculatedDiscountAmount = round(
+                $grossAmount
+                * ((float) $item->discount_percent / 100),
+                2
+            );
+
+            $this->discountInputSource[$item->id] =
+                $grossAmount > 0
+                && round(
+                    $calculatedDiscountAmount,
+                    2
+                ) !== round(
+                    (float) $item->discount_amount,
+                    2
+                )
+                    ? 'amount'
+                    : 'percent';
 
             $this->leadTimes[$item->id] =
                 (int) ($item->lead_time_days ?? 0);
@@ -314,12 +346,152 @@ class AssignmentDirectMarketItemsGrid extends Component
         $this->discountAmounts[$item->id] =
             $discountAmount;
 
+        $grossAmount = round(
+            (float) $item->assigned_qty
+            * (float) $item->unit_price,
+            2
+        );
+
+        $calculatedDiscountAmount = round(
+            $grossAmount
+            * ((float) $item->discount_percent / 100),
+            2
+        );
+
+        $this->discountInputSource[$item->id] =
+            $grossAmount > 0
+            && round(
+                $calculatedDiscountAmount,
+                2
+            ) !== round(
+                (float) $item->discount_amount,
+                2
+            )
+                ? 'amount'
+                : 'percent';
+
         $this->leadTimes[$item->id] =
             (int) ($item->lead_time_days ?? 0);
 
         $this->selectedTax[$item->id] =
             $item->tax_id;
     }
+
+    /**
+     * Discount % changed by user.
+     *
+     * Discount % becomes the authoritative input.
+     */
+    public function updatedDiscountPercents(
+        $value,
+        $itemId,
+    ): void {
+
+        if (! $this->canEdit) {
+            return;
+        }
+
+        if (
+            $this->editingRow !== (int) $itemId
+        ) {
+            return;
+        }
+
+        $this->discountInputSource[$itemId] =
+            'percent';
+
+        $assignedQty =
+            (float) (
+                $this->assignedQty[$itemId] ?? 0
+            );
+
+        $unitPrice =
+            (float) (
+                $this->unitPrices[$itemId] ?? 0
+            );
+
+        $discountPercent =
+            max(
+                0,
+                min(
+                    100,
+                    (float) $value
+                )
+            );
+
+        $grossAmount = round(
+            $assignedQty * $unitPrice,
+            2
+        );
+
+        $this->discountPercents[$itemId] =
+            $discountPercent;
+
+        $this->discountAmounts[$itemId] =
+            round(
+                $grossAmount
+                * ($discountPercent / 100),
+                2
+            );
+    }
+
+
+    /**
+     * Discount Amount changed by user.
+     *
+     * Discount Amount becomes the authoritative input.
+     */
+    public function updatedDiscountAmounts(
+        $value,
+        $itemId,
+    ): void {
+
+        if (! $this->canEdit) {
+            return;
+        }
+
+        if (
+            $this->editingRow !== (int) $itemId
+        ) {
+            return;
+        }
+
+        $this->discountInputSource[$itemId] =
+            'amount';
+
+        $assignedQty =
+            (float) (
+                $this->assignedQty[$itemId] ?? 0
+            );
+
+        $unitPrice =
+            (float) (
+                $this->unitPrices[$itemId] ?? 0
+            );
+
+        $discountAmount =
+            max(
+                0,
+                (float) $value
+            );
+
+        $grossAmount = round(
+            $assignedQty * $unitPrice,
+            2
+        );
+
+        $this->discountAmounts[$itemId] =
+            $discountAmount;
+
+        $this->discountPercents[$itemId] =
+            $grossAmount > 0
+                ? round(
+                    ($discountAmount / $grossAmount) * 100,
+                    2
+                )
+                : 0;
+    }
+
 
     /**
      * Cancel Editing.
@@ -358,6 +530,8 @@ class AssignmentDirectMarketItemsGrid extends Component
         $this->discountPercents = [];
 
         $this->discountAmounts = [];
+
+        $this->discountInputSource = [];
 
         $this->leadTimes = [];
 
@@ -439,6 +613,10 @@ class AssignmentDirectMarketItemsGrid extends Component
 
                 'discount_amount' =>
                     $discountAmount,
+
+                'discount_source' =>
+                    $this->discountInputSource[$itemId]
+                    ?? 'percent',
 
                 'lead_time_days' =>
                     $leadTimeDays,
@@ -562,17 +740,44 @@ class AssignmentDirectMarketItemsGrid extends Component
             2
         );
 
-        if ($discountPercent > 0) {
+        $discountSource =
+            $this->discountInputSource[$itemId]
+            ?? 'percent';
+
+        if ($discountSource === 'amount') {
+
             $discountAmount = round(
-                $grossAmount * ($discountPercent / 100),
+                max(
+                    0,
+                    min(
+                        $grossAmount,
+                        $discountAmount
+                    )
+                ),
                 2
             );
-        } elseif (
-            $discountAmount > 0
-            && $grossAmount > 0
-        ) {
-            $discountPercent = round(
-                ($discountAmount / $grossAmount) * 100,
+
+            $discountPercent =
+                $grossAmount > 0
+                    ? round(
+                        ($discountAmount / $grossAmount) * 100,
+                        2
+                    )
+                    : 0;
+
+        } else {
+
+            $discountPercent = max(
+                0,
+                min(
+                    100,
+                    $discountPercent
+                )
+            );
+
+            $discountAmount = round(
+                $grossAmount
+                * ($discountPercent / 100),
                 2
             );
         }
@@ -725,6 +930,8 @@ class AssignmentDirectMarketItemsGrid extends Component
 
         $this->discountAmounts = [];
 
+        $this->discountInputSource = [];
+
         $this->leadTimes = [];
 
         $this->selectedTax = [];
@@ -789,6 +996,7 @@ class AssignmentDirectMarketItemsGrid extends Component
         $this->unitPrices[$itemId] = 0;
         $this->discountPercents[$itemId] = 0;
         $this->discountAmounts[$itemId] = 0;
+        $this->discountInputSource[$itemId] = 'percent';
     }
 
 }

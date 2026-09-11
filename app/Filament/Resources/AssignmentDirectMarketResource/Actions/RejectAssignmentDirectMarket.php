@@ -10,6 +10,7 @@ use App\Services\Approval\ApprovalTransactionService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
+use Livewire\Component;
 use Throwable;
 
 class RejectAssignmentDirectMarket
@@ -107,7 +108,8 @@ class RejectAssignmentDirectMarket
             ->action(
                 function (
                     AssignmentDirectMarket $record,
-                    array $data
+                    array $data,
+                    Component $livewire
                 ): void {
 
                     try {
@@ -180,6 +182,22 @@ class RejectAssignmentDirectMarket
                                 "Assignment Direct Market {$record->document_no} has been rejected."
                             )
                             ->send();
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | AUTO REFRESH CURRENT PAGE
+                        |--------------------------------------------------------------------------
+                        |
+                        | Refresh the record owned by the current
+                        | Assignment Direct Market View page after
+                        | a successful rejection.
+                        |
+                        | Rejection business logic remains unchanged.
+                        |
+                        |--------------------------------------------------------------------------
+                        */
+
+                        $livewire->getRecord()->refresh();
 
                     } catch (Throwable $exception) {
 

@@ -216,7 +216,7 @@ class AssignmentDirectMarketService
                         $directMarket->cost_center_id,
 
                     'warehouse_id' =>
-                        $directMarket->warehouse_id,                        
+                        $directMarket->warehouse_id,
 
                     'delivery_location' =>
                         $directMarket->delivery_location,
@@ -661,7 +661,7 @@ class AssignmentDirectMarketService
                         . 'contains an item without a valid unit price.'
                     );
                 }
-                
+
 
                 /*
                 |--------------------------------------------------------------------------
@@ -710,7 +710,7 @@ class AssignmentDirectMarketService
                 $assignment->update([
                     'status' => AssignmentDirectMarket::STATUS_WAITING_APPROVAL,
                     'updated_by' => $userId,
-                ]);                
+                ]);
 
                 /*
                 |--------------------------------------------------------------------------
@@ -921,7 +921,27 @@ class AssignmentDirectMarketService
                         $data
                     )
                     ? (float) $data['discount_amount']
-                    : (float) $item->discount_amount;                    
+                    : (float) $item->discount_amount;
+
+                $discountSource =
+                    array_key_exists(
+                        'discount_source',
+                        $data
+                    )
+                    ? (string) $data['discount_source']
+                    : 'percent';
+
+                if (
+                    ! in_array(
+                        $discountSource,
+                        ['percent', 'amount'],
+                        true
+                    )
+                ) {
+                    throw new RuntimeException(
+                        'Invalid discount calculation source.'
+                    );
+                }
 
                 $taxPercent =
                     array_key_exists(
@@ -965,6 +985,19 @@ class AssignmentDirectMarketService
                 }
 
                 if (
+                    ! in_array(
+                        $discountSource,
+                        ['percent', 'amount'],
+                        true
+                    )
+                ) {
+                    throw new RuntimeException(
+                        'Invalid discount calculation source.'
+                    );
+                }
+
+
+                if (
                     $taxPercent < 0
                     || $taxPercent > 100
                 ) {
@@ -984,17 +1017,40 @@ class AssignmentDirectMarketService
                     2
                 );
 
-                if ($discountPercent > 0) {
+                if ($discountSource === 'amount') {
 
                     $discountAmount = round(
-                        $grossAmount * ($discountPercent / 100),
+                        max(
+                            0,
+                            min(
+                                $grossAmount,
+                                $discountAmount
+                            )
+                        ),
                         2
                     );
 
-                } elseif ($discountAmount > 0 && $grossAmount > 0) {
+                    $discountPercent =
+                        $grossAmount > 0
+                            ? round(
+                                ($discountAmount / $grossAmount) * 100,
+                                2
+                            )
+                            : 0;
 
-                    $discountPercent = round(
-                        ($discountAmount / $grossAmount) * 100,
+                } else {
+
+                    $discountPercent = max(
+                        0,
+                        min(
+                            100,
+                            $discountPercent
+                        )
+                    );
+
+                    $discountAmount = round(
+                        $grossAmount
+                        * ($discountPercent / 100),
                         2
                     );
                 }
@@ -1090,7 +1146,7 @@ class AssignmentDirectMarketService
                         'updated_by' =>
                             $userId,
                     ]);
-                }       
+                }
 
                 /*
                 |--------------------------------------------------------------------------
