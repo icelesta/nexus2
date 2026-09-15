@@ -64,6 +64,44 @@ class DirectMarketTable
 
                     /*
                     |--------------------------------------------------------------------------
+                    | DATA VISIBILITY
+                    |--------------------------------------------------------------------------
+                    |
+                    | Keep Direct Market visibility aligned with Material Requisition:
+                    | privileged purchasing roles may see all records; ordinary users
+                    | may only see Direct Markets belonging to their own department.
+                    |
+                    | This is a visibility scope only. It does not change the DM
+                    | workflow, permissions, actions, or business services.
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $user = auth()->user();
+
+                    if (! $user) {
+                        return $query->whereRaw('1 = 0');
+                    }
+
+                    if (
+                        ! $user->hasAnyRole([
+                            'Super Admin',
+                            'Administrator',
+                            'Purchasing PIC',
+                            'Purchasing Manager',
+                        ])
+                    ) {
+                        if ($user->department_id) {
+                            $query->where(
+                                'direct_markets.department_id',
+                                $user->department_id
+                            );
+                        } else {
+                            return $query->whereRaw('1 = 0');
+                        }
+                    }
+
+                    /*
+                    |--------------------------------------------------------------------------
                     | GTF ACCESS
                     |--------------------------------------------------------------------------
                     */

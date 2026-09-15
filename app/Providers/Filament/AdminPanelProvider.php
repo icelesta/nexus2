@@ -57,6 +57,7 @@ class AdminPanelProvider extends PanelProvider
                     ->icon('heroicon-o-document-text')
                     ->group('Purchasing')
                     ->sort(2)
+                    ->visible(fn (): bool => auth()->user()?->can('ViewAny:PurchaseRequisition') === true)
                     ->url(fn (): string => PurchaseRequisitionResource::getUrl()),
 
                 NavigationItem::make('Direct Market')
@@ -64,6 +65,7 @@ class AdminPanelProvider extends PanelProvider
                     ->icon('heroicon-o-shopping-cart')
                     ->group('Purchasing')
                     ->sort(3)
+                    ->visible(fn (): bool => auth()->user()?->can('ViewAny:DirectMarket') === true)
                     ->url(fn (): string => DirectMarketResource::getUrl()),
             ])
 

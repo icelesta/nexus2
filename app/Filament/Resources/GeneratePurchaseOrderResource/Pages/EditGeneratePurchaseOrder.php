@@ -370,6 +370,10 @@ class EditGeneratePurchaseOrder extends EditRecord
 
     protected function canGeneratePurchaseOrder(): bool
     {
+        if (auth()->user()?->can('Update:GeneratePurchaseOrder') !== true) {
+            return false;
+        }
+
         $this->record->refresh();
 
         return app(
@@ -403,7 +407,18 @@ class EditGeneratePurchaseOrder extends EditRecord
 
             /*
             |--------------------------------------------------------------------------
-            | Server-Side Hard Gate
+            | Server-Side Authorization Gate
+            |--------------------------------------------------------------------------
+            */
+
+            abort_unless(
+                auth()->user()?->can('Update:GeneratePurchaseOrder') === true,
+                403,
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Server-Side Business Eligibility Gate
             |--------------------------------------------------------------------------
             */
 

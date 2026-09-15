@@ -38,11 +38,6 @@ class PurchaseRequisitionResource extends Resource
     protected static ?string $recordTitleAttribute =
         'pr_no';
 
-    public static function shouldRegisterNavigation(): bool
-    {
-        return true;
-    }
-
     /*
     |--------------------------------------------------------------------------
     | FORM

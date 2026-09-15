@@ -151,6 +151,15 @@ class GeneratePurchaseOrderResource extends Resource
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * Generate PO is a separate Roles module even though its business model
+     * remains AssignmentMaterialRequisition.
+     */
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->can('ViewAny:GeneratePurchaseOrder') === true;
+    }
+
     public static function canCreate(): bool
     {
         return false;
@@ -158,9 +167,7 @@ class GeneratePurchaseOrderResource extends Resource
 
     public static function canEdit(Model $record): bool
     {
-        return auth()->user()?->hasPermissionTo(
-            'Update:AssignmentMaterialRequisition'
-        ) === true
+        return auth()->user()?->can('Update:GeneratePurchaseOrder') === true
             && $record->status === AssignmentMaterialRequisition::STATUS_WAITING_APPROVAL;
     }
 

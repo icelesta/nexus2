@@ -9,114 +9,72 @@ use App\Models\User;
 
 class ShippingAddressPolicy
 {
-    /**
-     * Determine whether the user can view any models.
-     */
+    public function before(User $user, string $ability): ?bool
+    {
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
+        return null;
+    }
+
     public function viewAny(User $user): bool
     {
-        return $this->checkPermission(
-            $user,
-            'shipping-address.view-any',
-        );
+        return $user->can('ViewAny:ShippingAddress');
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
-    public function view(
-        User $user,
-        ShippingAddress $shippingAddress,
-    ): bool {
-        return $this->checkPermission(
-            $user,
-            'shipping-address.view',
-        );
+    public function view(User $user, ShippingAddress $shippingAddress): bool
+    {
+        return $user->can('View:ShippingAddress');
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
     public function create(User $user): bool
     {
-        return $this->checkPermission(
-            $user,
-            'shipping-address.create',
-        );
+        return $user->can('Create:ShippingAddress');
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(
-        User $user,
-        ShippingAddress $shippingAddress,
-    ): bool {
-        return $this->checkPermission(
-            $user,
-            'shipping-address.update',
-        );
+    public function update(User $user, ShippingAddress $shippingAddress): bool
+    {
+        return $user->can('Update:ShippingAddress');
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(
-        User $user,
-        ShippingAddress $shippingAddress,
-    ): bool {
-        return $this->checkPermission(
-            $user,
-            'shipping-address.delete',
-        );
+    public function delete(User $user, ShippingAddress $shippingAddress): bool
+    {
+        return $user->can('Delete:ShippingAddress');
     }
 
-    /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(
-        User $user,
-        ShippingAddress $shippingAddress,
-    ): bool {
-        return $this->checkPermission(
-            $user,
-            'shipping-address.restore',
-        );
+    public function restore(User $user, ShippingAddress $shippingAddress): bool
+    {
+        return $user->can('Restore:ShippingAddress');
     }
 
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(
-        User $user,
-        ShippingAddress $shippingAddress,
-    ): bool {
-        return $this->checkPermission(
-            $user,
-            'shipping-address.force-delete',
-        );
+    public function forceDelete(User $user, ShippingAddress $shippingAddress): bool
+    {
+        return $user->can('ForceDelete:ShippingAddress');
     }
 
-    /**
-     * Check permission.
-     *
-     * During ERP development we allow access if the
-     * permission engine has not yet been implemented.
-     *
-     * Once the Security Module is completed,
-     * replace this implementation with the final
-     * authorization logic.
-     */
-    protected function checkPermission(
-        User $user,
-        string $permission,
-    ): bool {
+    public function deleteAny(User $user): bool
+    {
+        return $user->can('DeleteAny:ShippingAddress');
+    }
 
-        /**
-         * Future implementation.
-         *
-         * return $user->can($permission);
-         */
+    public function restoreAny(User $user): bool
+    {
+        return $user->can('RestoreAny:ShippingAddress');
+    }
 
-        return true;
+    public function forceDeleteAny(User $user): bool
+    {
+        return $user->can('ForceDeleteAny:ShippingAddress');
+    }
+
+    public function replicate(User $user, ShippingAddress $shippingAddress): bool
+    {
+        return $user->can('Replicate:ShippingAddress');
+    }
+
+    public function reorder(User $user): bool
+    {
+        return $user->can('Reorder:ShippingAddress');
     }
 }

@@ -137,35 +137,9 @@ class TransactionNumberingResource extends Resource
         return 'Configured Active Transaction Numberings';
     }
 
-/*    public static function canViewAny(): bool
-    {
-        return auth()->user()?->can('view_any_transaction_numbering') ?? false;
-    }*/
-
-/*    public static function shouldRegisterNavigation(): bool
-    {
-        return auth()->user()?->can('view_any_transaction_numbering') ?? true;
-    }   */ 
-
-    public static function canViewAny(): bool
-    {
-        return true;
-    }
-
-    public static function canCreate(): bool
-    {
-        return true;
-    }
-
-    public static function canEdit($record): bool
-    {
-        return true;
-    }
-
-    public static function canDelete($record): bool
-    {
-        return true;
-    }
-
+    /**
+     * Authorization is intentionally delegated to TransactionNumberingPolicy.
+     * Do not bypass Role permissions at the Resource level.
+     */
 
 }
