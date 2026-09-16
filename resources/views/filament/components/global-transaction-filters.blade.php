@@ -213,7 +213,6 @@
 
                             <select
                                 wire:model.live="globalDepartmentFilter"
-                                :disabled="$livewire->isDepartmentRestrictedRole()"
                                 class="block w-full min-w-0 rounded-xl
                                        border-violet-100
                                        {{
@@ -235,9 +234,9 @@
                                        focus:ring-violet-100"
                             >
 
-                                    <option value="">
-                                        All Department
-                                    </option>
+                                <option value="">
+                                    All Department
+                                </option>
 
                                 @foreach ($livewire->globalDepartmentOptions as $id => $name)
 

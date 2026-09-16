@@ -82,24 +82,6 @@ class DirectMarketTable
                         return $query->whereRaw('1 = 0');
                     }
 
-                    if (
-                        ! $user->hasAnyRole([
-                            'Super Admin',
-                            'Administrator',
-                            'Purchasing PIC',
-                            'Purchasing Manager',
-                        ])
-                    ) {
-                        if ($user->department_id) {
-                            $query->where(
-                                'direct_markets.department_id',
-                                $user->department_id
-                            );
-                        } else {
-                            return $query->whereRaw('1 = 0');
-                        }
-                    }
-
                     /*
                     |--------------------------------------------------------------------------
                     | GTF ACCESS

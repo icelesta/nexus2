@@ -111,38 +111,6 @@ class PurchaseRequisitionTable
 
                     /*
                     |--------------------------------------------------------------------------
-                    | EXISTING DATA VISIBILITY
-                    |--------------------------------------------------------------------------
-                    |
-                    | DO NOT CHANGE EXISTING VISIBILITY CONCEPT.
-                    |
-                    */
-
-                    if (
-                        $user->hasAnyRole([
-                            'Staff',
-                            'Dept Head',
-                        ])
-                    ) {
-
-                        if ($user->department_id) {
-
-                            $query->where(
-                                'purchase_requisitions.department_id',
-                                $user->department_id
-                            );
-
-                        } else {
-
-                            return $query->whereRaw('1 = 0');
-
-                        }
-
-                    }
-
-
-                    /*
-                    |--------------------------------------------------------------------------
                     | GTF-1.1-C
                     | GLOBAL TRANSACTION FILTER — MR
                     |--------------------------------------------------------------------------

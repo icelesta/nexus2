@@ -241,7 +241,9 @@ class EditAssignmentDirectMarket extends EditRecord
                 'Assignment Direct Market submitted successfully.'
             );
 
-            $this->redirectToEdit();
+            $this->redirect(
+                static::getResource()::getUrl('index')
+            );
 
         } catch (\RuntimeException $e) {
 
