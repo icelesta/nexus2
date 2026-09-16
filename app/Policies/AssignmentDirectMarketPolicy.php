@@ -64,14 +64,15 @@ class AssignmentDirectMarketPolicy
 
     public function submit(User $user, AssignmentDirectMarket $model): bool
     {
-        return in_array(
-            $model->status,
-            [
-                AssignmentDirectMarket::STATUS_DRAFT,
-                AssignmentDirectMarket::STATUS_UPDATED,
-            ],
-            true,
-        );
+        return $user->can('Update:AssignmentDirectMarket')
+            && in_array(
+                $model->status,
+                [
+                    AssignmentDirectMarket::STATUS_DRAFT,
+                    AssignmentDirectMarket::STATUS_UPDATED,
+                ],
+                true,
+            );
     }
 
     public function approve(User $user, AssignmentDirectMarket $model): bool

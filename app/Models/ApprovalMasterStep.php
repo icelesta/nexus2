@@ -8,25 +8,14 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\Permission\Models\Role;
 
 class ApprovalMasterStep extends Model
 {
     use HasFactory;
 
-    /*
-    |--------------------------------------------------------------------------
-    | Table
-    |--------------------------------------------------------------------------
-    */
-
     protected $table = 'approval_master_steps';
-
-    /*
-    |--------------------------------------------------------------------------
-    | Mass Assignment
-    |--------------------------------------------------------------------------
-    */
 
     protected $fillable = [
         'approval_master_id',
@@ -34,12 +23,6 @@ class ApprovalMasterStep extends Model
         'role_id',
         'is_required',
     ];
-
-    /*
-    |--------------------------------------------------------------------------
-    | Casts
-    |--------------------------------------------------------------------------
-    */
 
     protected function casts(): array
     {
@@ -51,7 +34,7 @@ class ApprovalMasterStep extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | Relationships
+    | Approval Master
     |--------------------------------------------------------------------------
     */
 
@@ -63,6 +46,12 @@ class ApprovalMasterStep extends Model
         );
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Approval Role
+    |--------------------------------------------------------------------------
+    */
+
     public function role(): BelongsTo
     {
         return $this->belongsTo(
@@ -73,23 +62,64 @@ class ApprovalMasterStep extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | Scopes
+    | Explicit Approval Users
     |--------------------------------------------------------------------------
+    |
+    | An approval step is primarily configured by ROLE.
+    |
+    | Optional specific users can then be assigned to the step.
+    |
+    | If this relationship is empty:
+    |
+    |     all active users belonging to the configured role
+    |     remain eligible.
+    |
+    | If this relationship contains users:
+    |
+    |     only those selected active users belonging to the
+    |     configured role are eligible.
+    |
+    | The actual runtime authorization is enforced by the
+    | ApprovalTransactionService.
+    |
     */
 
-    public function scopeRequired(Builder $query): Builder
+    public function users(): BelongsToMany
     {
-        return $query->where('is_required', true);
-    }
-
-    public function scopeOrdered(Builder $query): Builder
-    {
-        return $query->orderBy('approval_level');
+        return $this->belongsToMany(
+            User::class,
+            'approval_master_step_users',
+            'approval_master_step_id',
+            'user_id'
+        )->withTimestamps();
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Helpers
+    | Scopes
+    |--------------------------------------------------------------------------
+    */
+
+    public function scopeRequired(
+        Builder $query
+    ): Builder {
+        return $query->where(
+            'is_required',
+            true
+        );
+    }
+
+    public function scopeOrdered(
+        Builder $query
+    ): Builder {
+        return $query->orderBy(
+            'approval_level'
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Status Helpers
     |--------------------------------------------------------------------------
     */
 
@@ -98,27 +128,22 @@ class ApprovalMasterStep extends Model
         return (bool) $this->is_required;
     }
 
-    /**
-     * Get active users who can approve an Approval Master Step.
-     */
-    public function getApproversForMasterStep(
-        \App\Models\ApprovalMasterStep $step
-    ) {
-        if (! $step->role_id) {
-            return collect();
-        }
+    /*
+    |--------------------------------------------------------------------------
+    | Explicit User Restriction
+    |--------------------------------------------------------------------------
+    |
+    | TRUE:
+    |     This approval level has specific users assigned.
+    |
+    | FALSE:
+    |     No specific users are assigned, therefore the existing
+    |     role-based fallback remains active.
+    |
+    */
 
-        return User::query()
-            ->where('is_active', true)
-            ->whereHas(
-                'roles',
-                fn ($query) => $query
-                    ->where('roles.id', $step->role_id)
-                    ->where('roles.guard_name', 'web')
-                    ->where('roles.is_active', true)
-            )
-            ->orderBy('name')
-            ->get();
+    public function hasExplicitUsers(): bool
+    {
+        return $this->users()->exists();
     }
-    
 }

@@ -5,20 +5,25 @@ declare(strict_types=1);
 namespace App\Filament\Resources\ApprovalMasterResource\RelationManagers;
 
 use App\Models\ApprovalMasterStep;
+
 use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+
 use Illuminate\Database\Eloquent\Builder;
 
 class ApprovalStepsRelationManager extends RelationManager
@@ -35,20 +40,23 @@ class ApprovalStepsRelationManager extends RelationManager
 
     protected static ?string $recordTitleAttribute = 'approval_level';
 
+
     /*
     |--------------------------------------------------------------------------
     | Form
     |--------------------------------------------------------------------------
     */
 
-    public function form(Schema $schema): Schema
-    {
+    public function form(
+        Schema $schema
+    ): Schema {
+
         return $schema
             ->components([
 
                 /*
                 |--------------------------------------------------------------------------
-                | Approval Level
+                | APPROVAL LEVEL
                 |--------------------------------------------------------------------------
                 */
 
@@ -58,14 +66,18 @@ class ApprovalStepsRelationManager extends RelationManager
                     ->required()
                     ->readOnly()
                     ->dehydrated()
-                    ->default(fn (): int => $this->getNextApprovalLevel())
+                    ->default(
+                        fn (): int =>
+                            $this->getNextApprovalLevel()
+                    )
                     ->helperText(
                         'Approval level is generated automatically.'
                     ),
 
+
                 /*
                 |--------------------------------------------------------------------------
-                | Approval Role
+                | APPROVAL ROLE
                 |--------------------------------------------------------------------------
                 */
 
@@ -74,23 +86,114 @@ class ApprovalStepsRelationManager extends RelationManager
                     ->relationship(
                         name: 'role',
                         titleAttribute: 'name',
-                        modifyQueryUsing: fn (Builder $query) => $query
-                            ->where('guard_name', 'web')
-                            ->where('is_active', true)
-                            ->orderBy('sort_order')
-                            ->orderBy('name'),
+                        modifyQueryUsing:
+                            fn (Builder $query): Builder =>
+                                $query
+                                    ->where(
+                                        'guard_name',
+                                        'web'
+                                    )
+                                    ->where(
+                                        'is_active',
+                                        true
+                                    )
+                                    ->orderBy(
+                                        'sort_order'
+                                    )
+                                    ->orderBy(
+                                        'name'
+                                    ),
                     )
                     ->searchable()
                     ->preload()
                     ->native(false)
+                    ->live()
                     ->required()
                     ->helperText(
                         'Select the role responsible for approving this level.'
                     ),
 
+
                 /*
                 |--------------------------------------------------------------------------
-                | Required
+                | APPROVAL USERS
+                |--------------------------------------------------------------------------
+                |
+                | Optional specific-user restriction.
+                |
+                | Empty = all active users belonging to the
+                | selected approval role remain eligible.
+                |
+                */
+
+                Select::make('users')
+                    ->label('Approval Users')
+                    ->multiple()
+                    ->searchable()
+                    ->preload()
+                    ->native(false)
+                    ->relationship(
+                        name: 'users',
+                        titleAttribute: 'name',
+                        modifyQueryUsing:
+                            function (
+                                Builder $query,
+                                callable $get
+                            ): Builder {
+
+                                $roleId = $get(
+                                    'role_id'
+                                );
+
+                                return $query
+                                    ->where(
+                                        'users.is_active',
+                                        true
+                                    )
+                                    ->whereHas(
+                                        'roles',
+                                        function (
+                                            Builder $roleQuery
+                                        ) use (
+                                            $roleId
+                                        ): void {
+
+                                            $roleQuery
+                                                ->where(
+                                                    'roles.id',
+                                                    $roleId
+                                                )
+                                                ->where(
+                                                    'roles.guard_name',
+                                                    'web'
+                                                )
+                                                ->where(
+                                                    'roles.is_active',
+                                                    true
+                                                );
+                                        }
+                                    )
+                                    ->orderBy(
+                                        'name'
+                                    );
+                            },
+                    )
+                    ->visible(
+                        fn (
+                            callable $get
+                        ): bool =>
+                            filled(
+                                $get('role_id')
+                            )
+                    )
+                    ->helperText(
+                        'Optional. If empty, all active users with the selected role may approve.'
+                    ),
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | REQUIRED
                 |--------------------------------------------------------------------------
                 */
 
@@ -105,22 +208,26 @@ class ApprovalStepsRelationManager extends RelationManager
             ]);
     }
 
+
     /*
     |--------------------------------------------------------------------------
-    | Create Hook
+    | CREATE HOOK
     |--------------------------------------------------------------------------
     */
 
     protected function mutateFormDataBeforeCreate(
         array $data
     ): array {
+
         /*
         |--------------------------------------------------------------------------
         | Always generate the next level server-side.
         |--------------------------------------------------------------------------
         */
 
-        $data['approval_level'] = $this->getNextApprovalLevel();
+        $data['approval_level'] =
+            $this->getNextApprovalLevel();
+
 
         /*
         |--------------------------------------------------------------------------
@@ -128,12 +235,20 @@ class ApprovalStepsRelationManager extends RelationManager
         |--------------------------------------------------------------------------
         */
 
-        if ($this->roleAlreadyAssigned(
-            (int) ($data['role_id'] ?? 0)
-        )) {
+        if (
+            $this->roleAlreadyAssigned(
+                (int) (
+                    $data['role_id']
+                    ?? 0
+                )
+            )
+        ) {
+
             Notification::make()
                 ->danger()
-                ->title('Role already assigned')
+                ->title(
+                    'Role already assigned'
+                )
                 ->body(
                     'This role is already assigned to another approval level in this Approval Master.'
                 )
@@ -145,20 +260,25 @@ class ApprovalStepsRelationManager extends RelationManager
         return $data;
     }
 
+
     /*
     |--------------------------------------------------------------------------
-    | Update Hook
+    | UPDATE HOOK
     |--------------------------------------------------------------------------
     */
 
     protected function mutateFormDataBeforeSave(
         array $data
     ): array {
-        $record = $this->getMountedTableActionRecord();
+
+        $record =
+            $this->getMountedTableActionRecord();
+
 
         if (! $record) {
             return $data;
         }
+
 
         /*
         |--------------------------------------------------------------------------
@@ -166,7 +286,9 @@ class ApprovalStepsRelationManager extends RelationManager
         |--------------------------------------------------------------------------
         */
 
-        $data['approval_level'] = $record->approval_level;
+        $data['approval_level'] =
+            $record->approval_level;
+
 
         /*
         |--------------------------------------------------------------------------
@@ -174,13 +296,21 @@ class ApprovalStepsRelationManager extends RelationManager
         |--------------------------------------------------------------------------
         */
 
-        if ($this->roleAlreadyAssigned(
-            (int) ($data['role_id'] ?? 0),
-            (int) $record->getKey()
-        )) {
+        if (
+            $this->roleAlreadyAssigned(
+                (int) (
+                    $data['role_id']
+                    ?? 0
+                ),
+                (int) $record->getKey()
+            )
+        ) {
+
             Notification::make()
                 ->danger()
-                ->title('Role already assigned')
+                ->title(
+                    'Role already assigned'
+                )
                 ->body(
                     'This role is already assigned to another approval level in this Approval Master.'
                 )
@@ -192,42 +322,59 @@ class ApprovalStepsRelationManager extends RelationManager
         return $data;
     }
 
+
     /*
     |--------------------------------------------------------------------------
-    | Delete Validation
+    | DELETE VALIDATION
     |--------------------------------------------------------------------------
     */
 
     protected function validateDelete(
         ApprovalMasterStep $record
     ): bool {
-        $owner = $this->getOwnerRecord();
 
-        $steps = $owner
-            ->steps()
-            ->orderBy('approval_level')
-            ->get();
+        $owner =
+            $this->getOwnerRecord();
+
+
+        $steps =
+            $owner
+                ->steps()
+                ->orderBy(
+                    'approval_level'
+                )
+                ->get();
+
 
         /*
         |--------------------------------------------------------------------------
         | Rule 1
         |--------------------------------------------------------------------------
-        | Active Approval Master must always contain at least
-        | one approval level.
+        | Active Approval Master must always contain
+        | at least one approval level.
         |--------------------------------------------------------------------------
         */
 
-        $remainingSteps = $steps
-            ->where('id', '!=', $record->getKey())
-            ->values();
+        $remainingSteps =
+            $steps
+                ->where(
+                    'id',
+                    '!=',
+                    $record->getKey()
+                )
+                ->values();
+
 
         if (
             $owner->is_active
             && $remainingSteps->isEmpty()
         ) {
+
             Notification::make()
                 ->danger()
-                ->title('Cannot delete approval level')
+                ->title(
+                    'Cannot delete approval level'
+                )
                 ->body(
                     'An active Approval Master must contain at least one approval level.'
                 )
@@ -236,21 +383,33 @@ class ApprovalStepsRelationManager extends RelationManager
             return false;
         }
 
+
         /*
         |--------------------------------------------------------------------------
         | Rule 2
         |--------------------------------------------------------------------------
-        | At least one required approval level must remain.
+        | At least one required level must remain.
         |--------------------------------------------------------------------------
         */
 
-        $remainingRequiredSteps = $remainingSteps
-            ->where('is_required', true);
+        $remainingRequired =
+            $remainingSteps
+                ->where(
+                    'is_required',
+                    true
+                );
 
-        if ($remainingRequiredSteps->isEmpty()) {
+
+        if (
+            $record->is_required
+            && $remainingRequired->isEmpty()
+        ) {
+
             Notification::make()
                 ->danger()
-                ->title('Cannot delete approval level')
+                ->title(
+                    'Cannot delete approval level'
+                )
                 ->body(
                     'At least one required approval level must remain in the Approval Master.'
                 )
@@ -259,44 +418,52 @@ class ApprovalStepsRelationManager extends RelationManager
             return false;
         }
 
+
         /*
         |--------------------------------------------------------------------------
         | Rule 3
         |--------------------------------------------------------------------------
-        | Do not allow a deletion that creates a level gap.
-        |--------------------------------------------------------------------------
-        |
-        | Example:
-        |
-        | 1 → Supervisor
-        | 2 → Manager
-        | 3 → Staff
-        |
-        | Deleting level 2 would produce:
-        |
-        | 1 → Supervisor
-        | 3 → Staff
-        |
-        | This is not allowed.
+        | Approval levels must remain sequential.
         |--------------------------------------------------------------------------
         */
 
-        $remainingLevels = $remainingSteps
-            ->pluck('approval_level')
-            ->map(fn ($level): int => (int) $level)
-            ->sort()
-            ->values()
-            ->all();
+        $remainingLevels =
+            $remainingSteps
+                ->sortBy(
+                    'approval_level'
+                )
+                ->pluck(
+                    'approval_level'
+                )
+                ->map(
+                    fn ($level): int =>
+                        (int) $level
+                )
+                ->values()
+                ->all();
 
-        $expectedLevels = range(
-            1,
-            count($remainingLevels)
-        );
 
-        if ($remainingLevels !== $expectedLevels) {
+        $expectedLevels =
+            $remainingLevels === []
+                ? []
+                : range(
+                    1,
+                    count(
+                        $remainingLevels
+                    )
+                );
+
+
+        if (
+            $remainingLevels !==
+            $expectedLevels
+        ) {
+
             Notification::make()
                 ->danger()
-                ->title('Cannot delete approval level')
+                ->title(
+                    'Cannot delete approval level'
+                )
                 ->body(
                     'This level cannot be deleted because it would create a gap in the approval sequence.'
                 )
@@ -305,12 +472,41 @@ class ApprovalStepsRelationManager extends RelationManager
             return false;
         }
 
+
         return true;
     }
 
+
     /*
     |--------------------------------------------------------------------------
-    | Role Duplicate Check
+    | NEXT APPROVAL LEVEL
+    |--------------------------------------------------------------------------
+    */
+
+    protected function getNextApprovalLevel(): int
+    {
+
+        $owner =
+            $this->getOwnerRecord();
+
+
+        $maxLevel =
+            $owner
+                ->steps()
+                ->max(
+                    'approval_level'
+                );
+
+
+        return (
+            (int) $maxLevel
+        ) + 1;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ROLE ALREADY ASSIGNED
     |--------------------------------------------------------------------------
     */
 
@@ -318,156 +514,201 @@ class ApprovalStepsRelationManager extends RelationManager
         int $roleId,
         ?int $ignoreId = null
     ): bool {
+
         if ($roleId <= 0) {
-            return true;
+            return false;
         }
 
-        $query = $this
-            ->getOwnerRecord()
-            ->steps()
-            ->where('role_id', $roleId);
+
+        $query =
+            $this->getOwnerRecord()
+                ->steps()
+                ->where(
+                    'role_id',
+                    $roleId
+                );
+
 
         if ($ignoreId !== null) {
-            $query->whereKeyNot($ignoreId);
+
+            $query->where(
+                'id',
+                '!=',
+                $ignoreId
+            );
         }
+
 
         return $query->exists();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Next Approval Level
-    |--------------------------------------------------------------------------
-    */
-
-    protected function getNextApprovalLevel(): int
-    {
-        return (
-            (int) $this
-                ->getOwnerRecord()
-                ->steps()
-                ->max('approval_level')
-        ) + 1;
-    }
 
     /*
     |--------------------------------------------------------------------------
-    | Halt Current Action
+    | TABLE
     |--------------------------------------------------------------------------
     */
 
-    protected function haltAction(): void
-    {
-        /*
-        |--------------------------------------------------------------------------
-        | The mounted table action will be halted by throwing no data
-        | forward through the current action lifecycle.
-        |--------------------------------------------------------------------------
-        |
-        | Validation is additionally protected by the database/business
-        | checks below. This helper intentionally keeps the form hook
-        | lightweight.
-        |--------------------------------------------------------------------------
-        */
+    public function table(
+        Table $table
+    ): Table {
 
-        throw \Illuminate\Validation\ValidationException::withMessages([
-            'role_id' => 'The selected role is already assigned to this Approval Master.',
-        ]);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Table
-    |--------------------------------------------------------------------------
-    */
-
-    public function table(Table $table): Table
-    {
         return $table
-            ->columns([
 
-                /*
-                |--------------------------------------------------------------------------
-                | Level
-                |--------------------------------------------------------------------------
-                */
+            /*
+            |--------------------------------------------------------------------------
+            | EAGER LOAD
+            |--------------------------------------------------------------------------
+            |
+            | Prevent N+1 queries for:
+            |
+            | role
+            | users
+            |
+            */
 
-                TextColumn::make('approval_level')
-                    ->label('Level')
-                    ->sortable()
-                    ->alignCenter()
-                    ->weight('medium'),
-
-                /*
-                |--------------------------------------------------------------------------
-                | Approval Role
-                |--------------------------------------------------------------------------
-                */
-
-                TextColumn::make('role.name')
-                    ->label('Approval Role')
-                    ->searchable()
-                    ->sortable()
-                    ->badge(),
-
-                /*
-                |--------------------------------------------------------------------------
-                | Role Code
-                |--------------------------------------------------------------------------
-                */
-
-                TextColumn::make('role.role_code')
-                    ->label('Role Code')
-                    ->searchable()
-                    ->toggleable(),
-
-                /*
-                |--------------------------------------------------------------------------
-                | Required
-                |--------------------------------------------------------------------------
-                */
-
-                IconColumn::make('is_required')
-                    ->label('Required')
-                    ->boolean()
-                    ->alignCenter()
-                    ->sortable(),
-
-                /*
-                |--------------------------------------------------------------------------
-                | Updated
-                |--------------------------------------------------------------------------
-                */
-
-                TextColumn::make('updated_at')
-                    ->label('Updated')
-                    ->dateTime('d M Y H:i')
-                    ->sortable()
-                    ->toggleable(),
-
-            ])
+            ->modifyQueryUsing(
+                fn (Builder $query): Builder =>
+                    $query->with([
+                        'role',
+                        'users',
+                    ])
+            )
 
             ->defaultSort(
                 'approval_level',
                 'asc'
             )
 
-            /*
-            |--------------------------------------------------------------------------
-            | Header Actions
-            |--------------------------------------------------------------------------
-            */
+            ->columns([
 
-            ->headerActions([
-                CreateAction::make()
-                    ->label('Add Approval Level')
-                    ->icon(Heroicon::OutlinedPlus)
-                    ->button(),
+                /*
+                |--------------------------------------------------------------------------
+                | LEVEL
+                |--------------------------------------------------------------------------
+                */
+
+                TextColumn::make(
+                    'approval_level'
+                )
+                    ->label('Level')
+                    ->sortable()
+                    ->alignCenter(),
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | APPROVAL ROLE
+                |--------------------------------------------------------------------------
+                */
+
+                TextColumn::make(
+                    'role.name'
+                )
+                    ->label('Approval Role')
+                    ->badge()
+                    ->searchable()
+                    ->sortable()
+                    ->placeholder('—'),
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | APPROVAL USER
+                |--------------------------------------------------------------------------
+                */
+
+                TextColumn::make(
+                    'users.name'
+                )
+                    ->label('Approval User')
+                    ->state(
+                        function (
+                            ApprovalMasterStep $record
+                        ): string {
+
+                            if (
+                                $record
+                                    ->users
+                                    ->isEmpty()
+                            ) {
+
+                                return 'All active users';
+                            }
+
+
+                            return $record
+                                ->users
+                                ->pluck('name')
+                                ->filter()
+                                ->unique()
+                                ->implode(', ');
+                        }
+                    )
+                    ->wrap()
+                    ->searchable()
+                    ->placeholder(
+                        'All active users'
+                    ),
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | REQUIRED
+                |--------------------------------------------------------------------------
+                */
+
+                IconColumn::make(
+                    'is_required'
+                )
+                    ->label('Required')
+                    ->boolean()
+                    ->alignCenter()
+                    ->sortable(),
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | UPDATED
+                |--------------------------------------------------------------------------
+                */
+
+                TextColumn::make(
+                    'updated_at'
+                )
+                    ->label('Updated')
+                    ->dateTime(
+                        'd M Y H:i'
+                    )
+                    ->sortable(),
+
+
             ])
 
             /*
             |--------------------------------------------------------------------------
-            | Record Actions
+            | HEADER ACTIONS
+            |--------------------------------------------------------------------------
+            */
+
+            ->headerActions([
+
+                CreateAction::make()
+                    ->label(
+                        'Add Approval Level'
+                    )
+                    ->icon(
+                        'heroicon-o-plus'
+                    )
+                    ->color(
+                        'primary'
+                    ),
+
+            ])
+
+            /*
+            |--------------------------------------------------------------------------
+            | RECORD ACTIONS
             |--------------------------------------------------------------------------
             */
 
@@ -475,32 +716,82 @@ class ApprovalStepsRelationManager extends RelationManager
 
                 ActionGroup::make([
 
-                    EditAction::make(),
+                    /*
+                    |--------------------------------------------------------------------------
+                    | EDIT
+                    |--------------------------------------------------------------------------
+                    */
+
+                    EditAction::make()
+                        ->label('Edit'),
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | DELETE
+                    |--------------------------------------------------------------------------
+                    */
 
                     DeleteAction::make()
-                        ->before(function (
-                            DeleteAction $action,
-                            ApprovalMasterStep $record
-                        ): void {
+                        ->label('Delete')
+                        ->requiresConfirmation()
+                        ->before(
+                            function (
+                                DeleteAction $action
+                            ): void {
 
-                            /*
-                            |--------------------------------------------------------------------------
-                            | Validate before actual delete.
-                            |--------------------------------------------------------------------------
-                            */
+                                $record =
+                                    $this->getMountedTableActionRecord();
 
-                            if (! $this->validateDelete($record)) {
-                                $action->halt();
+                                if (
+                                    ! $record instanceof
+                                    ApprovalMasterStep
+                                ) {
+
+                                    return;
+                                }
+
+
+                                if (
+                                    ! $this->validateDelete(
+                                        $record
+                                    )
+                                ) {
+
+                                    $action->halt();
+                                }
                             }
-                        }),
+                        ),
 
                 ])
-                    ->label('Actions')
-                    ->icon(Heroicon::OutlinedEllipsisVertical)
-                    ->button(),
+                    ->label(
+                        'Actions'
+                    )
+                    ->button()
+                    ->color(
+                        'warning'
+                    )
+                    ->icon(
+                        Heroicon::OutlinedEllipsisVertical
+                    ),
 
             ])
 
-            ->toolbarActions([]);
+            /*
+            |--------------------------------------------------------------------------
+            | TOOLBAR ACTIONS
+            |--------------------------------------------------------------------------
+            */
+
+            ->toolbarActions([
+
+                /*
+                | No bulk action.
+                |
+                | Approval level deletion has custom validation.
+                |
+                */
+
+            ]);
     }
 }

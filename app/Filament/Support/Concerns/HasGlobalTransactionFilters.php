@@ -47,6 +47,20 @@ trait HasGlobalTransactionFilters
         ];
     }
 
+    protected function isDepartmentRestrictedRole(): bool
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        return $user->hasAnyRole([
+            'Staff',
+            'Dept Head',
+        ]);
+    }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -56,15 +70,7 @@ trait HasGlobalTransactionFilters
 
     public function canUseGlobalTransactionFilters(): bool
     {
-        $user = auth()->user();
-
-        if (! $user) {
-            return false;
-        }
-
-        return $user->hasAnyRole(
-            $this->globalTransactionFilterAllowedRoles()
-        );
+        return auth()->check();
     }
 
 
@@ -83,6 +89,10 @@ trait HasGlobalTransactionFilters
         $this->globalDateTo ??= now()
             ->endOfMonth()
             ->toDateString();
+
+        if ($this->isDepartmentRestrictedRole()) {
+            $this->globalDepartmentFilter = auth()->user()->department_id;
+        }
     }
 
 
@@ -96,7 +106,10 @@ trait HasGlobalTransactionFilters
     {
         $this->globalBranchFilter = null;
 
-        $this->globalDepartmentFilter = null;
+        $this->globalDepartmentFilter =
+        $this->isDepartmentRestrictedRole()
+            ? auth()->user()->department_id
+            : null;
 
         $this->globalSupplierFilter = null;
 

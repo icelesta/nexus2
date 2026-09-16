@@ -28,7 +28,7 @@ class AssignmentMaterialRequisitionItemPolicy
      */
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->can('ViewAny:AssignmentMaterialRequisitionItem');
     }
 
     /**
@@ -38,7 +38,7 @@ class AssignmentMaterialRequisitionItemPolicy
         User $user,
         AssignmentMaterialRequisitionItem $model,
     ): bool {
-        return true;
+        return $user->can('View:AssignmentMaterialRequisitionItem');
     }
 
     /**
@@ -46,7 +46,7 @@ class AssignmentMaterialRequisitionItemPolicy
      */
     public function create(User $user): bool
     {
-        return true;
+        return $user->can('Create:AssignmentMaterialRequisitionItem');
     }
 
     /**
@@ -56,14 +56,15 @@ class AssignmentMaterialRequisitionItemPolicy
         User $user,
         AssignmentMaterialRequisitionItem $model,
     ): bool {
-        return in_array(
-            $model->status,
-            [
-                AssignmentMaterialRequisitionItem::STATUS_DRAFT,
-                AssignmentMaterialRequisitionItem::STATUS_ASSIGNED,
-            ],
-            true,
-        );
+        return $user->can('Update:AssignmentMaterialRequisitionItem')
+            && in_array(
+                $model->status,
+                [
+                    AssignmentMaterialRequisitionItem::STATUS_DRAFT,
+                    AssignmentMaterialRequisitionItem::STATUS_ASSIGNED,
+                ],
+                true,
+            );
     }
 
     /**
@@ -73,7 +74,8 @@ class AssignmentMaterialRequisitionItemPolicy
         User $user,
         AssignmentMaterialRequisitionItem $model,
     ): bool {
-        return $model->status === AssignmentMaterialRequisitionItem::STATUS_DRAFT;
+        return $user->can('Delete:AssignmentMaterialRequisitionItem')
+            && $model->status === AssignmentMaterialRequisitionItem::STATUS_DRAFT;
     }
 
     /**
@@ -94,6 +96,33 @@ class AssignmentMaterialRequisitionItemPolicy
         AssignmentMaterialRequisitionItem $model,
     ): bool {
         return false;
+    }
+
+    public function deleteAny(User $user): bool
+    {
+        return $user->can('DeleteAny:AssignmentMaterialRequisitionItem');
+    }
+
+    public function forceDeleteAny(User $user): bool
+    {
+        return $user->can('ForceDeleteAny:AssignmentMaterialRequisitionItem');
+    }
+
+    public function restoreAny(User $user): bool
+    {
+        return $user->can('RestoreAny:AssignmentMaterialRequisitionItem');
+    }
+
+    public function replicate(
+        User $user,
+        AssignmentMaterialRequisitionItem $model,
+    ): bool {
+        return $user->can('Replicate:AssignmentMaterialRequisitionItem');
+    }
+
+    public function reorder(User $user): bool
+    {
+        return $user->can('Reorder:AssignmentMaterialRequisitionItem');
     }
 
     /**

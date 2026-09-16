@@ -338,6 +338,32 @@ class SupplierPolicy
 
     /*
     |--------------------------------------------------------------------------
+    | Bulk / Reorder Permissions
+    |--------------------------------------------------------------------------
+    */
+
+    public function deleteAny(User $user): bool
+    {
+        return $user->can('DeleteAny:Supplier');
+    }
+
+    public function forceDeleteAny(User $user): bool
+    {
+        return $user->can('ForceDeleteAny:Supplier');
+    }
+
+    public function restoreAny(User $user): bool
+    {
+        return $user->can('RestoreAny:Supplier');
+    }
+
+    public function reorder(User $user): bool
+    {
+        return $user->can('Reorder:Supplier');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | Business Rules
     |--------------------------------------------------------------------------
     */

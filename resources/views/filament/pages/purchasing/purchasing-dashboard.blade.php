@@ -513,9 +513,9 @@
                     $pipeline = [
 
                         [
-                            'code' => 'MR',
-                            'title' => 'Material Requisition',
-                            'count' => $this->materialRequisitionCount,
+                            'code' => 'DM',
+                            'title' => 'Direct Market',
+                            'count' => $this->directMarketCount,
                             'status' => 'Open',
                             'icon' => 'heroicon-o-document-text',
 
@@ -526,9 +526,9 @@
                         ],
 
                         [
-                            'code' => 'AMR',
-                            'title' => 'Assignment',
-                            'count' => $this->assignmentMaterialRequisitionCount,
+                            'code' => 'ADM',
+                            'title' => 'Assignment Direct Market',
+                            'count' => $this->assignmentDirectMarketCount,
                             'status' => 'In Progress',
                             'icon' => 'heroicon-o-user-plus',
 
@@ -539,21 +539,8 @@
                         ],
 
                         [
-                            'code' => 'PO',
-                            'title' => 'Purchase Order',
-                            'count' => $this->purchaseOrderCount,
-                            'status' => 'Generated',
-                            'icon' => 'heroicon-o-clipboard-document-list',
-
-                            'iconBg' => 'bg-gradient-to-br from-emerald-50 to-emerald-200',
-                            'iconColor' => 'text-emerald-600',
-
-                            'connectorColor' => '#10b981',
-                        ],
-
-                        [
-                            'code' => 'GR',
-                            'title' => 'Goods Receipt',
+                            'code' => 'RR',
+                            'title' => 'Receiving Record',
                             'count' => $this->goodsReceiptCount,
                             'status' => 'Receiving',
                             'icon' => 'heroicon-o-archive-box',

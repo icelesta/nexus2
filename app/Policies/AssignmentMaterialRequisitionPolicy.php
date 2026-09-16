@@ -43,6 +43,7 @@ class AssignmentMaterialRequisitionPolicy
                 $model->status,
                 [
                     AssignmentMaterialRequisition::STATUS_DRAFT,
+                    AssignmentMaterialRequisition::STATUS_UPDATED,
                     AssignmentMaterialRequisition::STATUS_ASSIGNED,
                 ],
                 true,
@@ -67,24 +68,27 @@ class AssignmentMaterialRequisitionPolicy
 
     public function submit(User $user, AssignmentMaterialRequisition $model): bool
     {
-        return $model->status === AssignmentMaterialRequisition::STATUS_DRAFT;
+        return $user->can('Update:AssignmentMaterialRequisition')
+            && $model->status === AssignmentMaterialRequisition::STATUS_UPDATED;
     }
 
     public function requestApproval(User $user, AssignmentMaterialRequisition $model): bool
     {
-        return $model->status === AssignmentMaterialRequisition::STATUS_ASSIGNED;
+        return $user->can('Update:AssignmentMaterialRequisition')
+            && $model->status === AssignmentMaterialRequisition::STATUS_ASSIGNED;
     }
 
     public function cancel(User $user, AssignmentMaterialRequisition $model): bool
     {
-        return in_array(
-            $model->status,
-            [
-                AssignmentMaterialRequisition::STATUS_DRAFT,
-                AssignmentMaterialRequisition::STATUS_ASSIGNED,
-            ],
-            true,
-        );
+        return $user->can('Update:AssignmentMaterialRequisition')
+            && in_array(
+                $model->status,
+                [
+                    AssignmentMaterialRequisition::STATUS_DRAFT,
+                    AssignmentMaterialRequisition::STATUS_ASSIGNED,
+                ],
+                true,
+            );
     }
 
     public function approve(User $user, AssignmentMaterialRequisition $model): bool
@@ -99,6 +103,7 @@ class AssignmentMaterialRequisitionPolicy
 
     public function complete(User $user, AssignmentMaterialRequisition $model): bool
     {
-        return $model->status === AssignmentMaterialRequisition::STATUS_APPROVED;
+        return $user->can('Update:AssignmentMaterialRequisition')
+            && $model->status === AssignmentMaterialRequisition::STATUS_APPROVED;
     }
 }

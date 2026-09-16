@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use BezhanSalleh\FilamentShield\Facades\FilamentShield;
 
 use App\Models\WarehouseType;
 use App\Models\Warehouse;
@@ -129,6 +130,43 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        /*
+        |--------------------------------------------------------------------------
+        | Filament Shield - Generate Purchase Order permission identity
+        |--------------------------------------------------------------------------
+        |
+        | GeneratePurchaseOrderResource intentionally uses the
+        | AssignmentMaterialRequisition model as its data source. Shield's
+        | default resource subject is "model", so without this override the
+        | Generate Purchase Order resource collides with the
+        | Assignment Material Requisition permission identity.
+        |
+        | Keep all other resources on their existing permission identities.
+        |
+        */
+        FilamentShield::buildPermissionKeyUsing(
+            function (
+                string $entity,
+                ?string $affix,
+                string $subject,
+                string $case,
+                string $separator
+            ): ?string {
+                if (
+                    $entity === \App\Filament\Resources\GeneratePurchaseOrderResource\GeneratePurchaseOrderResource::class
+                ) {
+                    $subject = 'GeneratePurchaseOrder';
+                }
+
+                return FilamentShield::defaultPermissionKeyBuilder(
+                    affix: $affix,
+                    separator: $separator,
+                    subject: $subject,
+                    case: $case,
+                );
+            }
+        );
+
         Company::observe(CompanyObserver::class);
 
         Branch::observe(BranchObserver::class);

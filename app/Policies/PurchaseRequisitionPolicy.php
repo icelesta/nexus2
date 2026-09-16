@@ -20,7 +20,7 @@ class PurchaseRequisitionPolicy
 
     public function before(User $user): ?bool
     {
-        if ($user->hasRole('Super Admin')) {
+        if ($user->isSuperAdmin()) {
             return true;
         }
 

@@ -226,7 +226,9 @@ class EditAssignmentMaterialRequisition extends EditRecord
             'Assignment submitted successfully.'
         );
 
-        $this->redirectToEdit();
+        $this->redirect(
+            static::getResource()::getUrl('index')
+        );
     }
 
 

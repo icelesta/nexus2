@@ -21,20 +21,8 @@ use UnitEnum;
 
 class GeneratePurchaseOrderResource extends Resource
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Resource
-    |--------------------------------------------------------------------------
-    */
-
     protected static ?string $model =
         AssignmentMaterialRequisition::class;
-
-    /*
-    |--------------------------------------------------------------------------
-    | Navigation
-    |--------------------------------------------------------------------------
-    */
 
     protected static UnitEnum|string|null $navigationGroup =
         'Purchasing';
@@ -42,9 +30,7 @@ class GeneratePurchaseOrderResource extends Resource
     protected static ?int $navigationSort = 45;
 
     protected static ?string $navigationLabel =
-        'Generate PO';
-
-    protected static ?string $navigationParentItem = 'Material Requisition';
+        'Generate Purchase Order';
 
     protected static ?string $modelLabel =
         'Generate Purchase Order';
@@ -55,77 +41,30 @@ class GeneratePurchaseOrderResource extends Resource
     protected static string|BackedEnum|null $navigationIcon =
         Heroicon::OutlinedDocumentPlus;
 
-    /*
-    |--------------------------------------------------------------------------
-    | Form
-    |--------------------------------------------------------------------------
-    */
-
     public static function form(
         Schema $schema
     ): Schema {
-
-        return GeneratePurchaseOrderForm::configure(
-            $schema
-        );
+        return GeneratePurchaseOrderForm::configure($schema);
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Table
-    |--------------------------------------------------------------------------
-    */
 
     public static function table(
         Table $table
     ): Table {
-
-        return GeneratePurchaseOrdersTable::configure(
-            $table
-        );
+        return GeneratePurchaseOrdersTable::configure($table);
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Relations
-    |--------------------------------------------------------------------------
-    */
 
     public static function getRelations(): array
     {
         return [];
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Pages
-    |--------------------------------------------------------------------------
-    */
-
     public static function getPages(): array
     {
         return [
-
-            'index' =>
-                ListGeneratePurchaseOrders::route('/'),
-
-            'edit' =>
-                EditGeneratePurchaseOrder::route(
-                    '/{record}/edit'
-                ),
-
+            'index' => ListGeneratePurchaseOrders::route('/'),
+            'edit' => EditGeneratePurchaseOrder::route('/{record}/edit'),
         ];
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Query
-    |--------------------------------------------------------------------------
-    |
-    | Workbench only shows AMR transactions that have
-    | reached the approval stage.
-    |
-    */
 
     public static function getEloquentQuery(): Builder
     {
@@ -140,21 +79,19 @@ class GeneratePurchaseOrderResource extends Resource
                 'status',
                 AssignmentMaterialRequisition::STATUS_WAITING_APPROVAL
             )
-            ->whereDoesntHave(
-                'purchaseOrder'
-            );
+            ->whereDoesntHave('purchaseOrder');
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Create
+    | Roles / Navigation Authorization
     |--------------------------------------------------------------------------
+    |
+    | Generate PO is a separate module identity. Its data source remains
+    | AssignmentMaterialRequisition intentionally.
+    |
     */
 
-    /**
-     * Generate PO is a separate Roles module even though its business model
-     * remains AssignmentMaterialRequisition.
-     */
     public static function canViewAny(): bool
     {
         return auth()->user()?->can('ViewAny:GeneratePurchaseOrder') === true;
@@ -168,7 +105,7 @@ class GeneratePurchaseOrderResource extends Resource
     public static function canEdit(Model $record): bool
     {
         return auth()->user()?->can('Update:GeneratePurchaseOrder') === true
-            && $record->status === AssignmentMaterialRequisition::STATUS_WAITING_APPROVAL;
+            && $record->status ===
+                AssignmentMaterialRequisition::STATUS_WAITING_APPROVAL;
     }
-
 }

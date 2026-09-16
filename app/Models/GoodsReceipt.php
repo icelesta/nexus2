@@ -39,6 +39,7 @@ class GoodsReceipt extends Model
         'grn_no',
 
         'purchase_order_id',
+        'assignment_direct_market_id',
         'supplier_id',
 
         'receipt_date',
@@ -61,6 +62,7 @@ class GoodsReceipt extends Model
     {
         return [
             'purchase_order_id' => 'integer',
+            'assignment_direct_market_id' => 'integer',
             'supplier_id' => 'integer',
 
             'receipt_date' => 'date',
@@ -86,6 +88,14 @@ class GoodsReceipt extends Model
         return $this->belongsTo(PurchaseOrder::class);
     }
 
+    public function assignmentDirectMarket(): BelongsTo
+    {
+        return $this->belongsTo(
+            AssignmentDirectMarket::class,
+            'assignment_direct_market_id'
+        );
+    }
+    
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);

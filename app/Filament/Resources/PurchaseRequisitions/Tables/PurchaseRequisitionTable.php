@@ -119,11 +119,9 @@ class PurchaseRequisitionTable
                     */
 
                     if (
-                        ! $user->hasAnyRole([
-                            'Super Admin',
-                            'Administrator',
-                            'Purchasing PIC',
-                            'Purchasing Manager',
+                        $user->hasAnyRole([
+                            'Staff',
+                            'Dept Head',
                         ])
                     ) {
 

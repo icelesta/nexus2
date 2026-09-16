@@ -22,6 +22,7 @@ class GoodsReceiptItem extends Model
     protected $fillable = [
         'goods_receipt_id',
         'purchase_order_item_id',
+        'assignment_direct_market_item_id',
         'item_id',
 
         'received_qty',
@@ -49,7 +50,8 @@ class GoodsReceiptItem extends Model
         return [
             'goods_receipt_id'       => 'integer',
             'purchase_order_item_id' => 'integer',
-            'item_id'                => 'integer',
+            'assignment_direct_market_item_id' => 'integer',
+            'item_id' => 'integer',
             'uom_id'                 => 'integer',
             'warehouse_id'           => 'integer',
 
@@ -82,6 +84,14 @@ class GoodsReceiptItem extends Model
     {
         return $this->belongsTo(PurchaseOrderItem::class);
     }
+
+    public function assignmentDirectMarketItem(): BelongsTo
+    {
+        return $this->belongsTo(
+            AssignmentDirectMarketItem::class,
+            'assignment_direct_market_item_id'
+        );
+    }    
 
     public function item(): BelongsTo
     {

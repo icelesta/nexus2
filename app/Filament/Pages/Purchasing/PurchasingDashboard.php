@@ -18,6 +18,8 @@ use App\Models\AssignmentMaterialRequisition;
 use App\Models\PurchaseOrder;
 use App\Models\GoodsReceipt;
 use App\Models\ApprovalTransaction;
+use App\Models\DirectMarket;
+use App\Models\AssignmentDirectMarket;
 
 class PurchasingDashboard extends Page
 {
@@ -120,6 +122,76 @@ class PurchasingDashboard extends Page
     public function getMaterialRequisitionCountProperty(): int
     {
         return $this->materialRequisitionQuery->count();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Direct Market Analytics
+    |--------------------------------------------------------------------------
+    */
+
+    public function getDirectMarketQueryProperty()
+    {
+        $query = DirectMarket::query();
+
+        if ($this->branchFilter !== null) {
+            $query->where(
+                'branch_id',
+                $this->branchFilter
+            );
+        }
+
+        if ($this->departmentFilter !== null) {
+            $query->where(
+                'department_id',
+                $this->departmentFilter
+            );
+        }
+
+        return $this->applyDashboardDateFilter(
+            $query,
+            'request_date'
+        );
+    }
+
+    public function getDirectMarketCountProperty(): int
+    {
+        return $this->directMarketQuery->count();
+    }    
+
+    /*
+    |--------------------------------------------------------------------------
+    | Assignment Direct Market Analytics
+    |--------------------------------------------------------------------------
+    */
+
+    public function getAssignmentDirectMarketQueryProperty()
+    {
+        $query = AssignmentDirectMarket::query();
+
+        if ($this->branchFilter !== null) {
+            $query->where(
+                'branch_id',
+                $this->branchFilter
+            );
+        }
+
+        if ($this->departmentFilter !== null) {
+            $query->where(
+                'department_id',
+                $this->departmentFilter
+            );
+        }
+
+        return $this->applyDashboardDateFilter(
+            $query,
+            'document_date'
+        );
+    }
+
+    public function getAssignmentDirectMarketCountProperty(): int
+    {
+        return $this->assignmentDirectMarketQuery->count();
     }
 
     /*
@@ -839,26 +911,27 @@ class PurchasingDashboard extends Page
 
     /*
     |--------------------------------------------------------------------------
-    | Goods Receipt Analytics
+    | Direct Market Goods Receipt Analytics
     |--------------------------------------------------------------------------
     */
 
     public function getGoodsReceiptQueryProperty()
     {
         $query = GoodsReceipt::query()
+            ->whereNotNull('assignment_direct_market_id')
             ->whereHas(
-                'purchaseOrder',
-                function ($poQuery) {
+                'assignmentDirectMarket',
+                function ($assignmentQuery) {
 
                     if ($this->branchFilter !== null) {
-                        $poQuery->where(
+                        $assignmentQuery->where(
                             'branch_id',
                             $this->branchFilter
                         );
                     }
 
                     if ($this->departmentFilter !== null) {
-                        $poQuery->where(
+                        $assignmentQuery->where(
                             'department_id',
                             $this->departmentFilter
                         );
