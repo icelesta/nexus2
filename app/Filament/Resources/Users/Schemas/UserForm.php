@@ -195,6 +195,28 @@ class UserForm
 
                     ]),
 
+
+                /*
+                |--------------------------------------------------------------------------
+                | Transaction Filter
+                |--------------------------------------------------------------------------
+                */
+
+                Section::make('Transaction Filter')
+                    ->description('Configure default transaction list filter behavior.')
+                    ->schema([
+
+                        Toggle::make('global_filter_all_departments')
+                            ->label('Default Global Filter: All Departments')
+                            ->helperText(
+                                'When enabled, Material Requisition and Direct Market lists open with All Departments selected by default.'
+                            )
+                            ->default(false),
+
+                    ]),
+
+
+
                 /*
                 |--------------------------------------------------------------------------
                 | Security

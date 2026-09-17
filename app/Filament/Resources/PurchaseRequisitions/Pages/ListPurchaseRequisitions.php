@@ -57,4 +57,24 @@ class ListPurchaseRequisitions extends ListRecords
             'Closed'            => 'Closed',
         ];
     }
+
+    public function mount(): void
+    {
+        parent::mount();
+
+        $this->globalDepartmentFilter =
+            $this->getDefaultGlobalDepartmentFilter();
+    }
+
+    protected function getDefaultGlobalDepartmentFilter(): ?int
+    {
+        $user = auth()->user();
+
+        if ($user?->global_filter_all_departments) {
+            return null;
+        }
+
+        return $user?->department_id;
+    }
+
 }

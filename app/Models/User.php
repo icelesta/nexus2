@@ -45,6 +45,7 @@ class User extends Authenticatable
 
         // Status
         'is_active',
+        'global_filter_all_departments',
 
         // Audit
         'created_by',
@@ -72,6 +73,8 @@ class User extends Authenticatable
             'last_login_at' => 'datetime',
 
             'last_activity_at' => 'datetime',
+
+            'global_filter_all_departments' => 'boolean',
 
         ];
     }
