@@ -13,6 +13,7 @@ use App\Models\AssignmentDirectMarket;
 use App\Support\Timezone\UserTimezone;
 
 use Carbon\Carbon;
+use App\Models\ApprovalTransaction;
 
 use App\Services\Purchasing\DirectMarketService;
 use Filament\Notifications\Notification;
@@ -35,6 +36,52 @@ use Illuminate\Database\Eloquent\Model;
 
 class DirectMarketTable
 {
+
+    protected static function isLevelOneApprovalEditAllowed(
+        Model $record,
+    ): bool {
+        if (
+            $record->status !== DirectMarket::STATUS_SUBMITTED
+        ) {
+            return false;
+        }
+
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        $transaction = ApprovalTransaction::query()
+            ->where('document_type', 'DIRECT_MARKET')
+            ->where('document_id', $record->getKey())
+            ->where('status', 'PENDING')
+            ->latest('id')
+            ->first();
+
+        if (
+            ! $transaction
+            || (int) $transaction->current_level !== 1
+        ) {
+            return false;
+        }
+
+        $step = $transaction->steps()
+            ->where('approval_level', 1)
+            ->where('status', 'PENDING')
+            ->first();
+
+        if (! $step || ! $step->role_id) {
+            return false;
+        }
+
+        return $user->roles()
+            ->where('roles.id', $step->role_id)
+            ->where('roles.guard_name', 'web')
+            ->where('roles.is_active', true)
+            ->exists();
+    }
+
     public static function configure(
         Table $table
     ): Table {
@@ -796,8 +843,8 @@ class DirectMarketTable
                             fn (
                                 DirectMarket $record
                             ): string =>
-                                $record->status ===
-                                DirectMarket::STATUS_DRAFT
+                                $record->status === DirectMarket::STATUS_DRAFT
+                                || self::isLevelOneApprovalEditAllowed($record)
                                     ? 'heroicon-o-pencil-square'
                                     : 'heroicon-o-lock-closed'
                         )
@@ -805,8 +852,21 @@ class DirectMarketTable
                             fn (
                                 DirectMarket $record
                             ): bool =>
-                                $record->status !==
-                                DirectMarket::STATUS_DRAFT
+                                $record->status !== DirectMarket::STATUS_DRAFT
+                                && ! self::isLevelOneApprovalEditAllowed($record)
+                        )
+                        ->tooltip(
+                            fn (
+                                DirectMarket $record
+                            ): ?string =>
+                                $record->status !== DirectMarket::STATUS_DRAFT
+                                && ! self::isLevelOneApprovalEditAllowed($record)
+                                    ? 'Direct Market cannot be edited after submission.'
+                                    : (
+                                        $record->status === DirectMarket::STATUS_DRAFT
+                                            ? 'Edit Direct Market'
+                                            : 'Edit quantity before Level 1 approval'
+                                    )
                         ),
 
                     /*

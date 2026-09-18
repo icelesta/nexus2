@@ -43,6 +43,10 @@ class DirectMarketForm
                     ->description(
                         'Create a Direct Market request for non-stock / non-warehouse purchasing.'
                     )
+                    ->disabled(fn ($livewire): bool =>
+                        method_exists($livewire, 'isLevelOneApprovalEdit')
+                        && $livewire->isLevelOneApprovalEdit()
+                    )
                     ->columnSpanFull()
                     ->schema([
 
@@ -66,7 +70,10 @@ class DirectMarketForm
                                         today()
                                     )
                                     ->minDate(
-                                        today()
+                                        fn (string $operation) =>
+                                            $operation === 'create'
+                                                ? today()
+                                                : null
                                     )
                                     ->disabled()
                                     ->dehydrated()
@@ -397,6 +404,11 @@ class DirectMarketForm
                                         );
                                     }
                                 )
+                                ->disabled(fn ($livewire): bool =>
+                                    method_exists($livewire, 'isLevelOneApprovalEdit')
+                                    && $livewire->isLevelOneApprovalEdit()
+                                )
+
                                 ->columnSpan(4),
 
                             /*
@@ -499,6 +511,11 @@ class DirectMarketForm
                                 ->disabled()
                                 ->dehydrated()
                                 ->required()
+                                ->disabled(fn ($livewire): bool =>
+                                    method_exists($livewire, 'isLevelOneApprovalEdit')
+                                    && $livewire->isLevelOneApprovalEdit()
+                                )
+
                                 ->columnSpan(3),
 
                             /*
@@ -516,17 +533,31 @@ class DirectMarketForm
                                 ->rows(1)
                                 ->autosize()
                                 ->maxLength(5000)
+                                ->disabled(fn ($livewire): bool =>
+                                    method_exists($livewire, 'isLevelOneApprovalEdit')
+                                    && $livewire->isLevelOneApprovalEdit()
+                                )
                                 ->columnSpan(5),
 
                         ])
                         ->columns(16)
                         ->defaultItems(1)
                         ->minItems(1)
-                        ->addActionLabel(
-                            'Add Direct Market Item'
+                        ->addActionLabel('Add Direct Market Item')
+                        ->addable(fn ($livewire): bool =>
+                            ! (
+                                method_exists($livewire, 'isLevelOneApprovalEdit')
+                                && $livewire->isLevelOneApprovalEdit()
+                            )
+                        )
+                        ->deletable(fn ($livewire): bool =>
+                            ! (
+                                method_exists($livewire, 'isLevelOneApprovalEdit')
+                                && $livewire->isLevelOneApprovalEdit()
+                            )
                         )
                         ->reorderable(false)
-                        ->collapsible(),
+                        ->collapsible()
 
                     ]),
 

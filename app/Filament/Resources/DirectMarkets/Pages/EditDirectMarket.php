@@ -14,6 +14,8 @@ use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
+use App\Models\ApprovalTransaction;
+
 class EditDirectMarket extends EditRecord
 {
     protected static string $resource =
@@ -29,16 +31,19 @@ class EditDirectMarket extends EditRecord
 	        |--------------------------------------------------------------------------
 	        */
 
-	        Action::make('save')
-	            ->label('Save Changes')
-	            ->icon('heroicon-o-check')
-	            ->color('primary')
-	            ->action('save')
-	            ->visible(
-	                fn (): bool =>
-	                    $this->record->status ===
-	                    DirectMarket::STATUS_DRAFT
-	            ),
+			Action::make('save')
+			    ->label(fn (): string =>
+			        $this->isLevelOneApprovalEdit()
+			            ? 'Save Changes'
+			            : 'Save Changes'
+			    )
+			    ->icon('heroicon-o-check')
+			    ->color('primary')
+			    ->action('save')
+			    ->visible(fn (): bool =>
+			        $this->record->status === DirectMarket::STATUS_DRAFT
+			        || $this->isLevelOneApprovalEdit()
+			    ),
 
 	        /*
 	        |--------------------------------------------------------------------------
@@ -149,6 +154,68 @@ class EditDirectMarket extends EditRecord
 	    Model $record,
 	    array $data
 	): Model {
+
+	if ($this->isLevelOneApprovalEdit()) {
+	    $originalItems = $record->items()
+	        ->get()
+	        ->keyBy('id');
+
+	    $items = $data['items'] ?? [];
+
+	    // Tidak boleh tambah / hapus item
+	    if (count($items) !== $originalItems->count()) {
+	        throw \Illuminate\Validation\ValidationException::withMessages([
+	            'items' => 'Pada Approval Level 1, item tidak boleh ditambah atau dihapus.',
+	        ]);
+	    }
+
+	    foreach ($items as $itemData) {
+	        $itemId = $itemData['id'] ?? null;
+
+	        $existingItem = $originalItems->get((int) $itemId);
+
+	        if (! $existingItem) {
+	            throw \Illuminate\Validation\ValidationException::withMessages([
+	                'items' => 'Item Direct Market tidak valid.',
+	            ]);
+	        }
+
+	        $newQty = (float) ($itemData['qty'] ?? 0);
+	        $currentQty = (float) $existingItem->qty;
+
+	        // Quantity harus > 0
+	        if ($newQty <= 0) {
+	            throw \Illuminate\Validation\ValidationException::withMessages([
+	                'items' => 'Quantity harus lebih besar dari 0.',
+	            ]);
+	        }
+
+	        // Quantity hanya boleh dikurangi
+	        if ($newQty >= $currentQty) {
+	            throw \Illuminate\Validation\ValidationException::withMessages([
+	                'items' => "Quantity item #{$itemId} hanya boleh dikurangi dari {$currentQty}.",
+	            ]);
+	        }
+	    }
+
+	    // L1 hanya boleh mengubah quantity.
+	    // Header dan seluruh field item lainnya tidak disentuh.
+	    foreach ($items as $itemData) {
+	        $itemId = (int) $itemData['id'];
+
+	        $record->items()
+	            ->whereKey($itemId)
+	            ->update([
+	                'qty' => (float) $itemData['qty'],
+	                'updated_by' => auth()->id(),
+	            ]);
+	    }
+
+	    $record->refresh();
+
+	    return $record;
+	}
+
 
 	    $items = $data['items'] ?? [];
 
@@ -346,6 +413,50 @@ class EditDirectMarket extends EditRecord
 	    return true;
 	}
 
+	public function isLevelOneApprovalEdit(): bool
+	{
+	    if (
+	        ! $this->record
+	        || $this->record->status !== DirectMarket::STATUS_SUBMITTED
+	    ) {
+	        return false;
+	    }
+
+	    $user = auth()->user();
+
+	    if (! $user) {
+	        return false;
+	    }
+
+	    $transaction = ApprovalTransaction::query()
+	        ->where('document_type', 'DIRECT_MARKET')
+	        ->where('document_id', $this->record->getKey())
+	        ->where('status', 'PENDING')
+	        ->latest('id')
+	        ->first();
+
+	    if (
+	        ! $transaction
+	        || (int) $transaction->current_level !== 1
+	    ) {
+	        return false;
+	    }
+
+	    $step = $transaction->steps()
+	        ->where('approval_level', 1)
+	        ->where('status', 'PENDING')
+	        ->first();
+
+	    if (! $step || ! $step->role_id) {
+	        return false;
+	    }
+
+	    return $user->roles()
+	        ->where('roles.id', $step->role_id)
+	        ->where('roles.guard_name', 'web')
+	        ->where('roles.is_active', true)
+	        ->exists();
+	}
 
 	protected function submitDirectMarket(): void
 	{
@@ -390,5 +501,11 @@ class EditDirectMarket extends EditRecord
 		    static::getResource()::getUrl('index')
 		);
 	}
+
+	protected function getRedirectUrl(): ?string
+	{
+	    return DirectMarketResource::getUrl('index');
+	}
+
 	
 }
