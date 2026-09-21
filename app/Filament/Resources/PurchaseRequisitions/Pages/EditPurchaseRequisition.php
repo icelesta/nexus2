@@ -14,6 +14,9 @@ use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\HtmlString;
 
+use App\Models\ApprovalTransaction;
+use App\Models\PurchaseRequisition;
+
 use Filament\Notifications\Notification;
 use Illuminate\Validation\ValidationException;
 
@@ -31,6 +34,13 @@ class EditPurchaseRequisition extends EditRecord
      */
     public function editItem(int $itemId): void
     {
+        if (
+            $this->record->status !== PurchaseRequisition::STATUS_DRAFT
+            && ! $this->isLevelOneApprovalEdit()
+        ) {
+            abort(403);
+        }
+
         $item = $this->record
             ->items
             ->firstWhere('id', $itemId);
@@ -55,15 +65,71 @@ class EditPurchaseRequisition extends EditRecord
 
     public function saveItem(): void
     {
-        app(
-            PurchaseRequisitionItemService::class
-        )->updateItem(
-            $this->editingItemId,
-            [
-                'quantity' => $this->editingData['quantity'],
-                'remarks'  => $this->editingData['remarks'],
-            ]
-        );
+        $item = $this->record
+            ->items
+            ->firstWhere('id', $this->editingItemId);
+
+        abort_if(! $item, 404);
+
+        if (! is_numeric($this->editingData['quantity'] ?? null)) {
+            Notification::make()
+                ->danger()
+                ->title('Invalid Quantity')
+                ->body('Please enter a number.')
+                ->send();
+
+            return;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Approval Level 1 Restricted Edit
+        |--------------------------------------------------------------------------
+        */
+
+        if ($this->isLevelOneApprovalEdit()) {
+
+            $newQuantity = (float) $this->editingData['quantity'];
+            $currentQuantity = (float) $item->quantity;
+
+            if ($newQuantity >= $currentQuantity) {
+                Notification::make()
+                    ->danger()
+                    ->title('Quantity Reduction Required')
+                    ->body(
+                        'During Level 1 approval, quantity can only be reduced. '
+                        . 'The new quantity must be lower than the current quantity.'
+                    )
+                    ->send();
+
+                return;
+            }
+
+            app(PurchaseRequisitionItemService::class)
+                ->updateItem(
+                    $item->id,
+                    [
+                        'quantity' => $newQuantity,
+                    ]
+                );
+
+        } else {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Existing Draft Behavior
+            |--------------------------------------------------------------------------
+            */
+
+            app(PurchaseRequisitionItemService::class)
+                ->updateItem(
+                    $item->id,
+                    [
+                        'quantity' => $this->editingData['quantity'],
+                        'remarks'  => $this->editingData['remarks'],
+                    ]
+                );
+        }
 
         $this->record->refresh()->load([
             'items.item',
@@ -75,9 +141,19 @@ class EditPurchaseRequisition extends EditRecord
         $this->editingData = [];
     }
 
-    public function deleteItem(
-        int $itemId,
-    ): void {
+    public function deleteItem(int $itemId): void
+    {
+        if ($this->isLevelOneApprovalEdit()) {
+            Notification::make()
+                ->danger()
+                ->title('Action Not Allowed')
+                ->body(
+                    'Items cannot be deleted while the Material Requisition is awaiting Level 1 approval.'
+                )
+                ->send();
+
+            return;
+        }
 
         app(
             PurchaseRequisitionItemService::class
@@ -118,7 +194,11 @@ class EditPurchaseRequisition extends EditRecord
             */
 
             $this->getSaveFormAction()
-                ->formId('form'),
+                ->formId('form')
+                ->visible(
+                    fn (): bool =>
+                        ! $this->isLevelOneApprovalEdit()
+                ),
 
             /*
             |--------------------------------------------------------------------------
@@ -222,6 +302,18 @@ class EditPurchaseRequisition extends EditRecord
 
     public function clearItems(): void
     {
+        if ($this->isLevelOneApprovalEdit()) {
+            Notification::make()
+                ->danger()
+                ->title('Action Not Allowed')
+                ->body(
+                    'Items cannot be cleared while the Material Requisition is awaiting Level 1 approval.'
+                )
+                ->send();
+
+            return;
+        }
+
         app(
             PurchaseRequisitionItemService::class
         )->clearItems(
@@ -242,6 +334,20 @@ class EditPurchaseRequisition extends EditRecord
         array $data,
     ): \Illuminate\Database\Eloquent\Model
     {
+        if ($this->isLevelOneApprovalEdit()) {
+            Notification::make()
+                ->danger()
+                ->title('Action Not Allowed')
+                ->body(
+                    'Only quantity reduction is allowed while the Material Requisition is awaiting Level 1 approval.'
+                )
+                ->send();
+
+            throw ValidationException::withMessages([
+                'record' => 'Only quantity reduction is allowed during Level 1 approval.',
+            ]);
+        }
+
         return app(
             PurchaseRequisitionService::class
         )->update(
@@ -249,7 +355,48 @@ class EditPurchaseRequisition extends EditRecord
             $data,
         );
     }
-    
+
+    public function isLevelOneApprovalEdit(): bool
+    {
+        if (
+            ! $this->record
+            || $this->record->status !== PurchaseRequisition::STATUS_WAITING_APPROVAL
+        ) {
+            return false;
+        }
+
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        $transaction = ApprovalTransaction::query()
+            ->where('document_type', 'MATERIAL_REQUISITION')
+            ->where('document_id', $this->record->getKey())
+            ->where('status', 'PENDING')
+            ->latest('id')
+            ->first();
+
+        if (! $transaction || (int) $transaction->current_level !== 1) {
+            return false;
+        }
+
+        $step = $transaction->steps()
+            ->where('approval_level', 1)
+            ->where('status', 'PENDING')
+            ->first();
+
+        if (! $step || ! $step->role_id) {
+            return false;
+        }
+
+        return $user->roles()
+            ->where('roles.id', $step->role_id)
+            ->where('roles.guard_name', 'web')
+            ->where('roles.is_active', true)
+            ->exists();
+    }    
 
 
 }

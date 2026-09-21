@@ -221,6 +221,8 @@ class PurchaseOrdersTable
             |--------------------------------------------------------------------------
             */
 
+            ->defaultSort('document_date', 'desc')
+            
             ->columns([
 
                 TextColumn::make('document_no')

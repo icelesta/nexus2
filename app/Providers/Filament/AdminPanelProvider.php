@@ -58,7 +58,7 @@ class AdminPanelProvider extends PanelProvider
                     ->group('Purchasing')
                     ->sort(2)
                     ->visible(fn (): bool => auth()->user()?->can('ViewAny:PurchaseRequisition') === true)
-                    ->url(fn (): string => PurchaseRequisitionResource::getUrl()),
+                    ->url(null),
 
                 NavigationItem::make('Direct Market')
                     ->label('Direct Market')
@@ -66,7 +66,7 @@ class AdminPanelProvider extends PanelProvider
                     ->group('Purchasing')
                     ->sort(3)
                     ->visible(fn (): bool => auth()->user()?->can('ViewAny:DirectMarket') === true)
-                    ->url(fn (): string => DirectMarketResource::getUrl()),
+                    ->url(null),
             ])
 
 

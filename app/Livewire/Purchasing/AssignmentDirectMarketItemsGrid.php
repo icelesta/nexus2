@@ -597,37 +597,57 @@ class AssignmentDirectMarketItemsGrid extends Component
                 ? (int) $this->selectedTax[$itemId]
                 : null;
 
-        app(
-            AssignmentDirectMarketService::class
-        )->updateItemPricing(
-            itemId: $itemId,
-            data: [
-                'assigned_qty' =>
-                    $assignedQty,
+        try {
+            app(
+                AssignmentDirectMarketService::class
+            )->updateItemPricing(
+                itemId: $itemId,
+                data: [
+                    'assigned_qty' =>
+                        $assignedQty,
 
-                'unit_price' =>
-                    $unitPrice,
+                    'unit_price' =>
+                        $unitPrice,
 
-                'discount_percent' =>
-                    $discountPercent,
+                    'discount_percent' =>
+                        $discountPercent,
 
-                'discount_amount' =>
-                    $discountAmount,
+                    'discount_amount' =>
+                        $discountAmount,
 
-                'discount_source' =>
-                    $this->discountInputSource[$itemId]
-                    ?? 'percent',
+                    'discount_source' =>
+                        $this->discountInputSource[$itemId]
+                        ?? 'percent',
 
-                'lead_time_days' =>
-                    $leadTimeDays,
+                    'lead_time_days' =>
+                        $leadTimeDays,
 
-                'supplier_id' =>
-                    $supplierId,
+                    'supplier_id' =>
+                        $supplierId,
 
-                'tax_id' =>
-                    $taxId,
-            ],
-        );
+                    'tax_id' =>
+                        $taxId,
+                ],
+            );
+        } catch (\RuntimeException $e) {
+            if (
+                $e->getMessage() ===
+                'Assigned quantity cannot exceed requested quantity.'
+            ) {
+                Notification::make()
+                    ->danger()
+                    ->title('Invalid Assigned Quantity')
+                    ->body(
+                        'Assigned quantity cannot exceed requested quantity.'
+                    )
+                    ->persistent()
+                    ->send();
+
+                return;
+            }
+
+            throw $e;
+        }
 
         $this->refreshGrid();
     }

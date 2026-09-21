@@ -56,8 +56,10 @@ trait HasGlobalTransactionFilters
         $this->globalDateTo ??= now()
             ->endOfMonth()
             ->toDateString();
-    }
 
+        $this->globalDepartmentFilter ??=
+            $this->getDefaultGlobalDepartmentFilter();
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -65,11 +67,17 @@ trait HasGlobalTransactionFilters
     |--------------------------------------------------------------------------
     */
 
+    protected function getDefaultGlobalDepartmentFilter(): ?int
+    {
+        return null;
+    }
+
     public function resetGlobalTransactionFilters(): void
     {
         $this->globalBranchFilter = null;
 
-        $this->globalDepartmentFilter = null;
+        $this->globalDepartmentFilter =
+            $this->getDefaultGlobalDepartmentFilter();
 
         $this->globalSupplierFilter = null;
 

@@ -24,6 +24,11 @@
 
     $isEditPage = property_exists($livewire, 'editingItemId');
 
+    $isLevelOneApprovalEdit =
+        $isEditPage
+        && method_exists($livewire, 'isLevelOneApprovalEdit')
+        && $livewire->isLevelOneApprovalEdit();
+
     $disabled = ! $isEditPage;
 
 @endphp
@@ -160,26 +165,30 @@
                             {{-- DESCRIPTION --}}
                             <td class="px-4 py-3 align-middle">
 
-                                @if($isEditPage && $livewire->editingItemId === $item->id)
+                                @if(
+                                    $isEditPage
+                                    && $livewire->editingItemId === $item->id
+                                    && ! $isLevelOneApprovalEdit
+                                )
 
-                                <textarea
-                                    wire:model.live="editingData.remarks"
-                                    rows="2"
-                                    class="
-                                        w-full
-                                        rounded-lg
-                                        border-2
-                                        border-amber-400
-                                        bg-amber-50
-                                        px-3
-                                        py-2
-                                        text-sm
-                                        shadow-sm
-                                        focus:border-primary-500
-                                        focus:ring-primary-500
-                                        resize-none
-                                    ">
-                                </textarea>
+                                    <textarea
+                                        wire:model.live="editingData.remarks"
+                                        rows="2"
+                                        class="
+                                            w-full
+                                            rounded-lg
+                                            border-2
+                                            border-amber-400
+                                            bg-amber-50
+                                            px-3
+                                            py-2
+                                            text-sm
+                                            shadow-sm
+                                            focus:border-primary-500
+                                            focus:ring-primary-500
+                                            resize-none
+                                        "
+                                    ></textarea>
 
                                 @else
 
@@ -232,7 +241,7 @@
                                 {{ $item->warehouse?->warehouse_name }}
                             </td>
                            
-                            {{-- ACTION --}}
+                             {{-- ACTION --}}
                             <td class="px-4 py-3 text-center align-middle">
 
                                 <div class="flex items-center justify-center gap-2">
@@ -241,7 +250,7 @@
 
                                         @if($livewire->editingItemId === $item->id)
 
-                                            {{-- SAVE --}}
+                                            {{-- UPDATE --}}
                                             <x-filament::button
                                                 size="sm"
                                                 color="success"
@@ -251,6 +260,7 @@
                                                 Update
                                             </x-filament::button>
 
+                                            {{-- CANCEL --}}
                                             <x-filament::button
                                                 size="sm"
                                                 color="gray"
@@ -266,21 +276,23 @@
                                             <button
                                                 type="button"
                                                 wire:click="editItem({{ $item->id }})"
-                                                class="text-primary-600 hover:text-primary-700">
-
+                                                class="text-primary-600 hover:text-primary-700"
+                                            >
                                                 <x-heroicon-m-pencil-square class="h-5 w-5"/>
-
                                             </button>
 
                                             {{-- DELETE --}}
-                                            <button
-                                                type="button"
-                                                wire:click="deleteItem({{ $item->id }})"
-                                                class="text-danger-600 hover:text-danger-700">
+                                            @if(! $isLevelOneApprovalEdit)
 
-                                                <x-heroicon-m-trash class="h-5 w-5"/>
+                                                <button
+                                                    type="button"
+                                                    wire:click="deleteItem({{ $item->id }})"
+                                                    class="text-danger-600 hover:text-danger-700"
+                                                >
+                                                    <x-heroicon-m-trash class="h-5 w-5"/>
+                                                </button>
 
-                                            </button>
+                                            @endif
 
                                         @endif
 

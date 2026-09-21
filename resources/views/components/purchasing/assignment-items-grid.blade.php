@@ -356,14 +356,16 @@
                                             type="number"
                                             step="0.01"
                                             min="0"
+                                            inputmode="decimal"
+                                            onkeydown="return !['e', 'E', '+', '-'].includes(event.key)"
                                             wire:model.live="assignedQty.{{ $item->id }}"
                                             class="
-                                            w-20
-                                            rounded-md
-                                            border-gray-300
-                                            text-center
-                                            text-xs
-                                            py-1
+                                                w-20
+                                                rounded-md
+                                                border-gray-300
+                                                text-center
+                                                text-xs
+                                                py-1
                                             "
                                         >
 

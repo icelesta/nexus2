@@ -200,6 +200,10 @@ class PurchaseRequisitionItemActions
                 TextInput::make('quantity')
                     ->label('Quantity')
                     ->numeric()
+                    ->extraInputAttributes([
+                        'inputmode' => 'decimal',
+                        'onkeydown' => "return !['e', 'E', '+', '-'].includes(event.key)",
+                    ])
                     ->default(1)
                     ->minValue(0.000001)
                     ->required(),
@@ -404,6 +408,10 @@ class PurchaseRequisitionItemActions
                 TextInput::make('quantity')
                     ->label('Quantity')
                     ->numeric()
+                    ->extraInputAttributes([
+                        'inputmode' => 'decimal',
+                        'onkeydown' => "return !['e', 'E', '+', '-'].includes(event.key)",
+                    ])
                     ->required(),
 
                 /*

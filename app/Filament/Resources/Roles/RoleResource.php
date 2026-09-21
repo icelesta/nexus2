@@ -9,6 +9,7 @@ use App\Filament\Resources\Roles\Pages\EditRole;
 use App\Filament\Resources\Roles\Pages\ListRoles;
 use App\Filament\Resources\Roles\Pages\ViewRole;
 use App\Models\Role;
+use BezhanSalleh\FilamentShield\Facades\FilamentShield;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use BezhanSalleh\FilamentShield\Support\Utils;
 use BezhanSalleh\FilamentShield\Traits\HasShieldFormComponents;
@@ -31,6 +32,8 @@ use Filament\Tables\Table;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Unique;
 use Override;
+use Illuminate\Support\HtmlString;
+
 
 class RoleResource extends Resource
 {
@@ -194,6 +197,59 @@ class RoleResource extends Resource
             ->toolbarActions([
                 DeleteBulkAction::make(),
             ]);
+    }
+
+
+    public static function getResourceEntitiesSchema(): ?array
+    {
+        return collect(FilamentShield::getResources())
+            ->groupBy(
+                fn (array $entity): string => strval(
+                    $entity['resourceFqcn']::getNavigationGroup() ?? 'Other'
+                )
+            )
+            ->map(
+                function ($entities, string $group): Section {
+                    $resourceSections = $entities
+                        ->map(
+                            function (array $entity): Section {
+                                $sectionLabel = strval(
+                                    static::shield()->hasLocalizedPermissionLabels()
+                                        ? FilamentShield::getLocalizedResourceLabel(
+                                            $entity['resourceFqcn']
+                                        )
+                                        : $entity['model']
+                                );
+
+                                return Section::make($sectionLabel)
+                                    ->description(
+                                        fn (): HtmlString => new HtmlString(
+                                            '<span style="word-break: break-word;">'
+                                            . Utils::showModelPath($entity['modelFqcn'])
+                                            . '</span>'
+                                        )
+                                    )
+                                    ->compact()
+                                    ->schema([
+                                        static::getCheckBoxListComponentForResource($entity),
+                                    ])
+                                    ->columnSpanFull()
+                                    ->collapsible()
+                                    ->collapsed();
+                            }
+                        )
+                        ->values()
+                        ->all();
+
+                    return Section::make($group)
+                        ->schema($resourceSections)
+                        ->columnSpanFull()
+                        ->collapsible()
+                        ->collapsed();
+                }
+            )
+            ->values()
+            ->all();
     }
 
     #[Override]

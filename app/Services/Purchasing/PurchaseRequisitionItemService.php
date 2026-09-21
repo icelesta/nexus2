@@ -8,6 +8,7 @@ use App\Models\Item;
 use App\Models\PurchaseRequisition;
 
 use App\Models\PurchaseRequisitionItem;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 
@@ -239,6 +240,15 @@ class PurchaseRequisitionItemService
     ): PurchaseRequisitionItem {
 
         $item = PurchaseRequisitionItem::findOrFail($itemId);
+
+        Validator::make($data, [
+            'quantity' => [
+                'sometimes',
+                'required',
+                'numeric',
+                'min:0.0001',
+            ],
+        ])->validate();
 
         $item->update($data);
 

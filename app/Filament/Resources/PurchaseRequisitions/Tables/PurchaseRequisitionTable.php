@@ -31,6 +31,53 @@ use Carbon\Carbon;
 
 class PurchaseRequisitionTable
 {
+
+    protected static function isLevelOneApprovalEditAllowed(
+        Model $record,
+    ): bool {
+        if (
+            $record->status !== \App\Models\PurchaseRequisition::STATUS_WAITING_APPROVAL
+        ) {
+            return false;
+        }
+
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        $transaction = ApprovalTransaction::query()
+            ->where('document_type', 'MATERIAL_REQUISITION')
+            ->where('document_id', $record->getKey())
+            ->where('status', 'PENDING')
+            ->latest('id')
+            ->first();
+
+        if (
+            ! $transaction
+            || (int) $transaction->current_level !== 1
+        ) {
+            return false;
+        }
+
+        $step = $transaction->steps()
+            ->where('approval_level', 1)
+            ->where('status', 'PENDING')
+            ->first();
+
+        if (! $step || ! $step->role_id) {
+            return false;
+        }
+
+        return $user->roles()
+            ->where('roles.id', $step->role_id)
+            ->where('roles.guard_name', 'web')
+            ->where('roles.is_active', true)
+            ->exists();
+    }
+
+    
     public static function configure(
         Table $table,
     ): Table {
@@ -625,18 +672,25 @@ class PurchaseRequisitionTable
                         ->icon(
                             fn (Model $record): string =>
                                 $record->status === 'Draft'
+                                || self::isLevelOneApprovalEditAllowed($record)
                                     ? 'heroicon-o-pencil-square'
                                     : 'heroicon-o-lock-closed'
                         )
                         ->disabled(
                             fn (Model $record): bool =>
                                 $record->status !== 'Draft'
+                                && ! self::isLevelOneApprovalEditAllowed($record)
                         )
                         ->tooltip(
                             fn (Model $record): ?string =>
                                 $record->status !== 'Draft'
+                                && ! self::isLevelOneApprovalEditAllowed($record)
                                     ? 'Material Requisition cannot be edited after submission.'
-                                    : 'Edit Material Requisition'
+                                    : (
+                                        $record->status === 'Draft'
+                                            ? 'Edit Material Requisition'
+                                            : 'Edit quantity before Level 1 approval'
+                                    )
                         ),
 
                     Action::make('submit')

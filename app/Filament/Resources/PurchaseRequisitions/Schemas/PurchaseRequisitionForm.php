@@ -153,9 +153,20 @@ class PurchaseRequisitionForm
                 Section::make('Material Requisition Items')
                     ->description('List of requested items.')
                     ->headerActions([
-                        PurchaseRequisitionItemActions::add(),
-                        PurchaseRequisitionItemActions::clear(),
-                    ])
+                        PurchaseRequisitionItemActions::add()
+                            ->visible(
+                                fn ($livewire): bool =>
+                                    ! method_exists($livewire, 'isLevelOneApprovalEdit')
+                                    || ! $livewire->isLevelOneApprovalEdit()
+                            ),
+
+                        PurchaseRequisitionItemActions::clear()
+                            ->visible(
+                                fn ($livewire): bool =>
+                                    ! method_exists($livewire, 'isLevelOneApprovalEdit')
+                                    || ! $livewire->isLevelOneApprovalEdit()
+                            ),
+                    ])                    
                     ->schema([
                         View::make(
                             'filament.resources.purchase-requisitions.pages.purchase-requisition-items-table-edit'

@@ -193,6 +193,8 @@
                                             step="0.0001"
                                             min="0"
                                             max="{{ $item->requested_qty }}"
+                                            inputmode="decimal"
+                                            onkeydown="return !['e', 'E', '+', '-'].includes(event.key)"
                                             wire:model="assignedQty.{{ $item->id }}"
                                             class="
                                                 w-20

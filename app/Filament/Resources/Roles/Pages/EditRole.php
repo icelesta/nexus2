@@ -126,5 +126,13 @@ class EditRole extends EditRecord
 
         // @phpstan-ignore-next-line
         $this->record->syncPermissions($permissionModels);
+
+        $userId = auth()->id();
+
+        if ($userId !== null) {
+            $this->record->updateQuietly([
+                'updated_by' => $userId,
+            ]);
+        }
     }
 }

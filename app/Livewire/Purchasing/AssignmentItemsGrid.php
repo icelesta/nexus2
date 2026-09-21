@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Livewire\Component;
 use App\Services\Purchasing\AssignmentMaterialRequisitionService;
 use App\Models\TaxMaster;
+use Filament\Notifications\Notification;
 
 class AssignmentItemsGrid extends Component
 {
@@ -275,8 +276,34 @@ class AssignmentItemsGrid extends Component
         }
 
 
-        $assignedQty =
-            (float) ($this->assignedQty[$itemId] ?? 0);
+        $assignedQtyInput = $this->assignedQty[$itemId] ?? null;
+
+        if (
+            ! is_string($assignedQtyInput)
+            && ! is_numeric($assignedQtyInput)
+        ) {
+            Notification::make()
+                ->danger()
+                ->title('Invalid Quantity')
+                ->body('Please enter a number.')
+                ->send();
+
+            return;
+        }
+
+        $assignedQtyInput = (string) $assignedQtyInput;
+
+        if (! preg_match('/^\d+(?:\.\d+)?$/', $assignedQtyInput)) {
+            Notification::make()
+                ->danger()
+                ->title('Invalid Quantity')
+                ->body('Please enter a number.')
+                ->send();
+
+            return;
+        }
+
+        $assignedQty = (float) $assignedQtyInput;
 
         $unitPrice =
             (float) ($this->unitPrices[$itemId] ?? 0);

@@ -103,14 +103,18 @@ class PurchaseRequisitionItems
 				    ->columns(12)
 				    ->schema([
 
-				        TextInput::make('requested_qty')
-				            ->label('Requested Quantity')
-				            ->numeric()
-				            ->required()
-				            ->default(1)
-				            ->minValue(0.01)
-				            ->suffix('Qty')
-				            ->columnSpan(3),
+						TextInput::make('requested_qty')
+						    ->label('Requested Quantity')
+						    ->numeric()
+						    ->extraInputAttributes([
+						        'inputmode' => 'decimal',
+						        'onkeydown' => "return !['e', 'E', '+', '-'].includes(event.key)",
+						    ])
+						    ->required()
+						    ->default(1)
+						    ->minValue(0.01)
+						    ->suffix('Qty')
+						    ->columnSpan(3),
 
 				        Select::make('purchase_uom_id')
 				            ->label('Purchase UOM')

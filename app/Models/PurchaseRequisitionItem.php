@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 
+
 class PurchaseRequisitionItem extends Model
 {
     use SoftDeletes;
