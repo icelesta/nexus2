@@ -199,22 +199,21 @@
 
             <td
                 style="
-                    width:30%;
+                    width:38%;
                     padding:0;
                     vertical-align:top;
                     border-left:1px solid #7d93aa;
                 "
             >
-
-                    <table
-                        style="
-                            width:100%;
-                            border:none;
-                            border-collapse:collapse;
-                            border-spacing:0;
-                            table-layout:fixed;
-                        "
-                    >
+                <table
+                    style="
+                        width:100%;
+                        border:none;
+                        border-collapse:collapse;
+                        border-spacing:0;
+                        table-layout:fixed;
+                    "
+                >
 
                     {{-- =========================================
                          PURCHASE ORDER TITLE
@@ -228,18 +227,16 @@
                                 background:#12385d;
                                 color:#ffffff;
                                 text-align:center;
-                                font-size:15px;
+                                font-size:13px;
                                 font-weight:700;
-                                padding:6px 4px;
+                                padding:6px 6px;
                                 border:none;
                                 border-bottom:1px solid #7d93aa;
                                 line-height:17px;
                                 white-space:nowrap;
                             "
                         >
-
                             PURCHASE ORDER
-
                         </td>
 
                     </tr>
@@ -253,34 +250,33 @@
 
                         <td
                             style="
-                                width:90px;
-                                font-weight:600;
+                                width:72px;
+                                font-weight:500;
                                 font-size:9px;
-                                padding:5px 7px;
+                                padding:5px 6px;
                                 border:none;
                                 border-bottom:1px solid #d7dee7;
                                 vertical-align:middle;
                                 white-space:nowrap;
                             "
                         >
-
                             Number
-
                         </td>
 
                         <td
                             style="
-                                padding:5px 7px;
-                                font-size:9px;
+                                padding:5px 6px;
+                                font-size:8.5px;
                                 border:none;
                                 border-bottom:1px solid #d7dee7;
                                 vertical-align:middle;
                                 white-space:nowrap;
+                                text-align:right;
+                                overflow:hidden;
+                                text-overflow:clip;
                             "
                         >
-
                             {{ $purchaseOrder->document_no }}
-
                         </td>
 
                     </tr>
@@ -294,40 +290,42 @@
 
                         <td
                             style="
-                                width:90px;
+                                width:72px;
+                                height:26px;
+                                padding:5px 6px;
                                 font-weight:600;
                                 font-size:9px;
-                                padding:5px 7px;
+                                line-height:16px;
                                 border:none;
                                 vertical-align:middle;
                                 white-space:nowrap;
                             "
                         >
-
                             Approval Status
-
                         </td>
 
                         <td
                             style="
-                                padding:5px 7px;
-                                font-size:10px;
+                                height:26px;
+                                padding:5px 6px;
+                                font-size:8.5px;
+                                line-height:16px;
                                 border:none;
                                 vertical-align:middle;
                                 font-weight:700;
                                 color:#12385d;
                                 white-space:nowrap;
+                                text-align:right;
+                                overflow:hidden;
+                                text-overflow:clip;
                             "
                         >
-
                             {{ strtoupper($purchaseOrder->approval_status ?? 'PENDING') }}
-
                         </td>
 
                     </tr>
 
                 </table>
-
             </td>
 
         </tr>

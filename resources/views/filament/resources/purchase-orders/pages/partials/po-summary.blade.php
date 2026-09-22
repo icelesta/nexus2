@@ -281,32 +281,6 @@
                 style="text-align:left !important; vertical-align:top !important;"
             >
 
-                <div
-                    class="po-remark-box"
-                    style="text-align:left !important; vertical-align:top !important;"
-                >
-
-                    <div
-                        class="po-remark-title"
-                        style="text-align:left !important;"
-                    >
-                        Remark:
-                    </div>
-
-                    <div
-                        class="po-remark-content"
-                        style="
-                            display:block !important;
-                            width:100% !important;
-                            margin:0 !important;
-                            padding:0 !important;
-                            text-align:left !important;
-                            vertical-align:top !important;
-                        "
-                    >{{ trim((string) ($purchaseOrder->remarks ?? '-')) }}</div>
-
-                </div>
-
             </td>
 
 

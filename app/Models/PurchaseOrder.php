@@ -90,7 +90,7 @@ class PurchaseOrder extends Model
         'request_date',
         'required_date',
         'expected_delivery_date',
-
+        'delivery_time',
         'priority',
 
         'reference_no',
@@ -186,6 +186,7 @@ class PurchaseOrder extends Model
             'request_date'             => 'date',
             'required_date'            => 'date',
             'expected_delivery_date'   => 'date',
+            'delivery_time'            => 'integer',
 
             /*
             |--------------------------------------------------------------------------

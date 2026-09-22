@@ -24,7 +24,7 @@
 
         <td
             style="
-                width:55%;
+                width:52%;
                 vertical-align:top;
                 padding-right:8px;
             ">
@@ -365,7 +365,9 @@
                                 font-size:11px;
                                 line-height:16px;">
 
-                        {{ $purchaseOrder->delivery_time ?? '14 DAYS AFTER PO' }}
+                        {{ $purchaseOrder->delivery_time !== null
+                            ? $purchaseOrder->delivery_time . ' DAYS'
+                            : '-' }}
 
                     </td>
 

@@ -7,8 +7,6 @@ namespace App\Filament\Resources\PurchaseOrderResource\Schemas;
 use App\Models\PurchaseOrder;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -24,103 +22,158 @@ class PurchaseOrderForm
             ->columns(1)
             ->components([
 
-            /*
-            |--------------------------------------------------------------------------
-            | Purchase Order Information
-            |--------------------------------------------------------------------------
-            */
+                /*
+                |--------------------------------------------------------------------------
+                | Purchase Order Information
+                |--------------------------------------------------------------------------
+                */
 
-            Section::make('Purchase Order Information')
-                ->description('General information of this Purchase Order document.')
-                ->schema([
+                Section::make('Purchase Order Information')
+                    ->description(
+                        'General information of this Purchase Order document.'
+                    )
+                    ->icon('heroicon-o-document-text')
+                    ->iconColor('primary')
+                    ->columnSpanFull()
+                    ->extraAttributes([
+                        'class' => 'po-info-section',
+                    ])
+                    ->schema([
 
-                    /*
-                    |--------------------------------------------------------------------------
-                    | Row 1
-                    |--------------------------------------------------------------------------
-                    */
+                        /*
+                        |--------------------------------------------------------------------------
+                        | ROW 1 — Core Information
+                        |--------------------------------------------------------------------------
+                        |
+                        | Document Status : 2
+                        | Purchasing PIC  : 2
+                        | Supplier        : 3
+                        | Currency        : 2
+                        | Exchange Rate   : 3
+                        |
+                        | Total = 12
+                        |--------------------------------------------------------------------------
+                        */
 
-                    Grid::make(12)
-                        ->schema([
+                        Grid::make(12)
+                            ->schema([
 
-                            Placeholder::make('document_status')
-                                ->label('Document Status')
-                                ->content(fn ($record) =>
-                                    $record?->status ?? '-'
-                                )
-                                ->columnSpan(2),
+                                Placeholder::make('document_status_display')
+                                    ->label('Document Status')
+                                    ->content(
+                                        fn (?PurchaseOrder $record) =>
+                                            $record?->status ?? '-'
+                                    )
+                                    ->extraAttributes([
+                                        'class' => 'po-info-value',
+                                    ])
+                                    ->columnSpan(2),
 
-                            Placeholder::make('purchasing_pic')
-                                ->label('Purchasing PIC')
-                                ->content(fn ($record) =>
-                                    $record?->purchasingPic?->name
-                                        ?? auth()->user()?->name
-                                        ?? '-'
-                                )
-                                ->columnSpan(2),
+                                Placeholder::make('purchasing_pic_display')
+                                    ->label('Purchasing PIC')
+                                    ->content(
+                                        fn (?PurchaseOrder $record) =>
+                                            $record?->generatedBy?->name ?? '-'
+                                    )
+                                    ->extraAttributes([
+                                        'class' => 'po-info-value',
+                                    ])
+                                    ->columnSpan(2),
 
-                            Placeholder::make('supplier')
-                                ->label('Supplier')
-                                ->content(fn ($record) =>
-                                    $record?->supplier?->supplier_name
-                                        ?? '-'
-                                )
-                                ->columnSpan(4),
+                                Placeholder::make('supplier_display')
+                                    ->label('Supplier')
+                                    ->content(
+                                        fn (?PurchaseOrder $record) =>
+                                            $record?->supplier?->supplier_name ?? '-'
+                                    )
+                                    ->extraAttributes([
+                                        'class' => 'po-info-value',
+                                    ])
+                                    ->columnSpan(3),
 
-                            Placeholder::make('currency')
-                                ->label('Currency')
-                                ->content(fn ($record) =>
-                                    $record?->currency?->currency_code
-                                        ?? $record?->currency_code
-                                        ?? '-'
-                                )
-                                ->columnSpan(2),
+                                Placeholder::make('currency_display')
+                                    ->label('Currency')
+                                    ->content(
+                                        fn (?PurchaseOrder $record) =>
+                                            $record?->currency?->currency_code ?? '-'
+                                    )
+                                    ->extraAttributes([
+                                        'class' => 'po-info-value',
+                                    ])
+                                    ->columnSpan(2),
 
-                            Placeholder::make('exchange_rate')
-                                ->label('Exchange Rate')
-                                ->content(fn ($record) =>
-                                    $record?->exchange_rate !== null
-                                        ? number_format(
-                                            (float) $record->exchange_rate,
-                                            4,
-                                            '.',
-                                            ''
-                                        )
-                                        : '-'
-                                )
-                                ->columnSpan(2),
+                                Placeholder::make('exchange_rate_display')
+                                    ->label('Exchange Rate')
+                                    ->content(
+                                        fn (?PurchaseOrder $record) =>
+                                            number_format(
+                                                (float) ($record?->exchange_rate ?? 0),
+                                                4,
+                                                '.',
+                                                ''
+                                            )
+                                    )
+                                    ->extraAttributes([
+                                        'class' => 'po-info-value',
+                                    ])
+                                    ->columnSpan(3),
 
-                        ]),
+                            ])
+                            ->columns(12),
 
-                    /*
-                    |--------------------------------------------------------------------------
-                    | Row 2
-                    |--------------------------------------------------------------------------
-                    */
+                        /*
+                        |--------------------------------------------------------------------------
+                        | ROW 2 — Delivery & Remarks
+                        |--------------------------------------------------------------------------
+                        |
+                        | Payment Instruction : 2
+                        | Expected Date       : 3
+                        | Delivery Time       : 3
+                        | Remarks             : 4
+                        |
+                        | Total = 12
+                        |--------------------------------------------------------------------------
+                        */
 
-                    Grid::make(12)
-                        ->schema([
+                        Grid::make(12)
+                            ->schema([
 
-                            Placeholder::make('payment_instruction_display')
-                                ->label('Payment Instruction')
-                                ->content(fn ($record) =>
-                                    $record?->payment_instruction ?? '-'
-                                )
-                                ->columnSpan(3),
+                                Placeholder::make('payment_instruction_display')
+                                    ->label('Payment Instruction')
+                                    ->content(
+                                        fn (?PurchaseOrder $record) =>
+                                            $record?->payment_instruction ?? '-'
+                                    )
+                                    ->extraAttributes([
+                                        'class' => 'po-info-value truncate',
+                                    ])
+                                    ->columnSpan(2),
 
-                            DatePicker::make('expected_delivery_date')
-                                ->label('Expected Delivery Date')
-                                ->columnSpan(3),
+                                DatePicker::make('expected_delivery_date')
+                                    ->label('Expected Delivery Date')
+                                    ->displayFormat('d / m / Y')
+                                    ->native(false)
+                                    ->columnSpan(3),
 
-                            Textarea::make('remarks')
-                                ->label('Remarks')
-                                ->rows(2)
-                                ->columnSpan(6),
+                                TextInput::make('delivery_time')
+                                    ->label('Delivery Time (Days)')
+                                    ->numeric()
+                                    ->minValue(1)
+                                    ->step(1)
+                                    ->rule('integer')
+                                    ->inputMode('numeric')
+                                    ->suffix('DAYS')
+                                    ->columnSpan(3),
 
-                        ]),
+                                TextInput::make('remarks')
+                                    ->label('Remarks')
+                                    ->maxLength(500)
+                                    ->columnSpan(4),
 
-                ])
-                ->columnSpanFull(),
+                            ])
+                            ->columns(12),
+
+                    ]),
 
                 /*
                 |--------------------------------------------------------------------------
@@ -132,6 +185,8 @@ class PurchaseOrderForm
                     ->description(
                         'Reference information copied from Assignment Material Requisition.'
                     )
+                    ->icon('heroicon-o-link')
+                    ->iconColor('primary')
                     ->columnSpanFull()
                     ->extraAttributes([
                         'class' => 'po-section',
@@ -271,6 +326,8 @@ class PurchaseOrderForm
                     ->description(
                         'Supplier information for this Purchase Order.'
                     )
+                    ->icon('heroicon-o-building-office-2')
+                    ->iconColor('primary')
                     ->columnSpanFull()
                     ->extraAttributes([
                         'class' => 'po-section',
@@ -338,9 +395,6 @@ class PurchaseOrderForm
                         |--------------------------------------------------------------------------
                         | Address
                         |--------------------------------------------------------------------------
-                        |
-                        | Full-width supplier address information.
-                        |
                         */
 
                         Placeholder::make('supplier_address')
@@ -357,8 +411,6 @@ class PurchaseOrderForm
 
                     ]),
 
-
-
                 /*
                 |--------------------------------------------------------------------------
                 | Shipping Information
@@ -369,6 +421,8 @@ class PurchaseOrderForm
                     ->description(
                         'Shipping destination information for this Purchase Order.'
                     )
+                    ->icon('heroicon-o-truck')
+                    ->iconColor('primary')
                     ->columnSpanFull()
                     ->extraAttributes([
                         'class' => 'po-section',
@@ -438,7 +492,6 @@ class PurchaseOrderForm
                                         }
 
                                         return new \Illuminate\Support\HtmlString(
-
                                             '<div style="
                                                 line-height:1.9;
                                             ">
@@ -497,6 +550,8 @@ class PurchaseOrderForm
                     ->description(
                         'Financial summary calculated automatically from Purchase Order Items.'
                     )
+                    ->icon('heroicon-o-calculator')
+                    ->iconColor('primary')
                     ->columnSpanFull()
                     ->extraAttributes([
                         'class' => 'po-section',
@@ -575,6 +630,5 @@ class PurchaseOrderForm
                     ]),
 
             ]);
-
     }
 }
