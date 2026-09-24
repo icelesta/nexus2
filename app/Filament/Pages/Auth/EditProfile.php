@@ -80,24 +80,44 @@ class EditProfile extends BaseEditProfile
                                 |--------------------------------------------------------------------------
                                 */
 
-                                FileUpload::make('avatar')
-                                    ->label('Profile Photo')
-                                    ->avatar()
-                                    ->image()
-                                    ->imageEditor()
-                                    ->directory('users')
-                                    ->disk('public')
-                                    ->visibility('public')
-                                    ->imageResizeMode('cover')
-                                    ->acceptedFileTypes([
-                                        'image/jpeg',
-                                        'image/png',
-                                        'image/webp',
-                                    ])
-                                    ->imageResizeTargetWidth('400')
-                                    ->imageResizeTargetHeight('400')
-                                    ->maxSize(2048)
-                                    ->columnSpanFull(),                                
+                            FileUpload::make('avatar')
+                                ->label('Profile Photo')
+                                ->image()
+                                ->imageEditor()
+                                ->disk('public')
+                                ->directory('avatars')
+                                ->visibility('public')
+                                ->getUploadedFileUsing(
+                                    function (
+                                        FileUpload $component,
+                                        string $file,
+                                        string|array|null $storedFileNames
+                                    ): ?array {
+
+                                        $uploadedFile = $component->getUploadedFile(
+                                            $file,
+                                            $storedFileNames
+                                        );
+
+                                        if ($uploadedFile === null) {
+                                            return null;
+                                        }
+
+                                        $uploadedFile['url'] = asset(
+                                            'storage/' . ltrim($file, '/')
+                                        );
+
+                                        return $uploadedFile;
+                                    }
+                                )
+                                ->maxSize(2048)
+                                ->acceptedFileTypes([
+                                    'image/jpeg',
+                                    'image/png',
+                                    'image/webp',
+                                ])
+                                ->avatar()
+                                ->columnSpanFull(),                              
 
                                 /*
                                 |--------------------------------------------------------------------------

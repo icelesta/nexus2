@@ -754,6 +754,8 @@ class PurchaseRequisitionService
 
                 PurchaseRequisition::STATUS_CANCELLED,
 
+                PurchaseRequisition::STATUS_REJECTED,
+
             ],
 
             PurchaseRequisition::STATUS_COMPLETED => [],

@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Filament\Pages;
 
 use App\Filament\Widgets\Approval\ApprovalKpiWidget;
-use App\Filament\Widgets\Approval\MyPendingApprovalsWidget;
-use App\Filament\Widgets\Approval\RecentApprovalActivityWidget;
 use App\Filament\Widgets\ItemStatsWidget;
 use App\Filament\Widgets\WelcomeWidget;
 use Filament\Pages\Dashboard as BaseDashboard;
@@ -74,11 +72,6 @@ class Dashboard extends BaseDashboard
             ApprovalKpiWidget::class,
 
             ItemStatsWidget::class,
-
-            MyPendingApprovalsWidget::class,
-
-            RecentApprovalActivityWidget::class,
-
 
             /*
             |--------------------------------------------------------------------------

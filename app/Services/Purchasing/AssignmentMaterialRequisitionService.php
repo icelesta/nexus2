@@ -1575,7 +1575,9 @@ class AssignmentMaterialRequisitionService
             |
             */
 
-            AssignmentMaterialRequisition::STATUS_WAITING_APPROVAL => [],
+            AssignmentMaterialRequisition::STATUS_WAITING_APPROVAL => [
+                AssignmentMaterialRequisition::STATUS_REJECTED,
+            ],
 
             /*
             |--------------------------------------------------------------------------

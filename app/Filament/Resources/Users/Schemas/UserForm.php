@@ -73,6 +73,29 @@ class UserForm
                             ->disk('public')
                             ->directory('avatars')
                             ->visibility('public')
+                            ->getUploadedFileUsing(
+                                function (
+                                    FileUpload $component,
+                                    string $file,
+                                    string|array|null $storedFileNames
+                                ): ?array {
+
+                                    $uploadedFile = $component->getUploadedFile(
+                                        $file,
+                                        $storedFileNames
+                                    );
+
+                                    if ($uploadedFile === null) {
+                                        return null;
+                                    }
+
+                                    $uploadedFile['url'] = asset(
+                                        'storage/' . ltrim($file, '/')
+                                    );
+
+                                    return $uploadedFile;
+                                }
+                            )
                             ->maxSize(2048)
                             ->acceptedFileTypes([
                                 'image/jpeg',

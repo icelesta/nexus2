@@ -1915,17 +1915,36 @@ class ApprovalTransactionService
 
                 if (
                     $purchaseRequisition->status
-                    !== 'Rejected'
+                    !== \App\Models\PurchaseRequisition::STATUS_REJECTED
                 ) {
 
-                    $purchaseRequisitionService =
-                        app(
-                            \App\Services\Purchasing\PurchaseRequisitionService::class
+                    if (
+                        $purchaseRequisition->status
+                        === \App\Models\PurchaseRequisition::STATUS_WAITING_APPROVAL
+                    ) {
+
+                        $purchaseRequisitionService =
+                            app(
+                                \App\Services\Purchasing\PurchaseRequisitionService::class
+                            );
+
+                        $purchaseRequisitionService->reject(
+                            (int) $purchaseRequisition->getKey()
                         );
 
-                    $purchaseRequisitionService->reject(
-                        (int) $purchaseRequisition->getKey()
-                    );
+                    } elseif (
+                        $purchaseRequisition->status
+                        === \App\Models\PurchaseRequisition::STATUS_APPROVED
+                    ) {
+
+                        $purchaseRequisition->update([
+                            'status' =>
+                                \App\Models\PurchaseRequisition::STATUS_REJECTED,
+
+                            'updated_by' =>
+                                $approver->getKey(),
+                        ]);
+                    }
                 }
 
                 /*

@@ -1950,6 +1950,45 @@
         </div>
         {{-- END PURCHASING ANALYTICS --}}
 
+        {{-- ============================================================= --}}
+        {{-- PURCHASING APPROVAL CENTER --}}
+        {{-- ============================================================= --}}
+        {{-- 
+            Approval detail intentionally lives at the bottom of the
+            Purchasing Dashboard.
+
+            Logic remains inside the existing approval widgets.
+            No approval query / workflow logic is changed here.
+        --}}
+        <div class="space-y-6">
+
+            {{-- ========================================================= --}}
+            {{-- MY PENDING APPROVALS --}}
+            {{-- ========================================================= --}}
+            <div class="min-w-0">
+
+                @livewire(
+                    \App\Filament\Widgets\Approval\MyPendingApprovalsWidget::class
+                )
+
+            </div>
+
+
+            {{-- ========================================================= --}}
+            {{-- RECENT APPROVAL ACTIVITY --}}
+            {{-- ========================================================= --}}
+            <div class="min-w-0">
+
+                @livewire(
+                    \App\Filament\Widgets\Approval\RecentApprovalActivityWidget::class
+                )
+
+            </div>
+
+        </div>
+        {{-- END PURCHASING APPROVAL CENTER --}}
+        
+
 
     </div>    
 

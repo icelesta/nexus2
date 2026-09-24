@@ -771,13 +771,22 @@ class PurchaseRequisitionApproval
 
                 /*
                 |--------------------------------------------------------------------------
-                | APPROVAL HISTORY
+                | Approval History
                 |--------------------------------------------------------------------------
+                |
+                | Display approval history from the MATERIAL_REQUISITION
+                | ApprovalTransaction snapshot.
+                |
+                | IMPORTANT:
+                | - Do NOT re-resolve historical approver role from current master.
+                | - Transaction step snapshot is the source of truth.
+                | - Level 2 may not exist until AMR Submit activates it.
+                |
                 */
 
                 Section::make('Approval History')
                     ->description(
-                        'Approval activity log for this Material Requisition.'
+                        'Approval activity and decision history for this Material Requisition.'
                     )
                     ->icon('heroicon-o-document-duplicate')
                     ->collapsible()
@@ -785,39 +794,25 @@ class PurchaseRequisitionApproval
                     ->columns(12)
                     ->schema([
 
-                        Placeholder::make('submitted_by')
-                            ->label('Submitted By')
+                        Placeholder::make('approval_history')
+                            ->hiddenLabel()
                             ->content(
-                                fn ($record): string =>
-                                    $record?->submittedBy?->name
-                                        ?? '-'
-                            )
-                            ->columnSpan(3),
-
-                        Placeholder::make('submitted_at')
-                            ->label('Submitted At')
-                            ->content(
-                                fn ($record): string =>
-                                    $record?->submitted_at
-                                        ? $record->submitted_at
-                                            ->timezone(
-                                                UserTimezone::timezone()
-                                            )
-                                            ->format(
-                                                'd M Y H:i'
-                                            )
-                                        : '-'
-                            )
-                            ->columnSpan(3),
-
-                        Placeholder::make('last_action')
-                            ->label('Last Action')
-                            ->content(
-                                function ($record): string {
+                                function ($record): \Illuminate\Support\HtmlString {
 
                                     if (! $record) {
-                                        return 'Draft';
+
+                                        return new \Illuminate\Support\HtmlString(
+                                            '<div class="text-sm text-gray-500">'
+                                            . 'No approval information available.'
+                                            . '</div>'
+                                        );
                                     }
+
+                                    /*
+                                    |--------------------------------------------------------------------------
+                                    | LOAD APPROVAL TRANSACTION
+                                    |--------------------------------------------------------------------------
+                                    */
 
                                     $transaction =
                                         ApprovalTransaction::query()
@@ -830,94 +825,296 @@ class PurchaseRequisitionApproval
                                                 $record->getKey()
                                             )
                                             ->latest('id')
-                                            ->with('steps')
+                                            ->with([
+                                                'steps',
+                                            ])
                                             ->first();
+
+                                    /*
+                                    |--------------------------------------------------------------------------
+                                    | NO TRANSACTION
+                                    |--------------------------------------------------------------------------
+                                    */
 
                                     if (! $transaction) {
-                                        return 'Draft';
+
+                                        return new \Illuminate\Support\HtmlString(
+                                            '<div class="rounded-lg border border-gray-200 '
+                                            . 'bg-gray-50 p-4 text-sm text-gray-500 '
+                                            . 'dark:border-gray-700 dark:bg-gray-800">'
+                                            . 'Approval has not been submitted yet.'
+                                            . '</div>'
+                                        );
                                     }
 
-                                    return $transaction
-                                        ->steps
-                                        ->sortByDesc('acted_at')
-                                        ->first()?->action
-                                        ?? $transaction->status;
-                                }
-                            )
-                            ->columnSpan(3),
+                                    /*
+                                    |--------------------------------------------------------------------------
+                                    | SNAPSHOT STEPS
+                                    |--------------------------------------------------------------------------
+                                    */
 
-                        Placeholder::make('last_action_at')
-                            ->label('Last Action At')
-                            ->content(
-                                function ($record): string {
+                                    $steps = $transaction->steps
+                                        ->sortBy('approval_level')
+                                        ->values();
 
-                                    if (! $record) {
-                                        return '-';
+                                    if ($steps->isEmpty()) {
+
+                                        return new \Illuminate\Support\HtmlString(
+                                            '<div class="rounded-lg border border-gray-200 '
+                                            . 'bg-gray-50 p-4 text-sm text-gray-500 '
+                                            . 'dark:border-gray-700 dark:bg-gray-800">'
+                                            . 'No approval steps available.'
+                                            . '</div>'
+                                        );
                                     }
 
-                                    $transaction =
-                                        ApprovalTransaction::query()
-                                            ->where(
-                                                'document_type',
-                                                'MATERIAL_REQUISITION'
-                                            )
-                                            ->where(
-                                                'document_id',
-                                                $record->getKey()
-                                            )
-                                            ->latest('id')
-                                            ->with('steps')
-                                            ->first();
+                                    /*
+                                    |--------------------------------------------------------------------------
+                                    | BUILD HISTORY
+                                    |--------------------------------------------------------------------------
+                                    */
 
-                                    $actedAt =
-                                        $transaction
-                                            ?->steps
-                                            ?->sortByDesc('acted_at')
-                                            ->first()
-                                            ?->acted_at;
+                                    $html =
+                                        '<div class="space-y-3">';
 
-                                    return $actedAt
-                                        ? $actedAt
-                                            ->timezone(
-                                                UserTimezone::timezone()
-                                            )
-                                            ->format(
-                                                'd M Y H:i'
-                                            )
-                                        : '-';
-                                }
-                            )
-                            ->columnSpan(3),
+                                    foreach ($steps as $step) {
 
-                        Placeholder::make('last_comment')
-                            ->label('Latest Comment')
-                            ->content(
-                                function ($record): string {
+                                        $level =
+                                            (int) $step->approval_level;
 
-                                    if (! $record) {
-                                        return '-';
+                                        /*
+                                        |--------------------------------------------------------------------------
+                                        | SNAPSHOT VALUES
+                                        |--------------------------------------------------------------------------
+                                        */
+
+                                        $roleName =
+                                            filled($step->role_name)
+                                                ? e($step->role_name)
+                                                : 'Approver';
+
+                                        $status =
+                                            strtoupper(
+                                                (string) (
+                                                    $step->status
+                                                    ?? 'PENDING'
+                                                )
+                                            );
+
+                                        $action =
+                                            filled($step->action)
+                                                ? e($step->action)
+                                                : '-';
+
+                                        $remarks =
+                                            filled($step->remarks)
+                                                ? e($step->remarks)
+                                                : '-';
+
+                                        /*
+                                        |--------------------------------------------------------------------------
+                                        | APPROVER
+                                        |--------------------------------------------------------------------------
+                                        */
+
+                                        $approverName = '-';
+
+                                        if ($step->approved_by) {
+
+                                            $approverName =
+                                                e(
+                                                    \App\Models\User::query()
+                                                        ->where(
+                                                            'id',
+                                                            $step->approved_by
+                                                        )
+                                                        ->value('name')
+                                                        ?? '-'
+                                                );
+                                        } elseif (
+                                            $status === 'PENDING'
+                                        ) {
+
+                                            $approverName =
+                                                'Waiting for approval';
+                                        }
+
+                                        /*
+                                        |--------------------------------------------------------------------------
+                                        | DATE
+                                        |--------------------------------------------------------------------------
+                                        */
+
+                                        $dateDisplay = '-';
+
+                                        if ($step->acted_at) {
+
+                                            $dateDisplay =
+                                                e(
+                                                    $step->acted_at
+                                                        ->timezone(
+                                                            config(
+                                                                'app.timezone',
+                                                                'Asia/Jakarta'
+                                                            )
+                                                        )
+                                                        ->format(
+                                                            'd M Y H:i'
+                                                        )
+                                                );
+                                        }
+
+                                        /*
+                                        |--------------------------------------------------------------------------
+                                        | STATUS VISUAL
+                                        |--------------------------------------------------------------------------
+                                        */
+
+                                        $statusLabel =
+                                            match ($status) {
+
+                                                'APPROVED' =>
+                                                    'APPROVED',
+
+                                                'REJECTED' =>
+                                                    'REJECTED',
+
+                                                default =>
+                                                    'PENDING',
+                                            };
+
+                                        $statusClass =
+                                            match ($status) {
+
+                                                'APPROVED' =>
+                                                    'bg-success-50 text-success-700 '
+                                                    . 'ring-success-600/20',
+
+                                                'REJECTED' =>
+                                                    'bg-danger-50 text-danger-700 '
+                                                    . 'ring-danger-600/20',
+
+                                                default =>
+                                                    'bg-warning-50 text-warning-700 '
+                                                    . 'ring-warning-600/20',
+                                            };
+
+                                        $icon =
+                                            match ($status) {
+
+                                                'APPROVED' =>
+                                                    'heroicon-o-check-circle',
+
+                                                'REJECTED' =>
+                                                    'heroicon-o-x-circle',
+
+                                                default =>
+                                                    'heroicon-o-clock',
+                                            };
+
+                                        /*
+                                        |--------------------------------------------------------------------------
+                                        | HISTORY CARD
+                                        |--------------------------------------------------------------------------
+                                        */
+
+                                        $html .= <<<HTML
+
+                                            <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+
+                                                <div class="flex items-start justify-between gap-4">
+
+                                                    <div class="flex items-start gap-3">
+
+                                                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+
+                                                            <x-dynamic-component
+                                                                component="{$icon}"
+                                                                class="h-5 w-5 text-gray-500"
+                                                            />
+
+                                                        </div>
+
+                                                        <div>
+
+                                                            <div class="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                                                                Approval Level {$level}
+                                                            </div>
+
+                                                            <div class="mt-1 text-base font-semibold text-gray-900 dark:text-white">
+                                                                {$roleName}
+                                                            </div>
+
+                                                            <div class="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                                                                {$approverName}
+                                                            </div>
+
+                                                        </div>
+
+                                                    </div>
+
+                                                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 {$statusClass}">
+                                                        {$statusLabel}
+                                                    </span>
+
+                                                </div>
+
+                                                <div class="mt-4 grid grid-cols-1 gap-4 border-t border-gray-100 pt-4 md:grid-cols-3 dark:border-gray-800">
+
+                                                    <div>
+                                                        <div class="text-xs font-medium text-gray-400">
+                                                            Date
+                                                        </div>
+
+                                                        <div class="mt-1 text-sm text-gray-700 dark:text-gray-200">
+                                                            {$dateDisplay}
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <div class="text-xs font-medium text-gray-400">
+                                                            Action
+                                                        </div>
+
+                                                        <div class="mt-1 text-sm text-gray-700 dark:text-gray-200">
+                                                            {$action}
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <div class="text-xs font-medium text-gray-400">
+                                                            Role Snapshot
+                                                        </div>
+
+                                                        <div class="mt-1 text-sm text-gray-700 dark:text-gray-200">
+                                                            {$roleName}
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+
+                                                <div class="mt-4 border-t border-gray-100 pt-4 dark:border-gray-800">
+
+                                                    <div class="text-xs font-medium text-gray-400">
+                                                        Remarks
+                                                    </div>
+
+                                                    <div class="mt-1 text-sm text-gray-700 dark:text-gray-200">
+                                                        {$remarks}
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+                                        HTML;
                                     }
 
-                                    $transaction =
-                                        ApprovalTransaction::query()
-                                            ->where(
-                                                'document_type',
-                                                'MATERIAL_REQUISITION'
-                                            )
-                                            ->where(
-                                                'document_id',
-                                                $record->getKey()
-                                            )
-                                            ->latest('id')
-                                            ->with('steps')
-                                            ->first();
+                                    $html .= '</div>';
 
-                                    return $transaction
-                                        ?->steps
-                                        ?->sortByDesc('acted_at')
-                                        ->first()
-                                        ?->remarks
-                                        ?? '-';
+                                    return new \Illuminate\Support\HtmlString(
+                                        $html
+                                    );
                                 }
                             )
                             ->columnSpanFull(),

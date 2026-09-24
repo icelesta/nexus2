@@ -487,3 +487,43 @@
     align-self: start;
     z-index: 40;
 }
+
+/* ==========================================================================
+   Nexus 2.0 - Purchase Order Section Header
+   ========================================================================== */
+
+.po-info-section,
+.po-section {
+    overflow: hidden;
+}
+
+/* Section header */
+.po-info-section .fi-section-header,
+.po-section .fi-section-header {
+    background: linear-gradient(
+        90deg,
+        rgba(239, 246, 255, 0.95),
+        rgba(248, 250, 252, 0.95)
+    );
+
+    border-bottom: 1px solid rgba(37, 99, 235, 0.08);
+}
+
+/* Section title */
+.po-info-section .fi-section-header-heading,
+.po-section .fi-section-header-heading {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+/* Section description */
+.po-info-section .fi-section-header-description,
+.po-section .fi-section-header-description {
+    color: rgb(100 116 139);
+}
+
+/* Section icon */
+.po-info-section .fi-section-header-icon,
+.po-section .fi-section-header-icon {
+    color: rgb(37 99 235);
+}

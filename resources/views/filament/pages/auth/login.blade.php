@@ -306,7 +306,7 @@
                     rgba(4, 25, 48, .08) 42%,
                     rgba(4, 25, 48, .76) 100%
                 ),
-                url('/images/nexus-login-oilgas-bg.jpg');
+                url('/images/bms-2.png');
             background-size: cover;
             background-position: center;
         }
