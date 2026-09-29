@@ -89,11 +89,27 @@ class ApprovalMastersTable
                 |--------------------------------------------------------------------------
                 */
 
-                TextColumn::make('updated_at')
-                    ->label('Updated')
+                TextColumn::make('creator.name')
+                    ->label('Created By')
+                    ->default('-')
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('created_at')
+                    ->label('Created Date')
                     ->dateTime('d M Y H:i')
-                    ->sortable()
-                    ->toggleable(),
+                    ->sortable(),
+
+                TextColumn::make('updater.name')
+                    ->label('Updated By')
+                    ->default('-')
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('updated_at')
+                    ->label('Updated Date')
+                    ->dateTime('d M Y H:i')
+                    ->sortable(),
 
             ])
             ->defaultSort('updated_at', 'desc')

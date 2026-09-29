@@ -53,7 +53,7 @@ class PurchaseRequisitionView
 
                         Grid::make(2)
                             ->schema([
-
+                                
                                 /*
                                 |--------------------------------------------------------------------------
                                 | REQUEST INFORMATION
@@ -84,12 +84,20 @@ class PurchaseRequisitionView
                                             ->label('Requester')
                                             ->placeholder('-'),
 
-                                        TextEntry::make('delivery_location')
-                                            ->label('Delivery Location')
+                                        TextEntry::make('material_type')
+                                            ->label('Material Type')
+                                            ->formatStateUsing(
+                                                fn ($state) =>
+                                                    match ((string) $state) {
+                                                        'PRODUCT' => 'Product',
+                                                        'SERVICES' => 'Services',
+                                                        default => $state ?: '-',
+                                                    }
+                                            )
                                             ->placeholder('-'),
 
-                                        TextEntry::make('reference_no')
-                                            ->label('Reference No')
+                                        TextEntry::make('allocationJournal.display_name')
+                                            ->label('Allocation Journal (COA)')
                                             ->placeholder('-'),
 
                                         TextEntry::make('remarks')

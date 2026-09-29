@@ -129,6 +129,7 @@ class AssignmentDirectMarketItemsGrid extends Component
             ->with([
                 'directMarketItem.item',
                 'directMarketItem.uom',
+                'directMarketItem.allocationJournal',
                 'item',
                 'uom',
                 'supplier',

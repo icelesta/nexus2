@@ -100,10 +100,17 @@
                                 Item Name
                             </th>
 
+                            {{-- DESCRIPTION --}}
                             <th class="border-b bg-gray-100 px-2 py-2">
                                 Description
                             </th>
 
+                            {{-- JOURNAL (COA) --}}
+                            <th class="border-b bg-gray-100 px-2 py-2">
+                                Journal (COA)
+                            </th>
+
+                            {{-- UOM --}}
                             <th class="border-b bg-gray-100 px-2 py-2">
                                 UOM
                             </th>
@@ -171,6 +178,11 @@
 
                                 <td class="border px-2 py-1.5">
                                     {{ $item->item_description ?? '-' }}
+                                </td>
+
+                                {{-- JOURNAL (COA) --}}
+                                <td class="border px-2 py-1.5">
+                                    {{ $item->directMarketItem?->allocationJournal?->display_name ?? '-' }}
                                 </td>
 
                                 <td class="border px-2 py-1.5 text-center">

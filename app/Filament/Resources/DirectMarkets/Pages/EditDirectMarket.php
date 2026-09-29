@@ -78,29 +78,23 @@ class EditDirectMarket extends EditRecord
 	        |--------------------------------------------------------------------------
 	        */
 
-	        Action::make('submit')
-	            ->label('Submit')
-	            ->icon('heroicon-o-paper-airplane')
-	            ->color('primary')
-	            ->requiresConfirmation()
-	            ->visible(
-	                fn (): bool =>
-	                    $this->record->status ===
-	                    DirectMarket::STATUS_DRAFT
-	                    &&
-	                    $this->canSubmitDirectMarket()
-	            )
-	            ->authorize(
-	                fn (): bool =>
-	                    auth()->user()->can(
-	                        'submit',
-	                        $this->record
-	                    )
-	            )
-	            ->action(
-	                fn () =>
-	                    $this->submitDirectMarket()
-	            ),
+			Action::make('submit')
+			    ->label('Submit')
+			    ->icon('heroicon-o-paper-airplane')
+			    ->color('primary')
+			    ->requiresConfirmation()
+				->visible(
+				    fn (): bool =>
+				        $this->record->status ===
+				        DirectMarket::STATUS_DRAFT
+				)
+			    ->authorize(function (): bool {
+			        return true;
+			    })
+			    ->action(
+			        fn () =>
+			            $this->submitDirectMarket()
+			    ),
 	    ];
 	}
 
@@ -134,6 +128,9 @@ class EditDirectMarket extends EditRecord
 
 	                'required_date' =>
 	                    $item->required_date,
+
+				    'allocation_journal_id' =>
+				        $item->allocation_journal_id,	                    
 
 	                'delivery_location' =>
 	                    $item->delivery_location,
@@ -248,6 +245,9 @@ class EditDirectMarket extends EditRecord
 
 	            'required_date' =>
 	                $itemData['required_date'] ?? null,
+
+				'allocation_journal_id' =>
+				    $itemData['allocation_journal_id'] ?? null,	                
 
 	            'delivery_location' =>
 	                $itemData['delivery_location'] ?? null,

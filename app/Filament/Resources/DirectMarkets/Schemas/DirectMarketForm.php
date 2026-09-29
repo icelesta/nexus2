@@ -53,6 +53,17 @@ class DirectMarketForm
                         Grid::make(12)
                             ->schema([
 
+                                Select::make('material_type')
+                                    ->label('Material Type')
+                                    ->options([
+                                        'PRODUCT' => 'PRODUCT',
+                                        'SERVICES' => 'SERVICES',
+                                    ])
+                                    ->required()
+                                    ->live()
+                                    ->columnSpan(3),
+
+
                                 /*
                                 |--------------------------------------------------------------------------
                                 | REQUEST DATE
@@ -272,7 +283,47 @@ class DirectMarketForm
                                     )
                                     ->searchable()
                                     ->preload()
-                                    ->columnSpan(6),
+                                    ->columnSpan(3),
+
+                                Select::make('allocation_journal_id')
+                                    ->label('Allocation Journal (COA)')
+                                    ->options(function (callable $get): array {
+                                        $materialType = $get('material_type');
+                                        $warehouseId = $get('warehouse_id');
+
+                                        $accountType = null;
+
+                                        if ($materialType === 'PRODUCT') {
+                                            $accountType = filled($warehouseId)
+                                                ? 'Inventory'
+                                                : 'Expense';
+                                        }
+
+                                        if ($materialType === 'SERVICES' && blank($warehouseId)) {
+                                            $accountType = 'Expense';
+                                        }
+
+                                        if ($accountType === null) {
+                                            return [];
+                                        }
+
+                                        return \App\Models\ChartOfAccount::query()
+                                            ->where('is_active', true)
+                                            ->where('account_type', $accountType)
+                                            ->orderBy('account_code')
+                                            ->get()
+                                            ->mapWithKeys(
+                                                fn (\App\Models\ChartOfAccount $coa): array => [
+                                                    $coa->id =>
+                                                        "{$coa->account_code} - {$coa->account_name}",
+                                                ]
+                                            )
+                                            ->all();
+                                    })
+                                    ->searchable()
+                                    ->preload()
+                                    ->live()
+                                    ->columnSpan(3),                                    
 
                                 Select::make(
                                     'currency_id'
@@ -295,7 +346,7 @@ class DirectMarketForm
                                     ])
                                     ->preload()
                                     ->required()
-                                    ->columnSpan(6),
+                                    ->columnSpan(3),
 
                                 /*
                                 |--------------------------------------------------------------------------
@@ -487,7 +538,7 @@ class DirectMarketForm
                                     0.01
                                 )
                                 ->required()
-                                ->columnSpan(2),
+                                ->columnSpan(1),
 
                             /*
                             |--------------------------------------------------------------------------
@@ -517,6 +568,32 @@ class DirectMarketForm
                                 )
 
                                 ->columnSpan(3),
+                            Select::make('allocation_journal_id')
+                                ->label('Journal (COA)')
+                                ->options(
+                                    \App\Models\ChartOfAccount::query()
+                                        ->where('is_active', true)
+                                        ->orderBy('account_code')
+                                        ->get()
+                                        ->mapWithKeys(
+                                            fn (\App\Models\ChartOfAccount $coa): array => [
+                                                $coa->id =>
+                                                    "{$coa->account_code} - {$coa->account_name}",
+                                            ]
+                                        )
+                                        ->all()
+                                )
+                                ->default(
+                                    fn (callable $get): ?int =>
+                                        $get('../../allocation_journal_id')
+                                            ? (int) $get('../../allocation_journal_id')
+                                            : null
+                                )
+                                ->searchable()
+                                ->preload()
+                                ->required()
+                                ->columnSpan(3),
+
 
                             /*
                             |--------------------------------------------------------------------------
@@ -537,7 +614,7 @@ class DirectMarketForm
                                     method_exists($livewire, 'isLevelOneApprovalEdit')
                                     && $livewire->isLevelOneApprovalEdit()
                                 )
-                                ->columnSpan(5),
+                                ->columnSpan(3),
 
                         ])
                         ->columns(16)

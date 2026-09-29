@@ -81,6 +81,20 @@ class DirectMarketView
                                             ->label('Currency')
                                             ->placeholder('-'),
 
+                                        TextEntry::make('material_type')
+                                            ->label('Material Type')
+                                            ->formatStateUsing(
+                                                fn (?string $state): string => match ($state) {
+                                                    'PRODUCT' => 'Product',
+                                                    'SERVICES' => 'Services',
+                                                    default => '-',
+                                                }
+                                            ),
+
+                                        TextEntry::make('allocationJournal.display_name')
+                                            ->label('Allocation Journal (COA)')
+                                            ->placeholder('-'),
+
                                         TextEntry::make('remarks')
                                             ->label('Remarks')
                                             ->placeholder('-')

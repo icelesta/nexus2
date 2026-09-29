@@ -25,6 +25,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\TrashedFilter;
+use Filament\Actions\ActionGroup;
 
 class UomsTable
 {
@@ -84,25 +85,23 @@ class UomsTable
                     ->boolean()
                     ->alignCenter(),
 
+                TextColumn::make('created_at')
+                    ->label('Create Date')
+                    ->dateTime('d M Y H:i')
+                    ->sortable(),
+
                 TextColumn::make('creator.name')
                     ->label('Created By')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
+
+                TextColumn::make('updated_at')
+                    ->label('Update Date')
+                    ->dateTime('d M Y H:i')
+                    ->sortable(),
 
                 TextColumn::make('updater.name')
                     ->label('Updated By')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('created_at')
-                    ->label('Created')
-                    ->since()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('updated_at')
-                    ->label('Updated')
-                    ->since()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
 
                 TextColumn::make('deleted_at')
                     ->label('Deleted')
@@ -137,12 +136,31 @@ class UomsTable
 
             ])
 
-                ->recordActions([
-                    ViewAction::make(),
-                    EditAction::make(),
-                    DeleteAction::make(),
-                    RestoreAction::make(),
-                    ForceDeleteAction::make(),
+            ->recordActions([
+
+                ActionGroup::make([
+
+                    ViewAction::make()
+                        ->label('View'),
+
+                    EditAction::make()
+                        ->label('Edit'),
+
+                    DeleteAction::make()
+                        ->label('Delete'),
+
+                    RestoreAction::make()
+                        ->label('Restore'),
+
+                    ForceDeleteAction::make()
+                        ->label('Force Delete'),
+
+                ])
+                    ->label('Actions')
+                    ->button()
+                    ->color('warning')
+                    ->icon('heroicon-m-ellipsis-vertical'),
+
             ])
             
             ->toolbarActions([

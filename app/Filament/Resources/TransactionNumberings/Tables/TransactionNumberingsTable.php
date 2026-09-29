@@ -15,6 +15,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Filament\Actions\ActionGroup;
 
 class TransactionNumberingsTable
 {
@@ -26,28 +27,6 @@ class TransactionNumberingsTable
 
             ->columns([
 
-                /*
-                |--------------------------------------------------------------------------
-                | Organization
-                |--------------------------------------------------------------------------
-                */
-
-                TextColumn::make('company.company_name')
-                    ->label('Company')
-                    ->searchable()
-                    ->sortable(),
-
-                TextColumn::make('businessUnit.business_unit_name')
-                    ->label('Business Unit')
-                    ->searchable()
-                    ->sortable()
-                    ->toggleable(),
-
-                TextColumn::make('branch.branch_name')
-                    ->label('Branch')
-                    ->searchable()
-                    ->sortable()
-                    ->toggleable(),
 
                 /*
                 |--------------------------------------------------------------------------
@@ -134,7 +113,7 @@ class TransactionNumberingsTable
                 |--------------------------------------------------------------------------
                 */
 
-                TextColumn::make('format_pattern')
+/*                TextColumn::make('format_pattern')
                     ->label('Pattern')
                     ->badge()
                     ->color('success')
@@ -156,7 +135,7 @@ class TransactionNumberingsTable
 
                         default => 'gray',
 
-                    }),
+                    }),*/
 
                 /*
                 |--------------------------------------------------------------------------
@@ -247,13 +226,21 @@ class TransactionNumberingsTable
 
             ->recordActions([
 
-                ViewAction::make()
-                    ->modalWidth('6xl'),
+                ActionGroup::make([
 
-                EditAction::make(),
+                    ViewAction::make()
+                        ->modalWidth('6xl'),
 
-                DeleteAction::make()
-                    ->requiresConfirmation(),
+                    EditAction::make(),
+
+                    DeleteAction::make()
+                        ->requiresConfirmation(),
+
+                ])
+                    ->label('Actions')
+                    ->button()
+                    ->color('warning')
+                    ->icon('heroicon-m-ellipsis-vertical'),
 
             ])
 

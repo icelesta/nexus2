@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\ChartOfAccount;
 
 
 class DirectMarketItem extends Model
@@ -54,6 +55,7 @@ class DirectMarketItem extends Model
         'unit_price',
 
         'required_date',
+        'allocation_journal_id',
         'delivery_location',
 
         'remarks',
@@ -78,6 +80,7 @@ class DirectMarketItem extends Model
 
             'item_id' => 'integer',
             'uom_id' => 'integer',
+            'allocation_journal_id' => 'integer',
 
             'qty' => 'decimal:4',
             'unit_price' => 'decimal:4',
@@ -124,6 +127,14 @@ class DirectMarketItem extends Model
         );
     }
 
+    public function allocationJournal(): BelongsTo
+    {
+        return $this->belongsTo(
+            ChartOfAccount::class,
+            'allocation_journal_id'
+        );
+    }    
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(
@@ -147,6 +158,8 @@ class DirectMarketItem extends Model
             'deleted_by'
         );
     }
+
+   
 
     /*
     |--------------------------------------------------------------------------

@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 use App\Models\Warehouse;
 use App\Models\Currency;
+use App\Models\ChartOfAccount;
+
 
 
 class DirectMarket extends Model
@@ -56,7 +58,10 @@ class DirectMarket extends Model
         'department_id',
         'cost_center_id',
         'warehouse_id',
-        'currency_id',        
+        'currency_id',  
+
+        'material_type',
+        'allocation_journal_id',      
 
         'delivery_location',
 
@@ -212,6 +217,14 @@ class DirectMarket extends Model
         return $this->belongsTo(
             Currency::class,
             'currency_id'
+        );
+    }
+
+    public function allocationJournal(): BelongsTo
+    {
+        return $this->belongsTo(
+            ChartOfAccount::class,
+            'allocation_journal_id'
         );
     }
 

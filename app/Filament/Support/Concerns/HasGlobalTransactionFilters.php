@@ -225,7 +225,8 @@ trait HasGlobalTransactionFilters
     public function getGlobalDepartmentOptionsProperty()
     {
         return Department::query()
-            ->orderBy('department_name')
+            ->orderByRaw('LOWER(TRIM(department_name)) ASC')
+            ->orderBy('id')
             ->pluck('department_name', 'id');
     }
 

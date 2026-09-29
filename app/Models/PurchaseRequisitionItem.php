@@ -46,6 +46,8 @@ class PurchaseRequisitionItem extends Model
         'item_id',
         'uom_id',
         'warehouse_id',
+        'allocation_journal_id',
+        'expense_account_id',
 
         'quantity',
         'estimated_unit_price',
@@ -73,6 +75,8 @@ class PurchaseRequisitionItem extends Model
             'item_id' => 'integer',
             'uom_id' => 'integer',
             'warehouse_id' => 'integer',
+            'allocation_journal_id' => 'integer',
+            'expense_account_id' => 'integer',
 
             'quantity' => 'decimal:4',
             'estimated_unit_price' => 'decimal:2',
@@ -175,6 +179,14 @@ class PurchaseRequisitionItem extends Model
             'deleted_by'
         );
     }
+
+    public function allocationJournal(): BelongsTo
+    {
+        return $this->belongsTo(
+            ChartOfAccount::class,
+            'allocation_journal_id'
+        );
+    }    
 
     /*
     |--------------------------------------------------------------------------

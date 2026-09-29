@@ -81,6 +81,10 @@
                             UOM
                         </th>
 
+                        <th class="border-b bg-gray-100 px-2 py-2">
+                            Journal (COA)
+                        </th>                        
+
                         <th class="border-b bg-gray-100 px-2 py-2 text-center">
                             Qty
                         </th>
@@ -163,6 +167,17 @@
                         <td class="border px-2 py-2 text-center">
                             {{ $item->uom_name }}
                         </td>
+
+                        <td class="border px-2 py-2">
+                            {{
+                                $item
+                                    ->assignmentMaterialRequisitionItem
+                                    ?->purchaseRequisitionItem
+                                    ?->allocationJournal
+                                    ?->display_name
+                                    ?? '-'
+                            }}
+                        </td>                      
 
                         <td class="border px-2 py-2 text-center">
                             {{ number_format((float) $item->ordered_qty, 2) }}

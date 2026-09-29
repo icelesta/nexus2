@@ -527,3 +527,102 @@
 .po-section .fi-section-header-icon {
     color: rgb(37 99 235);
 }
+
+/* =========================================================
+| NEXUS 2.0 — GLOBAL TYPOGRAPHY COMPACT
+| Typography size only.
+| No layout / spacing / functional changes.
+========================================================= */
+
+/* Page Heading */
+.fi-header-heading {
+    font-size: 24px !important;
+}
+
+/* Page Description */
+.fi-header-description {
+    font-size: 13px !important;
+}
+
+/* Breadcrumb */
+.fi-breadcrumbs {
+    font-size: 12px !important;
+}
+
+.fi-breadcrumbs a,
+.fi-breadcrumbs span {
+    font-size: 12px !important;
+}
+
+/* Sidebar */
+.fi-sidebar-item-label {
+    font-size: 12px !important;
+}
+
+.fi-sidebar-group-label,
+.fi-sidebar-group button span {
+    font-size: 10px !important;
+}
+
+/* Table Header */
+.fi-ta-table thead th,
+.fi-ta-header-cell-label {
+    font-size: 12px !important;
+}
+
+/* Table Body */
+.fi-ta-table tbody td,
+.fi-ta-text-item,
+.fi-ta-text-item-label {
+    font-size: 12px !important;
+}
+
+/* Table Actions / Buttons */
+.fi-ta-actions .fi-btn,
+.fi-ta-record-actions .fi-btn,
+.fi-btn {
+    font-size: 12px !important;
+}
+
+/* Status Badge */
+.fi-badge {
+    font-size: 11px !important;
+}
+
+/* Form Label */
+.fi-fo-field-wrp-label,
+.fi-fo-field-wrp-label span {
+    font-size: 12px !important;
+}
+
+/* Form Input */
+.fi-input,
+.fi-select-input,
+.fi-fo-field-wrp input,
+.fi-fo-field-wrp textarea,
+.fi-fo-field-wrp select {
+    font-size: 12px !important;
+}
+
+/* Tabs */
+.fi-tabs-item {
+    font-size: 12px !important;
+}
+
+/* Modal */
+.fi-modal-heading {
+    font-size: 18px !important;
+}
+
+.fi-modal-content {
+    font-size: 12px !important;
+}
+
+/* Notification */
+.fi-notification-title {
+    font-size: 13px !important;
+}
+
+.fi-notification-body {
+    font-size: 12px !important;
+}

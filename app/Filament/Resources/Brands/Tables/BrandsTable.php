@@ -15,6 +15,8 @@ use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\ViewAction;
 
 use Filament\Support\Colors\Color;
 
@@ -80,25 +82,23 @@ class BrandsTable
                     ->boolean()
                     ->alignCenter(),
 
+                TextColumn::make('created_at')
+                    ->label('Create Date')
+                    ->dateTime('d M Y H:i')
+                    ->sortable(),
+
                 TextColumn::make('creator.name')
                     ->label('Created By')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
+
+                TextColumn::make('updated_at')
+                    ->label('Update Date')
+                    ->dateTime('d M Y H:i')
+                    ->sortable(),
 
                 TextColumn::make('updater.name')
                     ->label('Updated By')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('created_at')
-                    ->label('Created')
-                    ->since()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('updated_at')
-                    ->label('Updated')
-                    ->since()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
 
                 TextColumn::make('deleted_at')
                     ->label('Deleted')
@@ -118,33 +118,28 @@ class BrandsTable
             ])
 
             ->recordActions([
+                ActionGroup::make([
+                    ViewAction::make()
+                        ->label('View'),
 
-                EditAction::make()
-                    ->icon('heroicon-o-pencil-square')
-                    ->label('Edit')
-                    ->tooltip('Edit')
-                    ->color('warning'),
+                    EditAction::make()
+                        ->label('Edit'),
 
-                DeleteAction::make()
-                    ->icon('heroicon-o-trash')
-                    ->label('Delete')
-                    ->tooltip('Delete')
-                    ->color('danger')
-                    ->requiresConfirmation(),
+                    DeleteAction::make()
+                        ->label('Delete')
+                        ->requiresConfirmation(),
 
-                RestoreAction::make()
-                    ->icon('heroicon-o-arrow-path')
-                    ->label('')
-                    ->tooltip('Restore')
-                    ->color('success'),
+                    RestoreAction::make()
+                        ->label('Restore'),
 
-                ForceDeleteAction::make()
-                    ->icon('heroicon-o-trash')
-                    ->label('')
-                    ->tooltip('Force Delete')
-                    ->color('danger')
-                    ->requiresConfirmation(),
-
+                    ForceDeleteAction::make()
+                        ->label('Force Delete')
+                        ->requiresConfirmation(),
+                ])
+                    ->label('Actions')
+                    ->button()
+                    ->color('warning')
+                    ->icon('heroicon-m-ellipsis-vertical'),
             ])
 
             ->toolbarActions([

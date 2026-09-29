@@ -103,6 +103,9 @@ class DirectMarketService
                 'warehouse_id' =>
                     $data['warehouse_id'] ?? null,
 
+                'allocation_journal_id' =>
+                    $data['allocation_journal_id'] ?? null,
+
                 'currency_id' =>
                     $data['currency_id'],
                     
@@ -118,6 +121,9 @@ class DirectMarketService
 
                 'request_date' =>
                     $data['request_date'] ?? today(),
+
+                'material_type' =>
+                    $data['material_type'] ?? 'PRODUCT',                    
 
                 'required_date' =>
                     $data['required_date'] ?? null,
@@ -337,6 +343,10 @@ class DirectMarketService
             'required_date' =>
                 $data['required_date']
                 ?? $directMarket->required_date,
+
+            'allocation_journal_id' =>
+                $data['allocation_journal_id']
+                ?? $directMarket->allocation_journal_id,                
 
             'delivery_location' =>
                 $data['delivery_location']

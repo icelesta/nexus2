@@ -44,7 +44,7 @@ class AssignmentDirectMarketForm
                     )
                     ->schema([
 
-                        Grid::make(3)
+                        Grid::make(4)
                             ->schema([
 
                                 /*
@@ -120,6 +120,33 @@ class AssignmentDirectMarketForm
 
                                 /*
                                 |--------------------------------------------------------------------------
+                                | MATERIAL TYPE
+                                |--------------------------------------------------------------------------
+                                */
+
+                                TextInput::make(
+                                    'material_type_display'
+                                )
+                                    ->label('Material Type')
+                                    ->disabled()
+                                    ->dehydrated(false)
+                                    ->formatStateUsing(
+                                        fn (
+                                            ?AssignmentDirectMarket $record
+                                        ): string =>
+                                            match (
+                                                $record
+                                                    ?->directMarket
+                                                    ?->material_type
+                                            ) {
+                                                'PRODUCT' => 'Product',
+                                                'SERVICES' => 'Services',
+                                                default => '-',
+                                            }
+                                    ),
+
+                                /*
+                                |--------------------------------------------------------------------------
                                 | REQUEST DATE
                                 |--------------------------------------------------------------------------
                                 */
@@ -181,6 +208,29 @@ class AssignmentDirectMarketForm
                                             $record
                                                 ?->assignedBy
                                                 ?->name
+                                                ?? '-'
+                                    ),
+
+                                /*
+                                |--------------------------------------------------------------------------
+                                | ALLOCATION JOURNAL
+                                |--------------------------------------------------------------------------
+                                */
+
+                                TextInput::make(
+                                    'allocation_journal_display'
+                                )
+                                    ->label('Allocation Journal (COA)')
+                                    ->disabled()
+                                    ->dehydrated(false)
+                                    ->formatStateUsing(
+                                        fn (
+                                            ?AssignmentDirectMarket $record
+                                        ): string =>
+                                            $record
+                                                ?->directMarket
+                                                ?->allocationJournal
+                                                ?->display_name
                                                 ?? '-'
                                     ),
 

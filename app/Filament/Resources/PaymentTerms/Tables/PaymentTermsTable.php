@@ -7,6 +7,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Actions\ActionGroup;
 
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -21,12 +22,6 @@ class PaymentTermsTable
             ->defaultSort('term_code')
 
             ->columns([
-
-                TextColumn::make('company.company_name')
-                    ->label('Company')
-                    ->searchable()
-                    ->sortable()
-                    ->toggleable(),
 
                 TextColumn::make('term_code')
                     ->label('Code')
@@ -102,30 +97,24 @@ class PaymentTermsTable
                     ->boolean(),
 
                 TextColumn::make('created_at')
-                    ->label('Created')
+                    ->label('Create Date')
                     ->dateTime('d M Y H:i')
-                    ->sortable()
-                    ->toggleable(),
+                    ->sortable(),
 
                 TextColumn::make('creator.name')
                     ->label('Created By')
                     ->placeholder('-')
-                    ->toggleable(
-                        isToggledHiddenByDefault: true
-                    ),
+                    ->sortable(),
 
                 TextColumn::make('updated_at')
-                    ->label('Updated')
+                    ->label('Update Date')
                     ->dateTime('d M Y H:i')
-                    ->sortable()
-                    ->toggleable(),
+                    ->sortable(),
 
                 TextColumn::make('updater.name')
                     ->label('Updated By')
                     ->placeholder('-')
-                    ->toggleable(
-                        isToggledHiddenByDefault: true
-                    ),
+                    ->sortable(),
 
             ])
 
@@ -136,25 +125,21 @@ class PaymentTermsTable
             ])
 
             ->recordActions([
+                ActionGroup::make([
+                    ViewAction::make()
+                        ->label('View'),
 
-                ViewAction::make()
-                    ->icon('heroicon-o-eye')
-                    ->label('')
-                    ->tooltip('View'),
+                    EditAction::make()
+                        ->label('Edit'),
 
-                EditAction::make()
-                    ->icon('heroicon-o-pencil-square')
-                    ->label('')
+                    DeleteAction::make()
+                        ->label('Delete')
+                        ->requiresConfirmation(),
+                ])
+                    ->label('Actions')
+                    ->button()
                     ->color('warning')
-                    ->tooltip('Edit'),
-
-                DeleteAction::make()
-                    ->icon('heroicon-o-trash')
-                    ->label('')
-                    ->color('danger')
-                    ->tooltip('Delete')
-                    ->requiresConfirmation(),
-
+                    ->icon('heroicon-m-ellipsis-vertical'),
             ])
 
             ->toolbarActions([

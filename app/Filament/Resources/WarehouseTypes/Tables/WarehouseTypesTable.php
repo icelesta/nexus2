@@ -9,6 +9,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Actions\ActionGroup;
 
 use Filament\Tables\Table;
 
@@ -24,11 +25,6 @@ class WarehouseTypesTable
             ->defaultSort('sort_order')
 
             ->columns([
-
-                TextColumn::make('company.company_name')
-                    ->label('Company')
-                    ->searchable()
-                    ->sortable(),
 
                 TextColumn::make('type_code')
                     ->label('Code')
@@ -73,28 +69,22 @@ class WarehouseTypesTable
                     ->boolean(),
 
                 TextColumn::make('created_at')
-                    ->label('Created')
+                    ->label('Create Date')
                     ->dateTime('d M Y H:i')
-                    ->sortable()
-                    ->toggleable(),
+                    ->sortable(),
 
                 TextColumn::make('creator.name')
                     ->label('Created By')
-                    ->toggleable(
-                        isToggledHiddenByDefault: true
-                    ),
+                    ->sortable(),
 
                 TextColumn::make('updated_at')
-                    ->label('Updated')
+                    ->label('Update Date')
                     ->dateTime('d M Y H:i')
-                    ->sortable()
-                    ->toggleable(),
+                    ->sortable(),
 
                 TextColumn::make('updater.name')
                     ->label('Updated By')
-                    ->toggleable(
-                        isToggledHiddenByDefault: true
-                    ),
+                    ->sortable(),
 
             ])
 
@@ -105,25 +95,21 @@ class WarehouseTypesTable
             ])
 
             ->recordActions([
+                ActionGroup::make([
+                    ViewAction::make()
+                        ->label('View'),
 
-                ViewAction::make()
-                    ->icon('heroicon-o-eye')
-                    ->label('View')
-                    ->tooltip('View'),
+                    EditAction::make()
+                        ->label('Edit'),
 
-                EditAction::make()
-                    ->icon('heroicon-o-pencil-square')
-                    ->label('Edit')
+                    DeleteAction::make()
+                        ->label('Delete')
+                        ->requiresConfirmation(),
+                ])
+                    ->label('Actions')
+                    ->button()
                     ->color('warning')
-                    ->tooltip('Edit'),
-
-                DeleteAction::make()
-                    ->icon('heroicon-o-trash')
-                    ->label('Delete')
-                    ->color('danger')
-                    ->tooltip('Delete')
-                    ->requiresConfirmation(),
-
+                    ->icon('heroicon-m-ellipsis-vertical'),
             ])
 
             ->toolbarActions([

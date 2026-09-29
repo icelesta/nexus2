@@ -109,10 +109,11 @@ class AssignmentItemsGrid extends Component
         $this->items = $this->assignment
             ->items()
             ->with([
-                    'purchaseRequisitionItem.item',
-                    'purchaseRequisitionItem.uom',
-                    'supplier',
-                    'tax',
+                'purchaseRequisitionItem.item',
+                'purchaseRequisitionItem.uom',
+                'purchaseRequisitionItem.allocationJournal',
+                'supplier',
+                'tax',
             ])
             ->orderBy('id')
             ->get();
@@ -134,7 +135,8 @@ class AssignmentItemsGrid extends Component
             $this->selectedTax[$item->id] =
                 $item->tax_id;
 
-            $this->selectedSupplier[$item->id] = $item->supplier_id;    
+            $this->selectedSupplier[$item->id] =
+                $item->supplier_id;
         }
     }
 
@@ -205,6 +207,7 @@ class AssignmentItemsGrid extends Component
             ->with([
                 'purchaseRequisitionItem.item',
                 'purchaseRequisitionItem.uom',
+                'purchaseRequisitionItem.allocationJournal',
                 'supplier',
             ])
             ->find($itemId);

@@ -18,6 +18,8 @@ use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 use Livewire\Component;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\ChartOfAccount;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PurchaseRequisitionItemActions
 {
@@ -87,8 +89,9 @@ class PurchaseRequisitionItemActions
                 }
 
                 return [
-                    'required_date' => $record->required_date,
-                    'warehouse_id'  => $record->warehouse_id,
+                    'required_date'          => $record->required_date,
+                    'warehouse_id'           => $record->warehouse_id,
+                    'allocation_journal_id'  => $record->allocation_journal_id,
                 ];
             })
 
@@ -181,6 +184,34 @@ class PurchaseRequisitionItemActions
                         }
                     ),
 
+                            /*
+                            |--------------------------------------------------------------------------
+                            | ALLOCATION JOURNAL
+                            |--------------------------------------------------------------------------
+                            |
+                            | Default follows MR Header but remains editable at item level.
+                            |
+                            */
+
+                            Select::make('allocation_journal_id')
+                                ->label('Allocation Journal (COA)')
+                                ->options(
+                                    ChartOfAccount::query()
+                                        ->where('is_active', true)
+                                        ->orderBy('account_code')
+                                        ->get()
+                                        ->mapWithKeys(
+                                            fn (ChartOfAccount $coa): array => [
+                                                $coa->id =>
+                                                    "{$coa->account_code} - {$coa->account_name}",
+                                            ]
+                                        )
+                                )
+                                ->searchable()
+                                ->preload()
+                                ->required(),
+
+
                 /*
                 |--------------------------------------------------------------------------
                 | DESCRIPTION
@@ -266,9 +297,7 @@ class PurchaseRequisitionItemActions
                             ->pluck('warehouse_name', 'id')
                     )
                     ->disabled()
-                    ->dehydrated()
-                    ->required(),
-
+                    ->dehydrated(),
             ])
 
             /*
@@ -302,6 +331,10 @@ class PurchaseRequisitionItemActions
 
                     $data['required_date'] = $record->required_date;
                     $data['warehouse_id']  = $record->warehouse_id;
+
+                    $data['allocation_journal_id'] =
+                        $data['allocation_journal_id']
+                        ?? $record->allocation_journal_id;
 
                     /*
                     |--------------------------------------------------------------------------

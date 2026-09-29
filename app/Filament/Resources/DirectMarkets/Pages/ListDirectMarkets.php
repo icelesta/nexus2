@@ -26,8 +26,11 @@ class ListDirectMarkets extends ListRecords
             DirectMarket::STATUS_SUBMITTED =>
                 DirectMarket::STATUS_SUBMITTED,
 
-            DirectMarket::STATUS_APPROVED =>
-                DirectMarket::STATUS_APPROVED,
+            'Approval 1/2' =>
+                'Approval 1/2',
+
+            'Approval 2/2' =>
+                'Approval 2/2',
 
             DirectMarket::STATUS_REJECTED =>
                 DirectMarket::STATUS_REJECTED,

@@ -9,6 +9,8 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Actions\ActionGroup;
+
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -22,11 +24,6 @@ class WarehousesTable
             ->defaultSort('warehouse_code')
 
             ->columns([
-
-                TextColumn::make('company.company_name')
-                    ->label('Company')
-                    ->sortable()
-                    ->searchable(),
 
                 TextColumn::make('branch.branch_name')
                     ->label('Branch')
@@ -84,24 +81,22 @@ class WarehousesTable
                     ->boolean(),
 
                 TextColumn::make('created_at')
-                    ->label('Created')
+                    ->label('Create Date')
                     ->dateTime('d M Y H:i')
-                    ->sortable()
-                    ->toggleable(),
+                    ->sortable(),
 
                 TextColumn::make('creator.name')
                     ->label('Created By')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
 
                 TextColumn::make('updated_at')
-                    ->label('Updated')
+                    ->label('Update Date')
                     ->dateTime('d M Y H:i')
-                    ->sortable()
-                    ->toggleable(),
+                    ->sortable(),
 
                 TextColumn::make('updater.name')
                     ->label('Updated By')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
 
             ])
 
@@ -112,14 +107,21 @@ class WarehousesTable
             ])
 
             ->recordActions([
+                ActionGroup::make([
+                    ViewAction::make()
+                        ->label('View'),
 
-                ViewAction::make(),
+                    EditAction::make()
+                        ->label('Edit'),
 
-                EditAction::make(),
-
-                DeleteAction::make()
-                    ->requiresConfirmation(),
-
+                    DeleteAction::make()
+                        ->label('Delete')
+                        ->requiresConfirmation(),
+                ])
+                    ->label('Actions')
+                    ->button()
+                    ->color('warning')
+                    ->icon('heroicon-m-ellipsis-vertical'),
             ])
 
             ->toolbarActions([

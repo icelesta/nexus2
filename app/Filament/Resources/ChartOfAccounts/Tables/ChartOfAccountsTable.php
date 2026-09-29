@@ -7,6 +7,8 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Actions\ActionGroup;
+
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -26,11 +28,6 @@ class ChartOfAccountsTable
             ->defaultSort('account_code')
 
             ->columns([
-
-                TextColumn::make('company.company_name')
-                    ->label('Company')
-                    ->sortable()
-                    ->searchable(),
 
                 TextColumn::make('account_code')
                     ->label('Code')
@@ -100,22 +97,22 @@ class ChartOfAccountsTable
                     ->boolean(),
 
                 TextColumn::make('created_at')
-                    ->label('Created')
+                    ->label('Create Date')
                     ->dateTime('d M Y H:i')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
 
                 TextColumn::make('creator.name')
                     ->label('Created By')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
 
                 TextColumn::make('updated_at')
-                    ->label('Updated')
+                    ->label('Update Date')
                     ->dateTime('d M Y H:i')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
 
                 TextColumn::make('updater.name')
                     ->label('Updated By')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
 
             ])
 
@@ -128,6 +125,7 @@ class ChartOfAccountsTable
                         'Equity' => 'Equity',
                         'Revenue' => 'Revenue',
                         'Expense' => 'Expense',
+                        'Inventory' => 'Inventory',
                     ]),
 
                 TernaryFilter::make('is_active')
@@ -139,17 +137,21 @@ class ChartOfAccountsTable
             ])
 
             ->recordActions([
+                ActionGroup::make([
+                    ViewAction::make()
+                        ->label('View'),
 
-                ViewAction::make()
-                    ->label(''),
+                    EditAction::make()
+                        ->label('Edit'),
 
-                EditAction::make()
-                    ->label(''),
-
-                self::deleteAction()
-                    ->label('')
-                    ->requiresConfirmation(),
-
+                    self::deleteAction()
+                        ->label('Delete')
+                        ->requiresConfirmation(),
+                ])
+                    ->label('Actions')
+                    ->button()
+                    ->color('warning')
+                    ->icon('heroicon-m-ellipsis-vertical'),
             ])
 
             ->toolbarActions([

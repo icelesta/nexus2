@@ -11,6 +11,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+use Filament\Actions\ActionGroup;
 
 use App\Filament\Concerns\HasProtectedDeleteAction;
 
@@ -33,21 +34,6 @@ class DepartmentsTable
 
                 TextColumn::make('department_name')
                     ->label('Department Name')
-                    ->searchable()
-                    ->sortable(),
-
-                TextColumn::make('company.company_name')
-                    ->label('Company')
-                    ->searchable()
-                    ->sortable(),
-
-                TextColumn::make('branch.branch_name')
-                    ->label('Branch')
-                    ->searchable()
-                    ->sortable(),
-
-                TextColumn::make('businessUnit.business_unit_name')
-                    ->label('Business Unit')
                     ->searchable()
                     ->sortable(),
 
@@ -83,23 +69,31 @@ class DepartmentsTable
 
             ->recordActions([
 
-                ViewAction::make()
-                    ->icon('heroicon-o-eye')
-                    ->label('View')
-                    ->tooltip('View'),
+                ActionGroup::make([
 
-                EditAction::make()
-                    ->icon('heroicon-o-pencil-square')
-                    ->label('Edit')
+                    ViewAction::make()
+                        ->icon('heroicon-o-eye')
+                        ->label('View')
+                        ->tooltip('View'),
+
+                    EditAction::make()
+                        ->icon('heroicon-o-pencil-square')
+                        ->label('Edit')
+                        ->color('warning')
+                        ->tooltip('Edit'),
+
+                    self::deleteAction()
+                        ->icon('heroicon-o-trash')
+                        ->label('Delete')
+                        ->color('danger')
+                        ->tooltip('Delete')
+                        ->requiresConfirmation(),
+
+                ])
+                    ->label('Actions')
+                    ->button()
                     ->color('warning')
-                    ->tooltip('Edit'),
-
-                self::deleteAction()
-                    ->icon('heroicon-o-trash')
-                    ->label('Delete')
-                    ->color('danger')
-                    ->tooltip('Delete')
-                    ->requiresConfirmation(),
+                    ->icon('heroicon-m-ellipsis-vertical'),
 
             ])
 

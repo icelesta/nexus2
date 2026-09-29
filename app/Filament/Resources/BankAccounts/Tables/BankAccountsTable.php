@@ -7,6 +7,8 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Actions\ActionGroup;
+
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -135,20 +137,18 @@ class BankAccountsTable
             ])
 
             ->recordActions([
+                ActionGroup::make([
+                    EditAction::make()
+                        ->label('Edit'),
 
-                EditAction::make()
-                    ->icon('heroicon-o-pencil-square')
-                    ->label('')
+                    self::deleteAction()
+                        ->label('Delete')
+                        ->requiresConfirmation(),
+                ])
+                    ->label('Actions')
+                    ->button()
                     ->color('warning')
-                    ->tooltip('Edit'),
-
-                self::deleteAction()
-                    ->icon('heroicon-o-trash')
-                    ->label('')
-                    ->color('danger')
-                    ->tooltip('Delete')
-                    ->requiresConfirmation(),
-
+                    ->icon('heroicon-m-ellipsis-vertical'),
             ])
 
             ->toolbarActions([

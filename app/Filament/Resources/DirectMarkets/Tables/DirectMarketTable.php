@@ -227,14 +227,236 @@ class DirectMarketTable
                     |--------------------------------------------------------------------------
                     */
 
-                    if (
-                        filled($livewire->globalStatusFilter)
-                    ) {
+                    if (filled($livewire->globalStatusFilter)) {
 
-                        $query->where(
-                            'direct_markets.status',
-                            $livewire->globalStatusFilter
-                        );
+                        $statusFilter = $livewire->globalStatusFilter;
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | STANDARD DATABASE STATUS
+                        |--------------------------------------------------------------------------
+                        */
+
+                        if (
+                            in_array(
+                                $statusFilter,
+                                [
+                                    DirectMarket::STATUS_DRAFT,
+                                    DirectMarket::STATUS_SUBMITTED,
+                                    DirectMarket::STATUS_CANCELLED,
+                                    DirectMarket::STATUS_CLOSED,
+                                ],
+                                true
+                            )
+                        ) {
+                            $query->where(
+                                'direct_markets.status',
+                                $statusFilter
+                            );
+                        }
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | REJECTED
+                        |--------------------------------------------------------------------------
+                        |
+                        | DM can be displayed as Rejected when:
+                        | 1. Direct Market approval is rejected
+                        | 2. Assignment Direct Market approval is rejected
+                        |
+                        */
+
+                        elseif ($statusFilter === DirectMarket::STATUS_REJECTED) {
+
+                            $query->where(function (Builder $query): void {
+
+                                $query
+                                    ->where(
+                                        'direct_markets.status',
+                                        DirectMarket::STATUS_REJECTED
+                                    )
+                                    ->orWhereIn(
+                                        'direct_markets.id',
+                                        \App\Models\ApprovalTransaction::query()
+                                            ->select('document_id')
+                                            ->where(
+                                                'document_type',
+                                                'DIRECT_MARKET'
+                                            )
+                                            ->where(
+                                                'status',
+                                                'REJECTED'
+                                            )
+                                    )
+                                    ->orWhereIn(
+                                        'direct_markets.id',
+                                        \App\Models\AssignmentDirectMarket::query()
+                                            ->select('direct_market_id')
+                                            ->where(
+                                                'status',
+                                                \App\Models\AssignmentDirectMarket::STATUS_REJECTED
+                                            )
+                                    );
+                            });
+                        }
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | APPROVAL 1/2
+                        |--------------------------------------------------------------------------
+                        |
+                        | Direct Market Level 1 = APPROVED
+                        | ADM Level 2 = not yet approved/completed/rejected
+                        |
+                        */
+
+                        elseif ($statusFilter === 'Approval 1/2') {
+
+                            $query
+                                ->whereIn(
+                                    'direct_markets.id',
+                                    \App\Models\ApprovalTransaction::query()
+                                        ->select('document_id')
+                                        ->where(
+                                            'document_type',
+                                            'DIRECT_MARKET'
+                                        )
+                                        ->where(
+                                            'status',
+                                            'APPROVED'
+                                        )
+                                )
+                                ->where(function (Builder $query): void {
+
+                                    /*
+                                    | ADM does not exist yet.
+                                    */
+
+                                    $query
+                                        ->whereNotExists(function ($subQuery): void {
+
+                                            $subQuery
+                                                ->selectRaw('1')
+                                                ->from('assignment_direct_markets as adm')
+                                                ->whereColumn(
+                                                    'adm.direct_market_id',
+                                                    'direct_markets.id'
+                                                );
+                                        })
+
+                                        /*
+                                        | ADM exists but Level 2 is not finished.
+                                        */
+
+                                        ->orWhereExists(function ($subQuery): void {
+
+                                            $subQuery
+                                                ->selectRaw('1')
+                                                ->from(
+                                                    'assignment_direct_markets as adm'
+                                                )
+                                                ->whereColumn(
+                                                    'adm.direct_market_id',
+                                                    'direct_markets.id'
+                                                )
+                                                ->whereNotIn(
+                                                    'adm.status',
+                                                    [
+                                                        \App\Models\AssignmentDirectMarket::STATUS_REJECTED,
+                                                        \App\Models\AssignmentDirectMarket::STATUS_COMPLETED,
+                                                    ]
+                                                )
+                                                ->whereNotExists(function ($approvalQuery): void {
+
+                                                    $approvalQuery
+                                                        ->selectRaw('1')
+                                                        ->from(
+                                                            'approval_transactions as at'
+                                                        )
+                                                        ->where(
+                                                            'at.document_type',
+                                                            'ASSIGNMENT_DIRECT_MARKET'
+                                                        )
+                                                        ->whereColumn(
+                                                            'at.document_id',
+                                                            'adm.id'
+                                                        )
+                                                        ->where(
+                                                            'at.status',
+                                                            'APPROVED'
+                                                        );
+                                                });
+                                        });
+                                });
+                        }
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | APPROVAL 2/2
+                        |--------------------------------------------------------------------------
+                        |
+                        | Direct Market Level 1 = APPROVED
+                        | ADM Level 2 = APPROVED / COMPLETED
+                        |
+                        */
+
+                        elseif ($statusFilter === 'Approval 2/2') {
+
+                            $query
+                                ->whereIn(
+                                    'direct_markets.id',
+                                    \App\Models\ApprovalTransaction::query()
+                                        ->select('document_id')
+                                        ->where(
+                                            'document_type',
+                                            'DIRECT_MARKET'
+                                        )
+                                        ->where(
+                                            'status',
+                                            'APPROVED'
+                                        )
+                                )
+                                ->whereExists(function ($subQuery): void {
+
+                                    $subQuery
+                                        ->selectRaw('1')
+                                        ->from(
+                                            'assignment_direct_markets as adm'
+                                        )
+                                        ->whereColumn(
+                                            'adm.direct_market_id',
+                                            'direct_markets.id'
+                                        )
+                                        ->where(function ($admQuery): void {
+
+                                            $admQuery
+                                                ->where(
+                                                    'adm.status',
+                                                    \App\Models\AssignmentDirectMarket::STATUS_COMPLETED
+                                                )
+                                                ->orWhereExists(function ($approvalQuery): void {
+
+                                                    $approvalQuery
+                                                        ->selectRaw('1')
+                                                        ->from(
+                                                            'approval_transactions as at'
+                                                        )
+                                                        ->where(
+                                                            'at.document_type',
+                                                            'ASSIGNMENT_DIRECT_MARKET'
+                                                        )
+                                                        ->whereColumn(
+                                                            'at.document_id',
+                                                            'adm.id'
+                                                        )
+                                                        ->where(
+                                                            'at.status',
+                                                            'APPROVED'
+                                                        );
+                                                });
+                                        });
+                                });
+                        }
                     }
 
                     return $query;

@@ -8,6 +8,7 @@ use App\Filament\Resources\PurchaseRequisitions\PurchaseRequisitionResource;
 use App\Filament\Support\Concerns\HasGlobalTransactionFilters;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
+use App\Models\PurchaseRequisition;
 
 class ListPurchaseRequisitions extends ListRecords
 {
@@ -49,12 +50,29 @@ class ListPurchaseRequisitions extends ListRecords
     public function getGlobalTransactionStatusOptions(): array
     {
         return [
-            'Draft'             => 'Draft',
-            'Waiting Approval'  => 'Waiting Approval',
-            'Approved'          => 'Approved',
-            'Rejected'          => 'Rejected',
-            'Cancelled'         => 'Cancelled',
-            'Closed'            => 'Closed',
+            PurchaseRequisition::STATUS_DRAFT
+                => PurchaseRequisition::STATUS_DRAFT,
+
+            'Waiting Approval'
+                => 'Waiting Approval',
+
+            'Approval 1/2'
+                => 'Approval 1/2',
+
+            'Approval 2/2'
+                => 'Approval 2/2',
+
+            PurchaseRequisition::STATUS_APPROVED
+                => PurchaseRequisition::STATUS_APPROVED,
+
+            PurchaseRequisition::STATUS_REJECTED
+                => PurchaseRequisition::STATUS_REJECTED,
+
+            PurchaseRequisition::STATUS_CANCELLED
+                => PurchaseRequisition::STATUS_CANCELLED,
+
+            PurchaseRequisition::STATUS_CLOSED
+                => PurchaseRequisition::STATUS_CLOSED,
         ];
     }
 

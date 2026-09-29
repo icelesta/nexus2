@@ -219,6 +219,10 @@
                                 REQUIRED DATE
                             </th>
 
+                            {{-- JOURNAL (COA) --}}
+                            <th class="w-72 px-4 py-3 text-left">
+                                JOURNAL (COA)
+                            </th>
 
                         @endif
 
@@ -520,6 +524,11 @@
                                             ?? '-'
                                         }}
                                     </td>
+
+                                    {{-- JOURNAL (COA) --}}
+                                    <td class="px-4 py-3 align-middle">
+                                        {{ $item->allocationJournal?->display_name ?? '-' }}
+                                    </td>                                  
 
 
                                 @endif

@@ -15,6 +15,10 @@ use Filament\Schemas\Components\View;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
+use Filament\Schemas\Components\Grid;
+use App\Models\ChartOfAccount;
+
+
 class PurchaseRequisitionForm
 {
     public static function configure(
@@ -33,12 +37,26 @@ class PurchaseRequisitionForm
                     ->description('Material Requisition document information.')
                     ->schema([
 
-                        DatePicker::make('request_date')
-                            ->label('Request Date')
-                            ->native(false)
-                            ->default(now())
-                            ->live()
-                            ->required(),
+                        Grid::make(2)
+                            ->schema([
+                                Select::make('material_type')
+                                    ->label('Material Type')
+                                    ->options([
+                                        'PRODUCT' => 'PRODUCT',
+                                        'SERVICES' => 'SERVICES',
+                                    ])
+                                    ->live()
+                                    ->required(),
+
+                                DatePicker::make('request_date')
+                                    ->label('Request Date')
+                                    ->native(false)
+                                    ->default(now())
+                                    ->live()
+                                    ->disabled()
+                                    ->dehydrated()
+                                    ->required(),
+                            ]),
 
                         DatePicker::make('required_date')
                             ->label('Required Date')
@@ -106,8 +124,43 @@ class PurchaseRequisitionForm
                             ->label('Warehouse')
                             ->relationship('warehouse', 'warehouse_name')
                             ->searchable()
+                            ->preload(),
+
+                        Select::make('allocation_journal_id')
+                            ->label('Allocation Journal (COA)')
+                            ->options(function (callable $get): array {
+                                $materialType = $get('material_type');
+                                $warehouseId = $get('warehouse_id');
+
+                                $accountType = null;
+
+                                if ($materialType === 'PRODUCT') {
+                                    $accountType = filled($warehouseId)
+                                        ? 'Inventory'
+                                        : 'Expense';
+                                }
+
+                                if ($materialType === 'SERVICES' && blank($warehouseId)) {
+                                    $accountType = 'Expense';
+                                }
+
+                                if ($accountType === null) {
+                                    return [];
+                                }
+
+                                return \App\Models\ChartOfAccount::query()
+                                    ->where('is_active', true)
+                                    ->where('account_type', $accountType)
+                                    ->orderBy('account_code')
+                                    ->get()
+                                    ->mapWithKeys(fn (\App\Models\ChartOfAccount $coa): array => [
+                                        $coa->id => "{$coa->account_code} - {$coa->account_name}",
+                                    ])
+                                    ->all();
+                            })
+                            ->searchable()
                             ->preload()
-                            ->required(),
+                            ->live(),                        
 
                         Select::make('currency_id')
                             ->label('Currency')

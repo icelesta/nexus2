@@ -26,7 +26,7 @@ class AssignmentDirectMarketInfolist
 
                 /*
                 |--------------------------------------------------------------------------
-                | DOCUMENT INFORMATION
+                | ASSIGNMENT DIRECT MARKET
                 |--------------------------------------------------------------------------
                 */
 
@@ -38,11 +38,23 @@ class AssignmentDirectMarketInfolist
                     )
                     ->schema([
 
+                        /*
+                        |--------------------------------------------------------------------------
+                        | DM NO.
+                        |--------------------------------------------------------------------------
+                        */
+
                         TextEntry::make(
                             'directMarket.dm_no'
                         )
                             ->label('DM No.')
                             ->placeholder('-'),
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | ASSIGNMENT DATE
+                        |--------------------------------------------------------------------------
+                        */
 
                         TextEntry::make(
                             'assigned_at'
@@ -51,11 +63,43 @@ class AssignmentDirectMarketInfolist
                             ->date('d M Y')
                             ->placeholder('-'),
 
+                        /*
+                        |--------------------------------------------------------------------------
+                        | CURRENCY
+                        |--------------------------------------------------------------------------
+                        */
+
                         TextEntry::make(
                             'directMarket.currency.display_name'
                         )
                             ->label('Currency')
                             ->placeholder('-'),
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | MATERIAL TYPE
+                        |--------------------------------------------------------------------------
+                        */
+
+                        TextEntry::make(
+                            'directMarket.material_type'
+                        )
+                            ->label('Material Type')
+                            ->formatStateUsing(
+                                fn (?string $state): string =>
+                                    match ($state) {
+                                        'PRODUCT' => 'Product',
+                                        'SERVICES' => 'Services',
+                                        default => '-',
+                                    }
+                            )
+                            ->placeholder('-'),
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | REQUEST DATE
+                        |--------------------------------------------------------------------------
+                        */
 
                         TextEntry::make(
                             'request_date'
@@ -64,6 +108,12 @@ class AssignmentDirectMarketInfolist
                             ->date('d M Y')
                             ->placeholder('-'),
 
+                        /*
+                        |--------------------------------------------------------------------------
+                        | REQUIRED DATE
+                        |--------------------------------------------------------------------------
+                        */
+
                         TextEntry::make(
                             'required_date'
                         )
@@ -71,14 +121,32 @@ class AssignmentDirectMarketInfolist
                             ->date('d M Y')
                             ->placeholder('-'),
 
+                        /*
+                        |--------------------------------------------------------------------------
+                        | ASSIGNED BY
+                        |--------------------------------------------------------------------------
+                        */
+
                         TextEntry::make(
                             'assignedBy.name'
                         )
                             ->label('Assigned By')
                             ->placeholder('-'),
 
+                        /*
+                        |--------------------------------------------------------------------------
+                        | ALLOCATION JOURNAL
+                        |--------------------------------------------------------------------------
+                        */
+
+                        TextEntry::make(
+                            'directMarket.allocationJournal.display_name'
+                        )
+                            ->label('Allocation Journal (COA)')
+                            ->placeholder('-'),
+
                     ])
-                    ->columns(3)
+                    ->columns(4)
                     ->columnSpanFull(),
 /*
                 |--------------------------------------------------------------------------

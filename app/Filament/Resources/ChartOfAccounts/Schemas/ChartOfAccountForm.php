@@ -57,6 +57,7 @@ class ChartOfAccountForm
                         'Equity'    => 'Equity',
                         'Revenue'   => 'Revenue',
                         'Expense'   => 'Expense',
+                        'Inventory' => 'Inventory',
                     ])
                     ->required(),
 

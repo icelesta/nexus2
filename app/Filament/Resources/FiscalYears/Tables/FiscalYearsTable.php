@@ -7,6 +7,8 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Actions\ActionGroup;
+
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -22,11 +24,6 @@ class FiscalYearsTable
             ->defaultSort('start_date', 'desc')
 
             ->columns([
-
-                TextColumn::make('company.company_name')
-                    ->label('Company')
-                    ->sortable()
-                    ->searchable(),
 
                 TextColumn::make('fiscal_code')
                     ->label('Code')
@@ -70,22 +67,22 @@ class FiscalYearsTable
                     ->boolean(),
 
                 TextColumn::make('created_at')
-                    ->label('Created')
+                    ->label('Create Date')
                     ->dateTime('d M Y H:i')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
 
                 TextColumn::make('creator.name')
                     ->label('Created By')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
 
                 TextColumn::make('updated_at')
-                    ->label('Updated')
+                    ->label('Update Date')
                     ->dateTime('d M Y H:i')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
 
                 TextColumn::make('updater.name')
                     ->label('Updated By')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
 
             ])
 
@@ -106,18 +103,22 @@ class FiscalYearsTable
             ])
 
             ->recordActions([
+                ActionGroup::make([
+                    ViewAction::make()
+                        ->label('View'),
 
-                ViewAction::make()
-                    ->label(''),
+                    EditAction::make()
+                        ->label('Edit'),
 
-                EditAction::make()
-                    ->label(''),
-
-                DeleteAction::make()
-                    ->label('')
-                    ->requiresConfirmation()
-                    ->visible(fn ($record) => ! $record->is_default),
-
+                    DeleteAction::make()
+                        ->label('Delete')
+                        ->requiresConfirmation()
+                        ->visible(fn ($record) => ! $record->is_default),
+                ])
+                    ->label('Actions')
+                    ->button()
+                    ->color('warning')
+                    ->icon('heroicon-m-ellipsis-vertical'),
             ])
 
             ->toolbarActions([

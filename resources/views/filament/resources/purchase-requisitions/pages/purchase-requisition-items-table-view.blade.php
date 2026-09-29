@@ -76,6 +76,8 @@
                             WAREHOUSE
                         </th>
 
+                        <th class="w-72 px-4 py-3 text-left">JOURNAL (COA)</th>
+
                         <th class="w-64 px-4 py-3 text-left">
                             SUPPLIER
                         </th>
@@ -183,10 +185,13 @@
                                     {{ $item->warehouse?->warehouse_name ?? '-' }}
                                 </td>
 
+                                <td class="px-4 py-3 align-middle">
+                                    {{ $item->allocationJournal?->display_name ?? '-' }}
+                                </td>
 
                                 {{-- SUPPLIER --}}
                                 <td class="px-4 py-3 align-middle">
-                                    {{ $assignmentItem?->supplier?->name ?? '-' }}
+                                    {{ $assignmentItem?->supplier?->supplier_name ?? '-' }}
                                 </td>
 
 

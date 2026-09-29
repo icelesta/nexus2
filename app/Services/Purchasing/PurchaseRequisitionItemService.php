@@ -168,6 +168,8 @@ class PurchaseRequisitionItemService
 
             'warehouse_id' => $payload['warehouse_id'],
 
+            'allocation_journal_id' => $payload['allocation_journal_id'] ?? null,
+
             'quantity' => $payload['quantity'],
 
             'required_date' => $payload['required_date'],

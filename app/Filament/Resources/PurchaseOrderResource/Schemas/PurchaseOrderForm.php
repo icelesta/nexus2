@@ -289,11 +289,28 @@ class PurchaseOrderForm
                                     $record?->required_date?->format('d M Y') ?? '-'
                             ),
 
-                        Placeholder::make('reference_no')
-                            ->label('Reference Number')
+                        Placeholder::make('material_type')
+                            ->label('Material Type')
                             ->content(
-                                fn (?PurchaseOrder $record) =>
-                                    $record?->reference_no ?? '-'
+                                fn (?PurchaseOrder $record): string =>
+                                    match (
+                                        $record?->purchaseRequisition?->material_type
+                                    ) {
+                                        'PRODUCT' => 'Product',
+                                        'SERVICES' => 'Services',
+                                        default => '-',
+                                    }
+                            ),
+
+                        Placeholder::make('allocation_journal')
+                            ->label('Allocation Journal (COA)')
+                            ->content(
+                                fn (?PurchaseOrder $record): string =>
+                                    $record
+                                        ?->purchaseRequisition
+                                        ?->allocationJournal
+                                        ?->display_name
+                                        ?? '-'
                             ),
 
                     ]),

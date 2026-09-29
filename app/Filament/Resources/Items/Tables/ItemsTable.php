@@ -197,29 +197,23 @@ class ItemsTable
                 |--------------------------------------------------------------------------
                 */
 
+                TextColumn::make('created_at')
+                    ->label('Create Date')
+                    ->dateTime('d M Y H:i')
+                    ->sortable(),
+
                 TextColumn::make('creator.name')
                     ->label('Created By')
-                    ->toggleable(
-                        isToggledHiddenByDefault: true
-                    ),
+                    ->sortable(),
+
+                TextColumn::make('updated_at')
+                    ->label('Update Date')
+                    ->dateTime('d M Y H:i')
+                    ->sortable(),
 
                 TextColumn::make('updater.name')
                     ->label('Updated By')
-                    ->toggleable(
-                        isToggledHiddenByDefault: true
-                    ),
-
-                TextColumn::make('created_at')
-                    ->since()
-                    ->toggleable(
-                        isToggledHiddenByDefault: true
-                    ),
-
-                TextColumn::make('updated_at')
-                    ->since()
-                    ->toggleable(
-                        isToggledHiddenByDefault: true
-                    ),
+                    ->sortable(),
 
                 TextColumn::make('deleted_at')
                     ->since()
@@ -251,29 +245,31 @@ class ItemsTable
             ])
 
             ->recordActions([
-
                 ActionGroup::make([
-
                     ViewAction::make()
+                        ->label('View')
                         ->icon('heroicon-o-eye'),
 
                     EditAction::make()
+                        ->label('Edit')
                         ->icon('heroicon-o-pencil-square')
                         ->color('warning'),
 
                     DeleteAction::make()
+                        ->label('Delete')
                         ->requiresConfirmation(),
 
-                    RestoreAction::make(),
+                    RestoreAction::make()
+                        ->label('Restore'),
 
                     ForceDeleteAction::make()
+                        ->label('Force Delete')
                         ->requiresConfirmation(),
-
                 ])
-                    ->label('Action')
-                    ->icon('heroicon-m-ellipsis-vertical')
-                    ->button(),
-
+                    ->label('Actions')
+                    ->button()
+                    ->color('warning')
+                    ->icon('heroicon-m-ellipsis-vertical'),
             ])
 
             ->toolbarActions([

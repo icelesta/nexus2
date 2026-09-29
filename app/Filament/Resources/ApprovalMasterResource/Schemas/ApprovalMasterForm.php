@@ -57,6 +57,7 @@ class ApprovalMasterForm
                             ->required()
                             ->options([
                                 'MATERIAL_REQUISITION' => 'Material Requisition',
+                                'DIRECT_MARKET'        => 'Direct Market',
                                 'PURCHASE_ORDER'       => 'Purchase Order',
                                 'GOODS_RECEIPT'        => 'Goods Receipt',
                             ])

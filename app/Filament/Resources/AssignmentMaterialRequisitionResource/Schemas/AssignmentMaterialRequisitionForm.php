@@ -597,20 +597,23 @@ class AssignmentMaterialRequisitionForm
                                         ?? '-'
                             ),
 
-                        Placeholder::make(
-                            'reference_no'
-                        )
-                            ->label(
-                                'Reference Number'
-                            )
+                        Placeholder::make('material_type_display')
+                            ->label('Material Type')
                             ->content(
-                                fn (
-                                    ?AssignmentMaterialRequisition $record
-                                ): string =>
-                                    $record
-                                        ?->purchaseRequisition
-                                        ?->reference_no
-                                        ?? '-'
+                                fn ($record): string =>
+                                    match ($record?->purchaseRequisition?->material_type) {
+                                        'PRODUCT' => 'Product',
+                                        'SERVICES' => 'Services',
+                                        default => '-',
+                                    }
+                            ),
+
+                        Placeholder::make('allocation_journal_display')
+                            ->label('Allocation Journal (COA)')
+                            ->content(
+                                fn ($record): string =>
+                                    $record?->purchaseRequisition?->allocationJournal?->display_name
+                                    ?? '-'
                             ),
 
                     ]),

@@ -7,6 +7,8 @@ namespace App\Filament\Resources\PurchaseRequisitions\Tables;
 use App\Filament\Resources\PurchaseRequisitions\Pages\PrintPurchaseRequisition;
 use App\Models\ApprovalMaster;
 use App\Models\ApprovalTransaction;
+use App\Models\PurchaseRequisition;
+
 use App\Services\Purchasing\PurchaseRequisitionService;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -253,11 +255,137 @@ class PurchaseRequisitionTable
 
                         if (filled($livewire->globalStatusFilter)) {
 
-                            $query->where(
-                                'purchase_requisitions.status',
-                                $livewire->globalStatusFilter
-                            );
+                            $statusFilter = $livewire->globalStatusFilter;
 
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Standard Database Status
+                            |--------------------------------------------------------------------------
+                            */
+
+                            if (
+                                in_array(
+                                    $statusFilter,
+                                    [
+                                        'Draft',
+                                        'Approved',
+                                        'Rejected',
+                                        'Cancelled',
+                                        'Closed',
+                                    ],
+                                    true
+                                )
+                            ) {
+                                $query->where(
+                                    'purchase_requisitions.status',
+                                    $statusFilter
+                                );
+                            }
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Waiting Approval
+                            |--------------------------------------------------------------------------
+                            |
+                            | UI status:
+                            | Waiting Approval
+                            |
+                            | Database status:
+                            | Pending Approval
+                            |
+                            */
+
+                            elseif ($statusFilter === 'Waiting Approval') {
+
+                                $query->where(
+                                    'purchase_requisitions.status',
+                                    PurchaseRequisition::STATUS_WAITING_APPROVAL
+                                );
+
+                                $query->whereIn(
+                                    'purchase_requisitions.id',
+                                    ApprovalTransaction::query()
+                                        ->select('document_id')
+                                        ->where(
+                                            'document_type',
+                                            'MATERIAL_REQUISITION'
+                                        )
+                                        ->where(
+                                            'status',
+                                            'PENDING'
+                                        )
+                                        ->whereRaw(
+                                            '(SELECT COUNT(*)
+                                              FROM approval_transaction_steps ats
+                                              WHERE ats.approval_transaction_id = approval_transactions.id
+                                              AND ats.status = "APPROVED") = 0'
+                                        )
+                                );
+                            }
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Approval 1/2
+                            |--------------------------------------------------------------------------
+                            */
+
+                            elseif ($statusFilter === 'Approval 1/2') {
+
+                                $query->whereIn(
+                                    'purchase_requisitions.id',
+                                    ApprovalTransaction::query()
+                                        ->select('document_id')
+                                        ->where(
+                                            'document_type',
+                                            'MATERIAL_REQUISITION'
+                                        )
+                                        ->whereIn(
+                                            'status',
+                                            [
+                                                'PENDING',
+                                                'APPROVED',
+                                            ]
+                                        )
+                                        ->whereRaw(
+                                            '(SELECT COUNT(*)
+                                              FROM approval_transaction_steps ats
+                                              WHERE ats.approval_transaction_id = approval_transactions.id
+                                              AND ats.status = "APPROVED") = 1'
+                                        )
+                                );
+                            }
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Approval 2/2
+                            |--------------------------------------------------------------------------
+                            */
+
+                            elseif ($statusFilter === 'Approval 2/2') {
+
+                                $query->whereIn(
+                                    'purchase_requisitions.id',
+                                    ApprovalTransaction::query()
+                                        ->select('document_id')
+                                        ->where(
+                                            'document_type',
+                                            'MATERIAL_REQUISITION'
+                                        )
+                                        ->whereIn(
+                                            'status',
+                                            [
+                                                'PENDING',
+                                                'APPROVED',
+                                            ]
+                                        )
+                                        ->whereRaw(
+                                            '(SELECT COUNT(*)
+                                              FROM approval_transaction_steps ats
+                                              WHERE ats.approval_transaction_id = approval_transactions.id
+                                              AND ats.status = "APPROVED") = 2'
+                                        )
+                                );
+                            }
                         }
 
                     }

@@ -42,19 +42,10 @@ class ShippingAddressesTable
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('company.company_name')
-                    ->label('Company')
-                    ->sortable()
-                    ->toggleable(),
-
                 TextColumn::make('branch.branch_name')
                     ->label('Branch')
                     ->sortable()
                     ->toggleable(),
-
-                TextColumn::make('city')
-                    ->searchable()
-                    ->sortable(),
 
                 TextColumn::make('contact_person')
                     ->label('Contact')
@@ -68,6 +59,30 @@ class ShippingAddressesTable
                     ->label('Status')
                     ->boolean(),
 
+                /*
+                |--------------------------------------------------------------------------
+                | Audit
+                |--------------------------------------------------------------------------
+                */
+
+                TextColumn::make('created_at')
+                    ->label('Create Date')
+                    ->dateTime('d M Y H:i')
+                    ->sortable(),
+
+                TextColumn::make('creator.name')
+                    ->label('Created By')
+                    ->sortable(),
+
+                TextColumn::make('updated_at')
+                    ->label('Update Date')
+                    ->dateTime('d M Y H:i')
+                    ->sortable(),
+
+                TextColumn::make('updater.name')
+                    ->label('Updated By')
+                    ->sortable(),                    
+
             ])
 
             ->filters([
@@ -79,17 +94,19 @@ class ShippingAddressesTable
             ->recordActions([
 
                 ActionGroup::make([
+                    ViewAction::make()
+                        ->label('View'),
 
-                    ViewAction::make(),
+                    EditAction::make()
+                        ->label('Edit'),
 
-                    EditAction::make(),
-
-                    DeleteAction::make(),
-
+                    DeleteAction::make()
+                        ->label('Delete'),
                 ])
-                    ->label('Action')
-                    ->icon('heroicon-m-ellipsis-vertical')
-                    ->button(),
+                    ->label('Actions')
+                    ->button()
+                    ->color('warning')
+                    ->icon('heroicon-m-ellipsis-vertical'),
 
             ])
 

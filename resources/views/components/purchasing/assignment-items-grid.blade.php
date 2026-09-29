@@ -131,6 +131,22 @@
                             UOM
                         </th>
 
+                        <th
+                            class="
+                                border-b
+                                bg-gray-100
+                                px-2
+                                py-2
+                                text-center
+                                font-semibold
+                                uppercase
+                                tracking-wide
+                                text-gray-700
+                            "
+                        >
+                            Journal (COA)
+                        </th>                        
+
                         <th class="
                                     border-b
                                     bg-gray-100
@@ -343,6 +359,10 @@
                                 <td class="border px-2 py-1.5 text-center">
                                     {{ $item->purchaseRequisitionItem?->uom?->uom_name ?? '-' }}
                                 </td>
+
+                                <td class="border px-2 py-1.5 text-center">
+                                    {{ $item->purchaseRequisitionItem?->allocationJournal?->display_name ?? '-' }}
+                                </td>                                
 
                                 <td class="border px-2 py-1.5 text-center">
                                     {{ number_format($item->purchaseRequisitionItem?->quantity ?? 0, 2) }}

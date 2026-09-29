@@ -51,6 +51,7 @@ class PurchaseRequisition extends Model
         'uuid',
         'pr_no',
 
+        'material_type',
         'request_date',
         'required_date',
 
@@ -61,6 +62,8 @@ class PurchaseRequisition extends Model
         'section_id',
         'cost_center_id',
         'warehouse_id',
+        'allocation_journal_id',
+        'requirement_type',
         'currency_id',
         'requester_id',
 
@@ -80,6 +83,7 @@ class PurchaseRequisition extends Model
     {
         return [
 
+            'material_type' => 'string',
             'request_date' => 'date',
             'required_date' => 'date',
 
@@ -90,6 +94,7 @@ class PurchaseRequisition extends Model
             'section_id' => 'integer',
             'cost_center_id' => 'integer',
             'warehouse_id' => 'integer',
+            'requirement_type' => 'string',
 
             'requester_id' => 'integer',
             'submitted_by' => 'integer',
@@ -180,6 +185,13 @@ class PurchaseRequisition extends Model
         );
     }
 
+    public function allocationJournal(): BelongsTo
+    {
+        return $this->belongsTo(
+            ChartOfAccount::class,
+            'allocation_journal_id'
+        );
+    }
 
     /*
     |--------------------------------------------------------------------------

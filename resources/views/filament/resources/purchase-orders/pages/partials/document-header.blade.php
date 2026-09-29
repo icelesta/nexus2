@@ -71,7 +71,7 @@
                 <td
                     style="
                         width:20%;
-                        padding:6px 10px;
+                        padding:8px 10px;
                         text-align:center;
                         vertical-align:middle;
                         border-right:1px solid #7d93aa;
@@ -85,7 +85,7 @@
                         alt="Besmindo Logo"
                         style="
                             display:block;
-                            width:78px;
+                            width:82px;
                             max-width:100%;
                             height:auto;
                             margin:0 auto;
@@ -123,8 +123,9 @@
 
                 <div
                     style="
-                        font-size:15px;
+                        font-size:14px;
                         font-weight:700;
+                        letter-spacing:.35px;
                         color:#12385d;
                         letter-spacing:.2px;
                         line-height:18px;
@@ -229,7 +230,8 @@
                                 text-align:center;
                                 font-size:13px;
                                 font-weight:700;
-                                padding:6px 6px;
+                                padding:7px 8px;
+                                letter-spacing:.45px;
                                 border:none;
                                 border-bottom:1px solid #7d93aa;
                                 line-height:17px;
@@ -252,7 +254,7 @@
                             style="
                                 width:72px;
                                 font-weight:500;
-                                font-size:9px;
+                                font-size:13px;
                                 padding:5px 6px;
                                 border:none;
                                 border-bottom:1px solid #d7dee7;
@@ -265,8 +267,9 @@
 
                         <td
                             style="
-                                padding:5px 6px;
-                                font-size:8.5px;
+                                padding:6px 8px;
+                                font-size:13px;
+                                font-weight:600;
                                 border:none;
                                 border-bottom:1px solid #d7dee7;
                                 vertical-align:middle;
@@ -294,7 +297,7 @@
                                 height:26px;
                                 padding:5px 6px;
                                 font-weight:600;
-                                font-size:9px;
+                                font-size:13px;
                                 line-height:16px;
                                 border:none;
                                 vertical-align:middle;
@@ -307,8 +310,8 @@
                         <td
                             style="
                                 height:26px;
-                                padding:5px 6px;
-                                font-size:8.5px;
+                                padding:6px 8px;
+                                font-size:13px;
                                 line-height:16px;
                                 border:none;
                                 vertical-align:middle;

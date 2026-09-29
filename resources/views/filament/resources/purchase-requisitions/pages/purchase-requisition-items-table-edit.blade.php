@@ -125,7 +125,7 @@
 
                         <th class="w-64 px-4 py-3 text-left">WAREHOUSE</th>
 
-<!--                         <th class="w-28 px-4 py-3 text-center">STATUS</th> -->
+                        <th class="w-72 px-4 py-3 text-left">JOURNAL (COA)</th>
 
                         <th class="w-24 px-4 py-3 text-center">ACTION</th>
 
@@ -240,6 +240,11 @@
                             <td class="px-4 py-3 align-middle">
                                 {{ $item->warehouse?->warehouse_name }}
                             </td>
+
+                                {{-- JOURNAL (COA) --}}
+                            <td class="px-4 py-3 align-middle">
+                                {{ $item->allocationJournal?->display_name ?? '-' }}
+                            </td>                            
                            
                              {{-- ACTION --}}
                             <td class="px-4 py-3 text-center align-middle">

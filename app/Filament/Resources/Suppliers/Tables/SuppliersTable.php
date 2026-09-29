@@ -15,6 +15,7 @@ use Filament\Tables\Filters\TernaryFilter;
 
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\ActionGroup;
 
 class SuppliersTable
 {
@@ -205,12 +206,10 @@ class SuppliersTable
                     ->label('Rating')
 
                     ->formatStateUsing(
-
                         fn ($state) => '⭐ ' . number_format(
                             (float) $state,
                             2
                         )
-
                     )
 
                     ->sortable()
@@ -219,7 +218,31 @@ class SuppliersTable
 
                     ->toggleable(),
 
-            ])
+                TextColumn::make('created_at')
+                    ->label('Create Date')
+                    ->dateTime('d M Y H:i')
+                    ->sortable()
+                    ->toggleable(),
+
+                TextColumn::make('creator.name')
+                    ->label('Created By')
+                    ->sortable()
+                    ->searchable()
+                    ->toggleable(),
+
+                TextColumn::make('updated_at')
+                    ->label('Update Date')
+                    ->dateTime('d M Y H:i')
+                    ->sortable()
+                    ->toggleable(),
+
+                TextColumn::make('updater.name')
+                    ->label('Updated By')
+                    ->sortable()
+                    ->searchable()
+                    ->toggleable(),
+
+                ])
 
 
             /*
@@ -368,59 +391,71 @@ class SuppliersTable
 
             ->recordActions([
 
-                /*
-                |--------------------------------------------------------------------------
-                | View
-                |--------------------------------------------------------------------------
-                */
+                ActionGroup::make([
 
-                ViewAction::make()
+                    /*
+                    |--------------------------------------------------------------------------
+                    | View
+                    |--------------------------------------------------------------------------
+                    */
 
-                    ->label('View')
+                    ViewAction::make()
 
-                    ->icon('heroicon-o-eye')
+                        ->label('View')
 
-                    ->tooltip('View supplier details'),
+                        ->icon('heroicon-o-eye')
 
-                /*
-                |--------------------------------------------------------------------------
-                | Edit
-                |--------------------------------------------------------------------------
-                */
+                        ->tooltip('View supplier details'),
 
-                EditAction::make()
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Edit
+                    |--------------------------------------------------------------------------
+                    */
 
-                    ->label('Edit')
+                    EditAction::make()
 
-                    ->icon('heroicon-o-pencil-square')
+                        ->label('Edit')
 
-                    ->tooltip('Edit supplier information'),
+                        ->icon('heroicon-o-pencil-square')
 
-                /*
-                |--------------------------------------------------------------------------
-                | Delete
-                |--------------------------------------------------------------------------
-                */
+                        ->tooltip('Edit supplier information'),
 
-                DeleteAction::make()
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Delete
+                    |--------------------------------------------------------------------------
+                    */
 
-                    ->label('Delete')
+                    DeleteAction::make()
 
-                    ->icon('heroicon-o-trash')
+                        ->label('Delete')
 
-                    ->requiresConfirmation()
+                        ->icon('heroicon-o-trash')
 
-                    ->modalHeading('Delete Supplier')
+                        ->requiresConfirmation()
 
-                    ->modalDescription(
-                        'Are you sure you want to delete this supplier? This action can be restored if soft delete is enabled.'
-                    )
+                        ->modalHeading('Delete Supplier')
 
-                    ->modalSubmitActionLabel('Delete')
+                        ->modalDescription(
+                            'Are you sure you want to delete this supplier? This action can be restored if soft delete is enabled.'
+                        )
 
-                    ->successNotificationTitle(
-                        'Supplier deleted successfully.'
-                    ),
+                        ->modalSubmitActionLabel('Delete')
+
+                        ->successNotificationTitle(
+                            'Supplier deleted successfully.'
+                        ),
+
+                ])
+
+                    ->label('Actions')
+
+                    ->button()
+
+                    ->color('warning')
+
+                    ->icon('heroicon-m-ellipsis-vertical'),
 
             ])
 

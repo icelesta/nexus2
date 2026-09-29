@@ -7,6 +7,8 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Actions\ActionGroup;
+
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -20,11 +22,6 @@ class TaxMastersTable
             ->defaultSort('sort_order')
 
             ->columns([
-
-                TextColumn::make('company.company_name')
-                    ->label('Company')
-                    ->sortable()
-                    ->searchable(),
 
                 TextColumn::make('tax_code')
                     ->label('Tax Code')
@@ -90,28 +87,23 @@ class TaxMastersTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
+                TextColumn::make('created_at')
+                    ->label('Create Date')
+                    ->dateTime('d M Y H:i')
+                    ->sortable(),
+
                 TextColumn::make('creator.name')
                     ->label('Created By')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
 
-                TextColumn::make('created_at')
-                    ->label('Created')
+                TextColumn::make('updated_at')
+                    ->label('Update Date')
                     ->dateTime('d M Y H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
 
                 TextColumn::make('updater.name')
                     ->label('Updated By')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('updated_at')
-                    ->label('Updated')
-                    ->dateTime('d M Y H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
+                    ->sortable(),
             ])
 
             ->filters([
@@ -121,25 +113,21 @@ class TaxMastersTable
             ])
 
             ->recordActions([
+                ActionGroup::make([
+                    ViewAction::make()
+                        ->label('View'),
 
-                ViewAction::make()
-                    ->label('')
-                    ->tooltip('View')
-                    ->icon('heroicon-o-eye'),
+                    EditAction::make()
+                        ->label('Edit'),
 
-                EditAction::make()
-                    ->label('')
-                    ->tooltip('Edit')
-                    ->icon('heroicon-o-pencil-square')
-                    ->color('warning'),
-
-                DeleteAction::make()
-                    ->label('')
-                    ->tooltip('Delete')
-                    ->icon('heroicon-o-trash')
-                    ->color('danger')
-                    ->requiresConfirmation(),
-
+                    DeleteAction::make()
+                        ->label('Delete')
+                        ->requiresConfirmation(),
+                ])
+                    ->label('Actions')
+                    ->button()
+                    ->color('warning')
+                    ->icon('heroicon-m-ellipsis-vertical'),
             ])
 
             ->toolbarActions([

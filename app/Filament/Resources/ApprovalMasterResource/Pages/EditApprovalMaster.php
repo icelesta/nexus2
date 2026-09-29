@@ -8,6 +8,7 @@ use App\Filament\Resources\ApprovalMasterResource\ApprovalMasterResource;
 use App\Services\Approval\ApprovalMasterService;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Support\Facades\Auth;
 
 class EditApprovalMaster extends EditRecord
 {
@@ -70,4 +71,12 @@ class EditApprovalMaster extends EditRecord
     {
         return ApprovalMasterResource::getUrl('index');
     }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        $data['updated_by'] = Auth::id();
+
+        return $data;
+    }
+
 }
