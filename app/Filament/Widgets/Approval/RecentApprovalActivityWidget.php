@@ -6,73 +6,55 @@ namespace App\Filament\Widgets\Approval;
 
 use App\Services\Approval\ApprovalDashboardService;
 use Filament\Widgets\Widget;
-use Illuminate\Support\Collection;
+use Illuminate\Contracts\View\View;
 
 class RecentApprovalActivityWidget extends Widget
 {
-    /*
-    |--------------------------------------------------------------------------
-    | View
-    |--------------------------------------------------------------------------
-    */
-
     protected string $view =
         'filament.widgets.approval.recent-approval-activity-widget';
 
-    /*
-    |--------------------------------------------------------------------------
-    | Layout
-    |--------------------------------------------------------------------------
-    */
-
     protected int|string|array $columnSpan = 'full';
 
-    /*
-    |--------------------------------------------------------------------------
-    | State
-    |--------------------------------------------------------------------------
-    */
+    public int|string $perPage = 5;
 
-    public Collection $activities;
+    public int $activityPage = 1;
 
-    /*
-    |--------------------------------------------------------------------------
-    | Mount
-    |--------------------------------------------------------------------------
-    */
-
-    public function mount(): void
+    public function updatedPerPage(): void
     {
-        $this->activities = app(
-            ApprovalDashboardService::class
-        )->recentActivity(10);
+        $this->activityPage = 1;
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Status Helpers
-    |--------------------------------------------------------------------------
-    */
+    public function render(): View
+    {
+        $activities = app(
+            ApprovalDashboardService::class
+        )->recentActivityPaginated(
+            $this->perPage,
+            'activityPage',
+            $this->activityPage,
+        );
 
-    public function getStatusLabel(
-        ?string $status
-    ): string {
+        return view(
+            $this->view,
+            [
+                'activities' => $activities,
+            ],
+        );
+    }
+
+    public function getStatusLabel(?string $status): string
+    {
         return match ($status) {
             'APPROVED' => 'Approved',
             'REJECTED' => 'Rejected',
             'PENDING' => 'Pending',
             'CANCELLED' => 'Cancelled',
-            default => ucfirst(
-                strtolower(
-                    $status ?? 'Unknown'
-                )
-            ),
+            default => ucfirst(strtolower($status ?? 'Unknown')),
         };
     }
 
-    public function getStatusColor(
-        ?string $status
-    ): string {
+    public function getStatusColor(?string $status): string
+    {
         return match ($status) {
             'APPROVED' => 'success',
             'REJECTED' => 'danger',
@@ -82,45 +64,24 @@ class RecentApprovalActivityWidget extends Widget
         };
     }
 
-    public function getStatusIcon(
-        ?string $status
-    ): string {
+    public function getStatusIcon(?string $status): string
+    {
         return match ($status) {
-            'APPROVED' =>
-                'heroicon-o-check-circle',
-
-            'REJECTED' =>
-                'heroicon-o-x-circle',
-
-            'PENDING' =>
-                'heroicon-o-clock',
-
-            'CANCELLED' =>
-                'heroicon-o-minus-circle',
-
-            default =>
-                'heroicon-o-document-text',
+            'APPROVED' => 'heroicon-o-check-circle',
+            'REJECTED' => 'heroicon-o-x-circle',
+            'PENDING' => 'heroicon-o-clock',
+            'CANCELLED' => 'heroicon-o-minus-circle',
+            default => 'heroicon-o-document-text',
         };
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Document URL
-    |--------------------------------------------------------------------------
-    */
 
     public function getDocumentUrl(
         string $documentType,
         int $documentId
     ): ?string {
         return match ($documentType) {
-
             'MATERIAL_REQUISITION' =>
-                url(
-                    '/admin/purchase-requisitions/' .
-                    $documentId
-                ),
-
+                url('/admin/purchase-requisitions/' . $documentId),
             default => null,
         };
     }

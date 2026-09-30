@@ -1960,7 +1960,7 @@
             Logic remains inside the existing approval widgets.
             No approval query / workflow logic is changed here.
         --}}
-        <div class="space-y-6">
+        <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
 
             {{-- ========================================================= --}}
             {{-- MY PENDING APPROVALS --}}

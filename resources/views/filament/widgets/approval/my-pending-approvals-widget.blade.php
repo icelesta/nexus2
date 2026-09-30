@@ -28,9 +28,9 @@
             >
 
                 <x-filament::badge
-                    :color="$approvals->count() > 0 ? 'warning' : 'gray'"
+                    :color="$pendingCount > 0 ? 'warning' : 'gray'"
                 >
-                    {{ $approvals->count() }}
+                    {{ $pendingCount }}
                 </x-filament::badge>
 
             </div>
@@ -182,6 +182,55 @@
             </div>
 
         @endif
+
+        {{-- =====================================================
+             PAGINATION
+        ====================================================== --}}
+        <div class="mt-4 flex flex-col gap-3 border-t border-gray-200 pt-4 sm:flex-row sm:items-center sm:justify-between dark:border-gray-700">
+
+            <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                <span>Show</span>
+
+                <select
+                    wire:model.live="perPage"
+                    class="rounded-lg border-gray-300 bg-white py-1.5 pl-2 pr-8 text-xs shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+                >
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="all">All</option>
+                </select>
+
+                <span>records</span>
+            </div>
+
+            @if ($approvals instanceof \Illuminate\Contracts\Pagination\LengthAwarePaginator && $approvals->lastPage() > 1)
+                <div class="flex items-center gap-1">
+                    <button
+                        type="button"
+                        wire:click="$set('pendingPage', {{ max(1, $approvals->currentPage() - 1) }})"
+                        @disabled($approvals->onFirstPage())
+                        class="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                    >Previous</button>
+
+                    @for ($page = max(1, $approvals->currentPage() - 1); $page <= min($approvals->lastPage(), $approvals->currentPage() + 1); $page++)
+                        <button
+                            type="button"
+                            wire:click="$set('pendingPage', {{ $page }})"
+                            class="rounded-lg border px-2.5 py-1.5 text-xs font-medium transition {{ $page === $approvals->currentPage() ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400' : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800' }}"
+                        >{{ $page }}</button>
+                    @endfor
+
+                    <button
+                        type="button"
+                        wire:click="$set('pendingPage', {{ min($approvals->lastPage(), $approvals->currentPage() + 1) }})"
+                        @disabled($approvals->currentPage() >= $approvals->lastPage())
+                        class="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                    >Next</button>
+                </div>
+            @endif
+        </div>
 
     </x-filament::section>
 </x-filament-widgets::widget>

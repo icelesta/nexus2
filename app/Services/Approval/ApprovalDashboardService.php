@@ -7,6 +7,7 @@ namespace App\Services\Approval;
 use App\Models\ApprovalTransaction;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class ApprovalDashboardService
 {
@@ -258,4 +259,90 @@ class ApprovalDashboardService
 
             ->get();
     }
+
+    public function pendingApprovalsPaginated(
+        User $user,
+        int|string $perPage = 5,
+        string $pageName = 'pendingPage',
+        int $page = 1,
+    ): Collection|LengthAwarePaginator {
+
+        $roleIds = $user
+            ->roles()
+            ->pluck('roles.id');
+
+        if ($roleIds->isEmpty()) {
+            return new Collection();
+        }
+
+        $query = ApprovalTransaction::query()
+            ->with([
+                'approvalMaster',
+                'steps',
+            ])
+            ->where('status', 'PENDING')
+            ->whereHas(
+                'steps',
+                function ($query) use ($roleIds) {
+                    $query
+                        ->whereColumn(
+                            'approval_transaction_steps.approval_level',
+                            'approval_transactions.current_level'
+                        )
+                        ->where(
+                            'approval_transaction_steps.status',
+                            'PENDING'
+                        )
+                        ->whereIn(
+                            'approval_transaction_steps.role_id',
+                            $roleIds
+                        );
+                }
+            )
+            ->latest('submitted_at');
+
+        if ($perPage === 'all') {
+            return $query->get();
+        }
+
+        return $query->paginate(
+            (int) $perPage,
+            ['*'],
+            $pageName,
+            $page
+        );
+    }
+
+    public function recentActivityPaginated(
+        int|string $perPage = 5,
+        string $pageName = 'activityPage',
+        int $page = 1,
+    ): Collection|LengthAwarePaginator {
+
+        $query = ApprovalTransaction::query()
+            ->with([
+                'approvalMaster',
+                'steps',
+            ])
+            ->whereIn(
+                'status',
+                [
+                    'APPROVED',
+                    'REJECTED',
+                ]
+            )
+            ->latest('completed_at');
+
+        if ($perPage === 'all') {
+            return $query->get();
+        }
+
+        return $query->paginate(
+            (int) $perPage,
+            ['*'],
+            $pageName,
+            $page
+        );
+    }
+
 }
