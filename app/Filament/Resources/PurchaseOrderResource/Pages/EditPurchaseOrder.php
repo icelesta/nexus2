@@ -458,6 +458,20 @@ class EditPurchaseOrder extends EditRecord
                     ])
                     ->columnSpanFull(),
 
+                /*
+                |--------------------------------------------------------------------------
+                | Approval History
+                |--------------------------------------------------------------------------
+                */                    
+
+                View::make(
+                    'filament.resources.purchase-orders.pages.partials.approval-history'
+                )
+                    ->viewData([
+                        'record' => $this->record,
+                    ])
+                    ->columnSpanFull(),                
+
             ]);
     }
 
