@@ -73,9 +73,9 @@
                             Item Name
                         </th>
 
-<!--                         <th class="border-b bg-gray-100 px-2 py-2">
+                         <th class="border-b bg-gray-100 px-2 py-2">
                             Description
-                        </th> -->
+                        </th>
 
                         <th class="border-b bg-gray-100 px-2 py-2 text-center">
                             UOM
@@ -160,9 +160,9 @@
                             {{ $item->item_name }}
                         </td>
 
-<!--                         <td class="border px-2 py-2">
+                        <td class="border px-2 py-2">
                             {{ $item->item_description ?: '-' }}
-                        </td> -->
+                        </td>
 
                         <td class="border px-2 py-2 text-center">
                             {{ $item->uom_name }}
@@ -257,7 +257,7 @@
                 <tr>
 
                     <td
-                        colspan="12"
+                        colspan="14"
                         class="border py-20"
                     >
 

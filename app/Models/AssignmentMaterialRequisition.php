@@ -121,6 +121,8 @@ class AssignmentMaterialRequisition extends Model
 
     public const STATUS_APPROVED = 'Approved';
 
+    public const STATUS_GENERATE_PO = 'Generate PO';
+
     public const STATUS_COMPLETED = 'Completed';
 
     public const STATUS_REJECTED = 'Rejected';
@@ -141,6 +143,7 @@ class AssignmentMaterialRequisition extends Model
             self::STATUS_ASSIGNED           => 'Assigned',
             self::STATUS_WAITING_APPROVAL   => 'Waiting Approval',
             self::STATUS_APPROVED           => 'Approved',
+            self::STATUS_GENERATE_PO        => 'Generate PO',
             self::STATUS_COMPLETED          => 'Completed',
             self::STATUS_REJECTED           => 'Rejected',
             self::STATUS_CANCELLED          => 'Cancelled',
@@ -513,6 +516,7 @@ class AssignmentMaterialRequisition extends Model
             $this->status,
             [
                 self::STATUS_APPROVED,
+                self::STATUS_GENERATE_PO,
                 self::STATUS_COMPLETED,
                 self::STATUS_REJECTED,
                 self::STATUS_CANCELLED,

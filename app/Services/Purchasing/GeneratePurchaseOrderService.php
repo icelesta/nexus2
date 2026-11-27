@@ -153,6 +153,7 @@ class GeneratePurchaseOrderService
                 'items',
                 'purchaseRequisition',
             ])
+            ->lockForUpdate()
             ->findOrFail($assignmentId);
 
         /*
@@ -160,27 +161,20 @@ class GeneratePurchaseOrderService
         | Workflow State Validation
         |--------------------------------------------------------------------------
         |
-        | Generate PO is allowed only after the AMR has been submitted
-        | into the approval workflow.
+        | Generate PO is allowed only after:
         |
-        | IMPORTANT:
+        | 1. AMR Buyer has submitted the document.
+        | 2. Final MR Approval (Level 2) is completed.
+        | 3. AMR status has changed to Approved.
         |
-        | The AMR intentionally remains:
-        |
-        |     Waiting Approval
-        |
-        | after submission/final MR approval.
-        |
-        | Approval authority lives in approval_transactions, not in the
-        | AMR status itself.
+        | After successful PO generation, AMR status becomes Generate PO.
         |
         */
 
         if (
             $assignment->status
-            !== 'Waiting Approval'
+            !== AssignmentMaterialRequisition::STATUS_APPROVED
         ) {
-
             throw new RuntimeException(
                 "Assignment Material Requisition [{$assignment->document_no}] is not ready to generate Purchase Order. Current status: [{$assignment->status}]."
             );
@@ -921,6 +915,8 @@ class GeneratePurchaseOrderService
         */
 
         $assignment->update([
+            'status' => AssignmentMaterialRequisition::STATUS_GENERATE_PO,
+
             'updated_by' => auth()->id(),
         ]);
     }

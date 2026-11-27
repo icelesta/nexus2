@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Filament\Resources\GoodsReceipts\Tables;
 
 use App\Filament\Resources\GoodsReceipts\Pages\ListGoodsReceipts;
+use App\Models\GoodsReceipt;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -18,6 +21,8 @@ class GoodsReceiptsTable
     ): Table {
 
         return $table
+
+            ->defaultSort('created_at', 'desc')
 
             /*
             |--------------------------------------------------------------------------
@@ -38,19 +43,6 @@ class GoodsReceiptsTable
             |--------------------------------------------------------------------------
             | GLOBAL TRANSACTION FILTER QUERY — RR
             |--------------------------------------------------------------------------
-            |
-            | Visibility:
-            | - All authenticated users see all RR by default.
-            | - No automatic Department restriction.
-            |
-            | Manual GTF:
-            | - Branch      -> Purchase Order
-            | - Department  -> Purchase Order
-            | - Supplier    -> Goods Receipt
-            | - Status      -> Goods Receipt
-            | - From        -> Receipt Date
-            | - To          -> Receipt Date
-            |
             */
 
             ->modifyQueryUsing(
@@ -58,12 +50,6 @@ class GoodsReceiptsTable
                     Builder $query,
                     ListGoodsReceipts $livewire,
                 ): Builder {
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | GTF ACCESS
-                    |--------------------------------------------------------------------------
-                    */
 
                     if (! $livewire->canUseGlobalTransactionFilters()) {
                         return $query;
@@ -73,10 +59,6 @@ class GoodsReceiptsTable
                     |--------------------------------------------------------------------------
                     | BRANCH
                     |--------------------------------------------------------------------------
-                    |
-                    | Goods Receipt does not have branch_id.
-                    | Branch is inherited from the related Purchase Order.
-                    |
                     */
 
                     if ($livewire->globalBranchFilter !== null) {
@@ -93,10 +75,6 @@ class GoodsReceiptsTable
                     |--------------------------------------------------------------------------
                     | DEPARTMENT
                     |--------------------------------------------------------------------------
-                    |
-                    | Goods Receipt does not have department_id.
-                    | Department is inherited from the related Purchase Order.
-                    |
                     */
 
                     if ($livewire->globalDepartmentFilter !== null) {
@@ -139,10 +117,6 @@ class GoodsReceiptsTable
                     |--------------------------------------------------------------------------
                     | RECEIPT DATE FROM
                     |--------------------------------------------------------------------------
-                    |
-                    | receipt_date is a DATE column.
-                    | No timezone conversion is required.
-                    |
                     */
 
                     if (filled($livewire->globalDateFrom)) {
@@ -179,31 +153,164 @@ class GoodsReceiptsTable
 
             ->columns([
 
+                /*
+                |--------------------------------------------------------------------------
+                | JOB RR NO.
+                |--------------------------------------------------------------------------
+                */
+
                 TextColumn::make('grn_no')
-                    ->label('GRN No')
+                    ->label('RR No.')
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make(
-                    'assignmentDirectMarket.document_no'
-                )
-                    ->label('ADM No')
-                    ->searchable()
-                    ->sortable(),
+                /*
+                |--------------------------------------------------------------------------
+                | SOURCE TYPE
+                |--------------------------------------------------------------------------
+                */
 
-                TextColumn::make('supplier.name')
+                TextColumn::make('source_type')
+                    ->label('Source Type')
+                    ->state(
+                        function (GoodsReceipt $record): string {
+                            if ($record->purchase_order_id !== null) {
+                                return 'Purchase Order';
+                            }
+
+                            if ($record->assignment_direct_market_id !== null) {
+                                return 'Direct Market';
+                            }
+
+                            return '-';
+                        }
+                    )
+                    ->color(
+                        fn ($state): string => match ($state) {
+                            'Purchase Order' => 'info',
+                            'Direct Market' => 'primary',
+                            default => 'gray',
+                        }
+                    )
+                    ->badge()
+                    ->searchable(false)
+                    ->sortable(false),
+
+                /*
+                |--------------------------------------------------------------------------
+                | SOURCE NO.
+                |--------------------------------------------------------------------------
+                |
+                | PO  -> PurchaseOrder.document_no
+                | DM  -> AssignmentDirectMarket.document_no
+                |
+                */
+
+                TextColumn::make('source_no')
+                    ->label('Source No.')
+                    ->state(
+                        function (GoodsReceipt $record): string {
+                            if ($record->purchaseOrder) {
+                                return $record->purchaseOrder->document_no ?? '-';
+                            }
+
+                            if ($record->assignmentDirectMarket) {
+                                return $record->assignmentDirectMarket->directMarket?->dm_no ?? '-';
+                            }
+
+                            return '-';
+                        }
+                    )
+                    ->searchable(false)
+                    ->sortable(false),
+
+                /*
+                |--------------------------------------------------------------------------
+                | SUPPLIER
+                |--------------------------------------------------------------------------
+                */
+
+                TextColumn::make('supplier.supplier_name')
                     ->label('Supplier')
+                    ->formatStateUsing(
+                        function ($state, GoodsReceipt $record): string {
+                            if (! $record->supplier) {
+                                return '-';
+                            }
+
+                            return $record->supplier->supplier_name
+                                ? "{$record->supplier->supplier_code} - {$record->supplier->supplier_name}"
+                                : $record->supplier->supplier_code;
+                        }
+                    )
                     ->searchable()
                     ->sortable(),
+
+                /*
+                |--------------------------------------------------------------------------
+                | RECEIPT DATE
+                |--------------------------------------------------------------------------
+                */
 
                 TextColumn::make('receipt_date')
                     ->label('Receipt Date')
                     ->date()
                     ->sortable(),
 
-                TextColumn::make('status')
-                    ->label('Status')
-                    ->badge(),
+                /*
+                |--------------------------------------------------------------------------
+                | STATUS
+                |--------------------------------------------------------------------------
+                */
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | ITEMS STATUS
+                |--------------------------------------------------------------------------
+                */
+
+                TextColumn::make('items_status')
+                    ->label('Items Status')
+                    ->badge()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'DRAFT' => 'gray',
+                        'PARTIAL RECEIVED' => 'warning',
+                        'COMPLETED' => 'success',
+                        default => 'gray',
+                    }),
+
+                /*
+                |--------------------------------------------------------------------------
+                | RR STATUS
+                |--------------------------------------------------------------------------
+                */
+
+                TextColumn::make('rr_status')
+                    ->label('RR Status')
+                    ->badge()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'DRAFT' => 'gray',
+                        'RECEIVED' => 'warning',
+                        'CLOSE' => 'success',
+                        default => 'gray',
+                    }),
+
+                /*
+                |--------------------------------------------------------------------------
+                | REMARK
+                |--------------------------------------------------------------------------
+                */
+
+                TextColumn::make('remarks')
+                    ->label('Remark')
+                    ->limit(40)
+                    ->tooltip(
+                        fn (?string $state): ?string => filled($state)
+                            ? $state
+                            : null
+                    )
+                    ->placeholder('-'),
 
             ])
 
@@ -213,17 +320,113 @@ class GoodsReceiptsTable
             |--------------------------------------------------------------------------
             */
 
+
             ->recordActions([
 
                 ActionGroup::make([
 
+                    /*
+                    |--------------------------------------------------------------------------
+                    | VIEW
+                    |--------------------------------------------------------------------------
+                    */
+
                     ViewAction::make()
                         ->label('View'),
 
+                    /*
+                    |--------------------------------------------------------------------------
+                    | EDIT
+                    |--------------------------------------------------------------------------
+                    |
+                    | DRAFT + DRAFT              : Editable
+                    | PARTIAL RECEIVED + RECEIVED: Editable
+                    | RECEIVED + CLOSE           : LOCK
+                    |
+                    */
+
+                    EditAction::make()
+                        ->label(
+                            fn (GoodsReceipt $record): string =>
+                                (
+                                    $record->items_status === 'RECEIVED'
+                                    && $record->rr_status === 'CLOSE'
+                                )
+                                    ? 'LOCK'
+                                    : 'Edit'
+                        )
+                        ->icon(
+                            fn (GoodsReceipt $record): string =>
+                                (
+                                    $record->items_status === 'RECEIVED'
+                                    && $record->rr_status === 'CLOSE'
+                                )
+                                    ? 'heroicon-o-lock-closed'
+                                    : 'heroicon-o-pencil-square'
+                        )
+                        ->disabled(
+                            fn (GoodsReceipt $record): bool =>
+                                ! in_array(
+                                    [$record->items_status, $record->rr_status],
+                                    [
+                                        ['DRAFT', 'DRAFT'],
+                                        ['PARTIAL RECEIVED', 'RECEIVED'],
+                                    ],
+                                    true
+                                )
+                        )
+                        ->visible(
+                            fn (): bool =>
+                                auth()->user()?->can('Update:GoodsReceipt') === true
+                        ),
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | DELETE
+                    |--------------------------------------------------------------------------
+                    |
+                    | DRAFT + DRAFT : Delete allowed
+                    | Other statuses: LOCK
+                    |
+                    */
+
+                    DeleteAction::make()
+                        ->label(
+                            fn (GoodsReceipt $record): string =>
+                                (
+                                    $record->items_status === 'DRAFT'
+                                    && $record->rr_status === 'DRAFT'
+                                )
+                                    ? 'Delete'
+                                    : 'LOCK'
+                        )
+                        ->icon(
+                            fn (GoodsReceipt $record): string =>
+                                (
+                                    $record->items_status === 'DRAFT'
+                                    && $record->rr_status === 'DRAFT'
+                                )
+                                    ? 'heroicon-o-trash'
+                                    : 'heroicon-o-lock-closed'
+                        )
+                        ->disabled(
+                            fn (GoodsReceipt $record): bool =>
+                                ! (
+                                    $record->items_status === 'DRAFT'
+                                    && $record->rr_status === 'DRAFT'
+                                )
+                        )
+                        ->visible(
+                            fn (): bool =>
+                                auth()->user()?->can('Delete:GoodsReceipt') === true
+                        ),
+
                 ])
                     ->label('Actions')
-                    ->button(),
+                    ->button()
+                    ->color('warning'),
 
             ]);
+
     }
 }

@@ -10,24 +10,27 @@ use App\Models\AssignmentMaterialRequisition;
 use App\Services\Purchasing\AssignmentMaterialRequisitionService;
 
 use Filament\Actions\Action;
-use Illuminate\Database\Eloquent\Model;
 use Filament\Notifications\Notification;
-
 use Filament\Resources\Pages\EditRecord;
-
-use Filament\Schemas\Schema;
 use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Livewire;
-
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\View;
+use Filament\Schemas\Schema;
+
+use Illuminate\Database\Eloquent\Model;
 
 
 class EditAssignmentMaterialRequisition extends EditRecord
 {
     protected static string $resource = AssignmentMaterialRequisitionResource::class;
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Header Actions
+    |--------------------------------------------------------------------------
+    */
 
     protected function getHeaderActions(): array
     {
@@ -38,7 +41,7 @@ class EditAssignmentMaterialRequisition extends EditRecord
             | Submit AMR
             |--------------------------------------------------------------------------
             |
-            | AMR workflow ends here.
+            | AMR workflow:
             |
             | Updated
             |     ↓
@@ -47,8 +50,7 @@ class EditAssignmentMaterialRequisition extends EditRecord
             | Waiting Approval
             |
             | Approval is NOT performed on AMR.
-            | Further approval is handled from the
-            | Generate Purchase Order workbench.
+            | Further approval is handled by the next workflow stage.
             |
             |--------------------------------------------------------------------------
             */
@@ -71,12 +73,20 @@ class EditAssignmentMaterialRequisition extends EditRecord
                         )
                 )
                 ->action(
-                    fn () =>
-                        $this->submitAssignment()
+                    function (): void {
+                        $this->submitAssignment();
+                    }
                 ),
 
         ];
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Form Actions
+    |--------------------------------------------------------------------------
+    */
 
     protected function getFormActions(): array
     {
@@ -87,7 +97,10 @@ class EditAssignmentMaterialRequisition extends EditRecord
                 ->icon('heroicon-o-check')
                 ->color('primary')
                 ->action('save')
-                ->visible(fn (): bool => $this->record->canEdit()),
+                ->visible(
+                    fn (): bool =>
+                        $this->record->canEdit()
+                ),
 
             Action::make('saveAndClose')
                 ->label('Save & Close')
@@ -104,11 +117,20 @@ class EditAssignmentMaterialRequisition extends EditRecord
                         static::getResource()::getUrl('index')
                     );
                 })
-                ->visible(fn (): bool => $this->record->canEdit()),
-
+                ->visible(
+                    fn (): bool =>
+                        $this->record->canEdit()
+                ),
 
         ];
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Page Content
+    |--------------------------------------------------------------------------
+    */
 
     public function content(Schema $schema): Schema
     {
@@ -130,6 +152,7 @@ class EditAssignmentMaterialRequisition extends EditRecord
                     ])
                     ->columnSpanFull(),
 
+
                 /*
                 |--------------------------------------------------------------------------
                 | Assignment Form
@@ -141,6 +164,7 @@ class EditAssignmentMaterialRequisition extends EditRecord
                     EmbeddedSchema::make('form'),
 
                 ]),
+
 
                 /*
                 |--------------------------------------------------------------------------
@@ -154,6 +178,7 @@ class EditAssignmentMaterialRequisition extends EditRecord
 
                 ])
                     ->columnSpanFull(),
+
 
                 /*
                 |--------------------------------------------------------------------------
@@ -174,6 +199,7 @@ class EditAssignmentMaterialRequisition extends EditRecord
             ]);
     }
 
+
     /*
     |--------------------------------------------------------------------------
     | Utility Layer
@@ -185,6 +211,7 @@ class EditAssignmentMaterialRequisition extends EditRecord
         $this->record->refresh();
     }
 
+
     protected function redirectToEdit(): void
     {
         $this->redirect(
@@ -194,12 +221,14 @@ class EditAssignmentMaterialRequisition extends EditRecord
         );
     }
 
+
     protected function redirectToIndex(): void
     {
         $this->redirect(
             static::getResource()::getUrl('index')
         );
     }
+
 
     protected function success(string $message): void
     {
@@ -209,6 +238,7 @@ class EditAssignmentMaterialRequisition extends EditRecord
             ->send();
     }
 
+
     /*
     |--------------------------------------------------------------------------
     | Workflow Layer
@@ -217,28 +247,128 @@ class EditAssignmentMaterialRequisition extends EditRecord
 
     protected function submitAssignment(): void
     {
-        app(AssignmentMaterialRequisitionService::class)
-            ->submit($this->record->id);
+        try {
 
-        $this->refreshRecord();
+            /*
+            |--------------------------------------------------------------------------
+            | Persist Current AMR Header
+            |--------------------------------------------------------------------------
+            |
+            | Save the current form state first.
+            |
+            | This is important because fields such as:
+            |
+            | - Shipping Address
+            | - Payment Instruction
+            |
+            | may have been changed in the current form session.
+            |
+            | The authoritative business validation remains inside:
+            |
+            | AssignmentMaterialRequisitionService::submit()
+            |
+            |--------------------------------------------------------------------------
+            */
 
-        $this->success(
-            'Assignment submitted successfully.'
-        );
+            $this->save(
+                shouldRedirect: false,
+                shouldSendSavedNotification: false,
+            );
 
-        $this->redirect(
-            static::getResource()::getUrl('index')
-        );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Authoritative Submit Gate
+            |--------------------------------------------------------------------------
+            |
+            | The service is the final authority for AMR submission.
+            |
+            | It must validate the complete document before allowing:
+            |
+            | Updated
+            |     ↓
+            | Waiting Approval
+            |
+            |--------------------------------------------------------------------------
+            */
+
+            app(AssignmentMaterialRequisitionService::class)
+                ->submit($this->record->id);
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Refresh Record
+            |--------------------------------------------------------------------------
+            */
+
+            $this->refreshRecord();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Success Notification
+            |--------------------------------------------------------------------------
+            */
+
+            $this->success(
+                'Assignment submitted successfully.'
+            );
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Stay on AMR Edit Page
+            |--------------------------------------------------------------------------
+            */
+
+            $this->redirectToEdit();
+
+        } catch (\Throwable $exception) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Log Exception
+            |--------------------------------------------------------------------------
+            */
+
+            report($exception);
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | User Notification
+            |--------------------------------------------------------------------------
+            */
+
+            Notification::make()
+                ->danger()
+                ->title(
+                    'Unable to Submit Assignment Material Requisition'
+                )
+                ->body(
+                    $exception->getMessage()
+                )
+                ->persistent()
+                ->send();
+        }
     }
 
 
-    protected function handleRecordUpdate(Model $record, array $data): Model
-    {
+    /*
+    |--------------------------------------------------------------------------
+    | Record Update Hook
+    |--------------------------------------------------------------------------
+    */
+
+    protected function handleRecordUpdate(
+        Model $record,
+        array $data
+    ): Model {
         $data['updated_by'] = auth()->id();
 
         $record->update($data);
 
         return $record;
     }
-
 }

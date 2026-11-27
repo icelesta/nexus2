@@ -1020,7 +1020,7 @@ class ItemForm
                                         "Warehouse : %d\nStock : %s",
                                         $record->stocks()->count(),
                                         number_format(
-                                            $record->stocks()->sum('qty_on_hand'),
+                                            (float) ($record->stocks()->sum('qty_on_hand') ?? 0),
                                             2
                                         )
                                     );

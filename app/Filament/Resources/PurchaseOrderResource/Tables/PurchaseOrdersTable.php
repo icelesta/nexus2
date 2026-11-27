@@ -19,6 +19,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use App\Support\Timezone\UserTimezone;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 use Illuminate\Database\Eloquent\Builder;
 
@@ -222,7 +223,7 @@ class PurchaseOrdersTable
             */
 
             ->defaultSort('document_date', 'desc')
-            
+
             ->columns([
 
                 TextColumn::make('document_no')
@@ -262,8 +263,17 @@ class PurchaseOrdersTable
                     ->sortable(),
 
                 TextColumn::make('status')
-                    ->label('Status')
+                    ->label('Status RR')
+                    ->state(
+                        fn (PurchaseOrder $record): string =>
+                            self::resolveStatusRr($record)
+                    )
                     ->badge()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'Received' => 'success',
+                        'Partial Received' => 'danger',
+                        default => 'warning',
+                    })
                     ->sortable(),
 
                 TextColumn::make('approval_status')
@@ -515,4 +525,105 @@ class PurchaseOrdersTable
             ]);
 
     }
+
+    private static function resolveStatusRr(
+        PurchaseOrder $record
+    ): string {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Aggregate actual received quantity per PO item
+        |--------------------------------------------------------------------------
+        |
+        | Only active Receiving Records with rr_status:
+        | RECEIVED or CLOSE are included.
+        |
+        */
+
+        $receivedSubquery = DB::table('goods_receipt_items as gri')
+            ->join(
+                'goods_receipts as gr',
+                'gr.id',
+                '=',
+                'gri.goods_receipt_id'
+            )
+            ->whereNull('gri.deleted_at')
+            ->whereNull('gr.deleted_at')
+            ->whereIn('gr.rr_status', [
+                'RECEIVED',
+                'CLOSE',
+            ])
+            ->select('gri.purchase_order_item_id')
+            ->selectRaw('SUM(gri.received_qty) as total_received')
+            ->groupBy('gri.purchase_order_item_id');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Evaluate every active PO item individually
+        |--------------------------------------------------------------------------
+        */
+
+        $result = DB::table('purchase_order_items as poi')
+            ->leftJoinSub(
+                $receivedSubquery,
+                'received',
+                function ($join): void {
+                    $join->on(
+                        'received.purchase_order_item_id',
+                        '=',
+                        'poi.id'
+                    );
+                }
+            )
+            ->where('poi.purchase_order_id', $record->getKey())
+            ->whereNull('poi.deleted_at')
+            ->selectRaw('COUNT(*) as item_count')
+            ->selectRaw(
+                'SUM(
+                    CASE
+                        WHEN COALESCE(received.total_received, 0) > 0
+                        THEN 1
+                        ELSE 0
+                    END
+                ) as received_item_count'
+            )
+            ->selectRaw(
+                'SUM(
+                    CASE
+                        WHEN COALESCE(received.total_received, 0) + 0.00005
+                            < poi.ordered_qty
+                        THEN 1
+                        ELSE 0
+                    END
+                ) as outstanding_item_count'
+            )
+            ->first();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Preserve original PO status when no receipt exists
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            ! $result
+            || (int) $result->item_count === 0
+            || (int) $result->received_item_count === 0
+        ) {
+            return (string) $record->status;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Additional receiving statuses
+        |--------------------------------------------------------------------------
+        */
+
+        if ((int) $result->outstanding_item_count === 0) {
+            return 'Received';
+        }
+
+        return 'Partial Received';
+    }
+
 }

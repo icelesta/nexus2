@@ -66,6 +66,7 @@ class GeneratePurchaseOrderResource extends Resource
         ];
     }
 
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
@@ -73,14 +74,15 @@ class GeneratePurchaseOrderResource extends Resource
                 'purchaseRequisition',
                 'items.purchaseRequisitionItem.item',
                 'items.supplier',
-                'purchaseOrder',
+                'purchaseOrders',
             ])
-            ->where(
-                'status',
-                AssignmentMaterialRequisition::STATUS_WAITING_APPROVAL
-            )
-            ->whereDoesntHave('purchaseOrder');
+            ->whereIn('status', [
+                AssignmentMaterialRequisition::STATUS_WAITING_APPROVAL,
+                AssignmentMaterialRequisition::STATUS_APPROVED,
+            ])
+            ->whereDoesntHave('purchaseOrders');
     }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -102,10 +104,18 @@ class GeneratePurchaseOrderResource extends Resource
         return false;
     }
 
+
     public static function canEdit(Model $record): bool
     {
         return auth()->user()?->can('Update:GeneratePurchaseOrder') === true
-            && $record->status ===
-                AssignmentMaterialRequisition::STATUS_WAITING_APPROVAL;
+            && in_array(
+                $record->status,
+                [
+                    AssignmentMaterialRequisition::STATUS_WAITING_APPROVAL,
+                    AssignmentMaterialRequisition::STATUS_APPROVED,
+                ],
+                true
+            );
     }
+
 }

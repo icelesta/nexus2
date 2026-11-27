@@ -85,7 +85,7 @@ class GeneratePurchaseOrderEligibilityService
 
         $amrStatusPassed =
             $assignment->status
-            === AssignmentMaterialRequisition::STATUS_WAITING_APPROVAL;
+            === AssignmentMaterialRequisition::STATUS_APPROVED;
 
         /*
         |--------------------------------------------------------------------------
@@ -166,7 +166,7 @@ class GeneratePurchaseOrderEligibilityService
         */
 
         $existingPurchaseOrder =
-            $assignment->purchaseOrder;
+            $assignment->purchaseOrders()->first();
 
         $duplicatePassed =
             ! $existingPurchaseOrder;
@@ -347,11 +347,11 @@ class GeneratePurchaseOrderEligibilityService
         */
 
         if (
-            ! $evaluation['assignment']['status']
-            === AssignmentMaterialRequisition::STATUS_WAITING_APPROVAL
+            $evaluation['assignment']['status']
+            !== AssignmentMaterialRequisition::STATUS_APPROVED
         ) {
             $messages[] =
-                'Assignment Material Requisition is not in Waiting Approval status.';
+                'Assignment Material Requisition is not in Approved status.';
         }
 
         /*

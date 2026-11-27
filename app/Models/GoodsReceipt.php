@@ -7,6 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\PurchaseOrder;
+use App\Models\Supplier;
+use App\Models\GoodsReceiptItem;
+use App\Models\AssignmentDirectMarket;
+
+use App\Models\GoodsReceiptAudit;
 
 class GoodsReceipt extends Model
 {
@@ -37,14 +43,18 @@ class GoodsReceipt extends Model
     protected $fillable = [
         'uuid',
         'grn_no',
+        'document_number',
 
         'purchase_order_id',
         'assignment_direct_market_id',
         'supplier_id',
+        'warehouse_id',
 
         'receipt_date',
 
         'status',
+        'items_status',
+        'rr_status',
         'remarks',
 
         'created_by',
@@ -64,6 +74,7 @@ class GoodsReceipt extends Model
             'purchase_order_id' => 'integer',
             'assignment_direct_market_id' => 'integer',
             'supplier_id' => 'integer',
+            'warehouse_id' => 'integer',
 
             'receipt_date' => 'date',
 
@@ -77,15 +88,22 @@ class GoodsReceipt extends Model
         ];
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Relationships
-    |--------------------------------------------------------------------------
-    */
-
-    public function purchaseOrder(): BelongsTo
+    public function purchaseOrder()
     {
-        return $this->belongsTo(PurchaseOrder::class);
+        return $this->belongsTo(PurchaseOrder::class, 'purchase_order_id');
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class, 'supplier_id');
+    }
+
+    public function items()
+    {
+        return $this->hasMany(
+            GoodsReceiptItem::class,
+            'goods_receipt_id'
+        );
     }
 
     public function assignmentDirectMarket(): BelongsTo
@@ -95,76 +113,13 @@ class GoodsReceipt extends Model
             'assignment_direct_market_id'
         );
     }
-    
-    public function supplier(): BelongsTo
+
+    public function audits(): HasMany
     {
-        return $this->belongsTo(Supplier::class);
+        return $this->hasMany(
+            GoodsReceiptAudit::class,
+            'goods_receipt_id'
+        )->orderBy('created_at');
     }
 
-    public function items(): HasMany
-    {
-        return $this->hasMany(GoodsReceiptItem::class);
-    }
-
-    public function createdBy(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
-
-    public function updatedBy(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'updated_by');
-    }
-
-    public function deletedBy(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'deleted_by');
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Query Scope
-    |--------------------------------------------------------------------------
-    */
-
-    public function scopeDraft(Builder $query): Builder
-    {
-        return $query->where('status', self::STATUS_DRAFT);
-    }
-
-    public function scopeReceived(Builder $query): Builder
-    {
-        return $query->where('status', self::STATUS_RECEIVED);
-    }
-
-    public function scopeCompleted(Builder $query): Builder
-    {
-        return $query->where('status', self::STATUS_COMPLETED);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Helper
-    |--------------------------------------------------------------------------
-    */
-
-    public function isDraft(): bool
-    {
-        return $this->status === self::STATUS_DRAFT;
-    }
-
-    public function isReceived(): bool
-    {
-        return $this->status === self::STATUS_RECEIVED;
-    }
-
-    public function isCompleted(): bool
-    {
-        return $this->status === self::STATUS_COMPLETED;
-    }
-
-    public function isClosed(): bool
-    {
-        return $this->status === self::STATUS_CLOSED;
-    }
 }

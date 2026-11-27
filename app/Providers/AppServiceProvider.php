@@ -111,6 +111,11 @@ use App\Observers\ItemSpecificationObserver;
 use App\Observers\ItemStockObserver;
 use App\Observers\ItemSupplierObserver;
 
+use Filament\Support\Facades\FilamentView;
+use Filament\Tables\View\TablesRenderHook;
+use Filament\Tables\Table;
+use Illuminate\Support\Facades\View;
+
 
 
 
@@ -268,6 +273,22 @@ class AppServiceProvider extends ServiceProvider
         AssignmentMaterialRequisition::observe(AssignmentMaterialRequisitionObserver::class);
 
         ShippingAddress::observe(ShippingAddressObserver::class);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Filter Stock Movement
+        |--------------------------------------------------------------------------
+        */
+
+        FilamentView::registerRenderHook(
+            TablesRenderHook::TOOLBAR_SEARCH_BEFORE,
+            fn () => view('filament.components.inventory-stock-toolbar-actions'),
+        );
+
+        FilamentView::registerRenderHook(
+            TablesRenderHook::TOOLBAR_SEARCH_BEFORE,
+            fn () => view('filament.components.stock-movement-toolbar-actions'),
+        );
 
     }
 }

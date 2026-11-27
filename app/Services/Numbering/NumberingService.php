@@ -62,6 +62,65 @@ class NumberingService
     }
 
     /**
+     * Preview the next transaction document number without consuming it.
+     *
+     * This method is read-only and does not increment or update the counter.
+     */
+    public function preview(
+        string $documentType,
+        ?int $companyId = null,
+        ?int $businessUnitId = null,
+        ?int $branchId = null,
+        ?int $departmentId = null,
+    ): string {
+        $numbering = $this->findConfiguration(
+            $documentType,
+            $companyId,
+            $businessUnitId,
+            $branchId,
+            $departmentId,
+            false,
+        );
+
+        $this->validateConfiguration($numbering);
+
+        $currentNumber = $numbering->current_number;
+
+        if ($numbering->last_generated_at !== null) {
+            $now = $numbering->numberingNow();
+            $lastGenerated = $numbering->last_generated_at
+                ->setTimezone($numbering->numberingTimezone());
+
+            $shouldReset = match ($numbering->reset_type) {
+                TransactionNumbering::RESET_DAILY =>
+                    ! $lastGenerated->isSameDay($now),
+                TransactionNumbering::RESET_MONTHLY =>
+                    ! $lastGenerated->isSameMonth($now),
+                TransactionNumbering::RESET_YEARLY =>
+                    ! $lastGenerated->isSameYear($now),
+                default => false,
+            };
+
+            if ($shouldReset) {
+                $currentNumber = $numbering->start_number - 1;
+            }
+        }
+
+        $running = str_pad(
+            (string) ($currentNumber + 1),
+            $numbering->running_digits,
+            '0',
+            STR_PAD_LEFT,
+        );
+
+        return $this->formatNumber(
+            $numbering,
+            $running,
+            $departmentId,
+        );
+    }
+
+    /**
      * Find transaction numbering configuration.
      */
     protected function findConfiguration(
@@ -70,6 +129,7 @@ class NumberingService
         ?int $businessUnitId,
         ?int $branchId,
         ?int $departmentId,
+        bool $lockForUpdate = true,
     ): TransactionNumbering {
 
         $scopes = [
@@ -105,6 +165,7 @@ class NumberingService
                 $businessUnit,
                 $branch,
                 $department,
+                $lockForUpdate,
             );
 
             if ($numbering instanceof TransactionNumbering) {
@@ -127,6 +188,7 @@ class NumberingService
         ?int $businessUnitId,
         ?int $branchId,
         ?int $departmentId,
+        bool $lockForUpdate = true,
     ): ?TransactionNumbering {
 
         return TransactionNumbering::query()
@@ -153,7 +215,10 @@ class NumberingService
             )
 
             ->documentType($documentType)
-            ->lockForUpdate()
+            ->when(
+                $lockForUpdate,
+                fn ($query) => $query->lockForUpdate(),
+            )
             ->first();
     }
 

@@ -559,6 +559,31 @@ class PurchaseOrderForm
 
                 /*
                 |--------------------------------------------------------------------------
+                | Supporting Documents
+                |--------------------------------------------------------------------------
+                */
+
+                Section::make('Supporting Documents')
+                    ->description(
+                        'Supplier quotations and other supporting documents for this Purchase Order.'
+                    )
+                    ->icon('heroicon-o-paper-clip')
+                    ->iconColor('primary')
+                    ->columnSpanFull()
+                    ->collapsible()
+                    ->schema([
+
+                        Placeholder::make('supporting_documents')
+                            ->label('Documents')
+                            ->content(
+                                fn (?PurchaseOrder $record) =>
+                                    self::renderSupportingDocuments($record)
+                            ),
+
+                    ]),
+
+                /*
+                |--------------------------------------------------------------------------
                 | Financial Summary
                 |--------------------------------------------------------------------------
                 */
@@ -648,4 +673,168 @@ class PurchaseOrderForm
 
             ]);
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Supporting Documents — Read Only
+    |--------------------------------------------------------------------------
+    */
+
+    private static function renderSupportingDocuments(
+        ?PurchaseOrder $record
+    ): \Illuminate\Support\HtmlString {
+
+        $assignment = $record?->assignmentMaterialRequisition;
+
+        if (! $assignment) {
+            return new \Illuminate\Support\HtmlString(
+                '<div class="text-sm text-gray-500">
+                    No Assignment Material Requisition found.
+                </div>'
+            );
+        }
+
+        $documents = $assignment
+            ->documents()
+            ->with('uploader')
+            ->orderBy('id')
+            ->get();
+
+        if ($documents->isEmpty()) {
+            return new \Illuminate\Support\HtmlString(
+                '<div class="rounded-lg border border-dashed
+                    border-gray-300 px-4 py-6 text-center
+                    text-sm text-gray-500 dark:border-gray-700">
+                    No supporting documents uploaded.
+                </div>'
+            );
+        }
+
+        $rows = '';
+
+        foreach ($documents as $document) {
+
+            $fileName = $document->file_name
+                ?: basename($document->file_path);
+
+            $documentType = $document->document_type ?: '-';
+
+            $uploadedBy = $document->uploader?->name ?? '-';
+
+            $uploadedAt = $document->created_at
+                ? \App\Support\Timezone\UserTimezone::format(
+                    $document->created_at,
+                    'd M Y H:i:s'
+                )
+                : '-';
+
+            $storage = \Illuminate\Support\Facades\Storage::disk(
+                'public'
+            );
+
+            $exists = $storage->exists($document->file_path);
+
+            $url = $exists
+                ? $storage->url($document->file_path)
+                : null;
+
+            $viewAction = $url
+                ? '<a href="'.e($url).'"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1
+                            whitespace-nowrap text-primary-600
+                            hover:underline">
+                        <span>◎</span> Open
+                   </a>'
+                : '<span class="whitespace-nowrap text-gray-400">
+                        Unavailable
+                   </span>';
+
+            $downloadAction = $url
+                ? '<a href="'.e($url).'"
+                        download="'.e($fileName).'"
+                        class="inline-flex items-center gap-1
+                            whitespace-nowrap text-primary-600
+                            hover:underline">
+                        <span>↓</span> Download
+                   </a>'
+                : '<span class="whitespace-nowrap text-gray-400">
+                        Unavailable
+                   </span>';
+
+            $rows .= '
+                <tr class="border-b border-gray-100
+                    last:border-0 dark:border-gray-800">
+
+                    <td class="px-3 py-4 text-sm font-semibold
+                        text-gray-900 dark:text-white">
+                        '.e($fileName).'
+                    </td>
+
+                    <td class="whitespace-nowrap px-3 py-4">
+                        <span class="inline-flex rounded-md
+                            bg-warning-50 px-2 py-1 text-xs
+                            font-medium text-warning-700
+                            dark:bg-warning-400/10
+                            dark:text-warning-400">
+                            '.e($documentType).'
+                        </span>
+                    </td>
+
+                    <td class="whitespace-nowrap px-3 py-4
+                        text-sm text-gray-700 dark:text-gray-300">
+                        '.e($uploadedBy).'
+                    </td>
+
+                    <td class="whitespace-nowrap px-3 py-4
+                        text-sm text-gray-700 dark:text-gray-300">
+                        '.e($uploadedAt).'
+                    </td>
+
+                    <td class="whitespace-nowrap px-3 py-4 text-sm">
+                        '.$viewAction.'
+                    </td>
+
+                    <td class="whitespace-nowrap px-3 py-4 text-sm">
+                        '.$downloadAction.'
+                    </td>
+
+                </tr>
+            ';
+        }
+
+        return new \Illuminate\Support\HtmlString(
+            '
+            <div class="overflow-x-auto rounded-lg border
+                border-gray-200 dark:border-gray-700">
+
+                <table class="w-full text-left">
+
+                    <thead class="bg-gray-50 dark:bg-gray-800">
+                        <tr class="text-xs uppercase
+                            tracking-wide text-gray-500">
+
+                            <th class="px-3 py-3">Document</th>
+                            <th class="px-3 py-3">Type</th>
+                            <th class="px-3 py-3">Uploaded By</th>
+                            <th class="px-3 py-3">Uploaded At</th>
+                            <th class="px-3 py-3">View</th>
+                            <th class="px-3 py-3">Download</th>
+
+                        </tr>
+                    </thead>
+
+                    <tbody class="divide-y divide-gray-100
+                        dark:divide-gray-800">
+                        '.$rows.'
+                    </tbody>
+
+                </table>
+
+            </div>
+            '
+        );
+    }
+
 }

@@ -31,6 +31,7 @@ class GeneratePurchaseOrderForm
                 |--------------------------------------------------------------------------
                 */
 
+
                 Section::make(
                     'Purchase Order Generation'
                 )
@@ -39,69 +40,74 @@ class GeneratePurchaseOrderForm
                     )
                     ->schema([
 
-                        Grid::make(12)
+                        Grid::make(5)
                             ->schema([
 
-                                Placeholder::make(
-                                    'amr_number'
-                                )
+                                Placeholder::make('amr_number')
                                     ->label('AMR No.')
                                     ->content(
                                         fn (
                                             ?AssignmentMaterialRequisition $record
-                                        ): string =>
-                                            $record?->document_no
-                                            ?? '-'
+                                        ): HtmlString =>
+                                            self::renderInfoBox(
+                                                $record?->document_no
+                                            )
                                     )
-                                    ->columnSpan(3),
+                                    ->columnSpan(1),
 
-                                Placeholder::make(
-                                    'mr_number'
-                                )
+                                Placeholder::make('mr_number')
                                     ->label('MR No.')
                                     ->content(
                                         fn (
                                             ?AssignmentMaterialRequisition $record
-                                        ): string =>
-                                            $record
-                                                ?->purchaseRequisition
-                                                ?->pr_no
-                                            ?? '-'
+                                        ): HtmlString =>
+                                            self::renderInfoBox(
+                                                $record?->purchaseRequisition?->pr_no
+                                            )
                                     )
-                                    ->columnSpan(3),
+                                    ->columnSpan(1),
 
-                                Placeholder::make(
-                                    'mr_status'
-                                )
+                                Placeholder::make('mr_status')
                                     ->label('MR Status')
                                     ->content(
                                         fn (
                                             ?AssignmentMaterialRequisition $record
-                                        ): string =>
-                                            $record
-                                                ?->purchaseRequisition
-                                                ?->status
-                                            ?? '-'
+                                        ): HtmlString =>
+                                            self::renderInfoBox(
+                                                $record?->purchaseRequisition?->status
+                                            )
                                     )
-                                    ->columnSpan(3),
+                                    ->columnSpan(1),
 
-                                Placeholder::make(
-                                    'amr_status'
-                                )
+                                Placeholder::make('amr_status')
                                     ->label('AMR Status')
                                     ->content(
                                         fn (
                                             ?AssignmentMaterialRequisition $record
-                                        ): string =>
-                                            $record?->status
-                                            ?? '-'
+                                        ): HtmlString =>
+                                            self::renderInfoBox(
+                                                $record?->status
+                                            )
                                     )
-                                    ->columnSpan(3),
+                                    ->columnSpan(1),
+
+                                Placeholder::make('amr_remarks')
+                                    ->label('Remark')
+                                    ->content(
+                                        fn (
+                                            ?AssignmentMaterialRequisition $record
+                                        ): HtmlString =>
+                                            self::renderInfoBox(
+                                                $record?->remarks
+                                            )
+                                    )
+                                    ->columnSpan(1),
 
                             ]),
 
                     ])
                     ->collapsible(),
+
 
                 /*
                 |--------------------------------------------------------------------------
@@ -133,31 +139,6 @@ class GeneratePurchaseOrderForm
 
                     ]),
 
-                /*
-                |--------------------------------------------------------------------------
-                | SUPPLIER
-                |--------------------------------------------------------------------------
-                */
-
-                Section::make(
-                    'Supplier Assignment'
-                )
-                    ->schema([
-
-                        Placeholder::make(
-                            'supplier'
-                        )
-                            ->label('Supplier')
-                            ->content(
-                                fn (
-                                    ?AssignmentMaterialRequisition $record
-                                ): string =>
-                                    self::resolveSupplierName(
-                                        $record
-                                    )
-                            ),
-
-                    ]),
 
                 /*
                 |--------------------------------------------------------------------------
@@ -187,6 +168,32 @@ class GeneratePurchaseOrderForm
                             ),
 
                     ]),
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | SUPPORTING DOCUMENTS
+                |--------------------------------------------------------------------------
+                */
+
+                Section::make('Supporting Documents')
+                    ->description(
+                        'Supplier quotations and other supporting documents for this Assignment Material Requisition.'
+                    )
+                    ->schema([
+
+                        Placeholder::make('supporting_documents')
+                            ->label('Documents')
+                            ->content(
+                                fn (
+                                    ?AssignmentMaterialRequisition $record
+                                ): HtmlString => self::renderSupportingDocuments(
+                                    $record
+                                )
+                            ),
+
+                    ])
+                    ->collapsible(),
 
                 /*
                 |--------------------------------------------------------------------------
@@ -480,9 +487,10 @@ class GeneratePurchaseOrderForm
         return '-';
     }
 
+
     /*
     |--------------------------------------------------------------------------
-    | Items
+    | Assignment Items
     |--------------------------------------------------------------------------
     */
 
@@ -498,160 +506,388 @@ class GeneratePurchaseOrderForm
             );
         }
 
-        $items = $record->items;
+        /*
+        |--------------------------------------------------------------------------
+        | Load Assignment Items
+        |--------------------------------------------------------------------------
+        | Follow the same relationships used by AssignmentItemsGrid.
+        */
+
+        $items = $record->items()
+            ->with([
+                'purchaseRequisitionItem.item',
+                'purchaseRequisitionItem.uom',
+                'purchaseRequisitionItem.allocationJournal',
+                'supplier',
+                'tax',
+            ])
+            ->orderBy('id')
+            ->get();
 
         if ($items->isEmpty()) {
-
             return new HtmlString(
-                '<div class="rounded-lg border border-dashed border-gray-300 px-4 py-6 text-center text-sm text-gray-500">
+                '<div class="rounded-lg border border-dashed
+                    border-gray-300 px-4 py-6 text-center
+                    text-sm text-gray-500 dark:border-gray-700">
                     No assignment items found.
                 </div>'
             );
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Summary Calculations
+        |--------------------------------------------------------------------------
+        | Use existing Assignment values.
+        | No financial recalculation.
+        */
+
+        $totalLines = $items->count();
+
+        $totalRequestedQty = (float) $items->sum(
+            fn ($item) => (float) (
+                $item->purchaseRequisitionItem?->quantity ?? 0
+            )
+        );
+
+        $totalAssignedQty = (float) $items->sum('assigned_qty');
+
+        $totalAmount = (float) $items->sum(
+            fn ($item) => (float) $item->grand_total
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Table Rows
+        |--------------------------------------------------------------------------
+        */
+
         $rows = '';
 
-        foreach ($items as $item) {
+        foreach ($items as $index => $item) {
 
-            /*
-            |--------------------------------------------------------------------------
-            | Description Source
-            |--------------------------------------------------------------------------
-            |
-            | Primary:
-            |   AMR snapshot item_description
-            |
-            | Fallback:
-            |   MR Item -> Item Master -> description
-            |
-            */
+            $purchaseItem = $item->purchaseRequisitionItem;
 
-            $description =
-                $item->item_description
-                ?? $item->purchaseRequisitionItem?->remarks
+            $itemCode = $purchaseItem?->item?->item_code ?? '-';
+
+            $itemName = $purchaseItem?->item?->item_name ?? '-';
+
+            $description = $purchaseItem?->remarks ?? '-';
+
+            $uom = $purchaseItem?->uom?->uom_name ?? '-';
+
+            $journal = $purchaseItem?->allocationJournal?->display_name ?? '-';
+
+            $requestedQty = number_format(
+                (float) ($purchaseItem?->quantity ?? 0),
+                2
+            );
+
+            $assignedQty = number_format(
+                (float) $item->assigned_qty,
+                2
+            );
+
+            $supplierName = $item->supplier?->supplier_name ?? '-';
+
+            $unitPrice = number_format(
+                (float) $item->unit_price,
+                2
+            );
+
+            $discountPercent = number_format(
+                (float) $item->discount_percent,
+                2
+            );
+
+            $discountAmount = number_format(
+                (float) $item->discount_amount,
+                2
+            );
+
+            $taxName = $item->tax_name
+                ?? $item->tax?->tax_name
                 ?? '-';
 
-            $qty =
-                number_format(
-                    (float) $item->assigned_qty,
-                    2
-                );
+            $taxPercent = number_format(
+                (float) $item->tax_percent,
+                2
+            );
 
-            $price =
-                number_format(
-                    (float) $item->unit_price,
-                    2
-                );
+            $taxAmount = number_format(
+                (float) $item->tax_amount,
+                2
+            );
 
-            $amount =
-                (float) $item->assigned_qty
-                * (float) $item->unit_price;
-
-            $amount =
-                number_format(
-                    $amount,
-                    2
-                );
-
-            $supplierName =
-                $item->supplier?->supplier_name
-                ?? '-';
+            $grandTotal = number_format(
+                (float) $item->grand_total,
+                2
+            );
 
             $rows .= '
-                <tr class="border-b border-gray-100 last:border-0 dark:border-gray-800">
+                <tr class="transition-colors hover:bg-gray-50
+                    dark:hover:bg-gray-800/50">
 
-                    <td class="px-3 py-3 text-sm font-medium text-gray-900 dark:text-white">
-                        '.e($item->item_code ?? '-').'
+                    <td class="border border-gray-300 px-2 py-2
+                        text-center text-xs dark:border-gray-700">
+                        '.($index + 1).'
                     </td>
 
-                    <td class="px-3 py-3 text-sm text-gray-700 dark:text-gray-300">
-                        '.e($item->item_name ?? '-').'
+                    <td class="border border-gray-300 px-2 py-2
+                        text-center text-xs dark:border-gray-700">
+                        '.e($itemCode).'
                     </td>
 
-                    <td class="px-3 py-3 text-sm text-gray-600 dark:text-gray-400">
+                    <td class="border border-gray-300 px-2 py-2
+                        text-xs whitespace-nowrap dark:border-gray-700">
+                        '.e($itemName).'
+                    </td>
+
+                    <td class="border border-gray-300 px-2 py-2
+                        text-xs dark:border-gray-700">
                         '.e($description).'
                     </td>
 
-                    <td class="px-3 py-3 text-right text-sm text-gray-700 dark:text-gray-300">
-                        '.e($qty).'
+                    <td class="border border-gray-300 px-2 py-2
+                        text-center text-xs dark:border-gray-700">
+                        '.e($uom).'
                     </td>
 
-                    <td class="px-3 py-3 text-sm text-gray-600 dark:text-gray-400">
-                        '.e($item->uom_code ?? '-').'
+                    <td class="border border-gray-300 px-2 py-2
+                        text-xs whitespace-nowrap dark:border-gray-700">
+                        '.e($journal).'
                     </td>
 
-                    <td class="px-3 py-3 text-sm text-gray-700 dark:text-gray-300">
+                    <td class="border border-gray-300 px-2 py-2
+                        text-right text-xs dark:border-gray-700">
+                        '.$requestedQty.'
+                    </td>
+
+                    <td class="border border-gray-300 px-2 py-2
+                        text-right text-xs dark:border-gray-700">
+                        '.$assignedQty.'
+                    </td>
+
+                    <td class="border border-gray-300 px-2 py-2
+                        text-xs whitespace-nowrap dark:border-gray-700">
                         '.e($supplierName).'
                     </td>
 
-                    <td class="px-3 py-3 text-right text-sm text-gray-700 dark:text-gray-300">
-                        Rp '.e($price).'
+                    <td class="border border-gray-300 px-2 py-2
+                        text-right text-xs whitespace-nowrap dark:border-gray-700">
+                        Rp. '.$unitPrice.'
                     </td>
 
-                    <td class="px-3 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
-                        Rp '.e($amount).'
+                    <td class="border border-gray-300 px-2 py-2
+                        text-right text-xs dark:border-gray-700">
+                        '.$discountPercent.' %
+                    </td>
+
+                    <td class="border border-gray-300 px-2 py-2
+                        text-right text-xs whitespace-nowrap dark:border-gray-700">
+                        Rp '.$discountAmount.'
+                    </td>
+
+                    <td class="border border-gray-300 px-2 py-2
+                        text-xs whitespace-nowrap dark:border-gray-700">
+                        '.e($taxName).'
+                    </td>
+
+                    <td class="border border-gray-300 px-2 py-2
+                        text-right text-xs dark:border-gray-700">
+                        '.$taxPercent.' %
+                    </td>
+
+                    <td class="border border-gray-300 px-2 py-2
+                        text-right text-xs whitespace-nowrap dark:border-gray-700">
+                        Rp '.$taxAmount.'
+                    </td>
+
+                    <td class="border border-gray-300 px-2 py-2
+                        text-right text-xs font-bold text-blue-700
+                        whitespace-nowrap dark:border-gray-700">
+                        Rp '.$grandTotal.'
                     </td>
 
                 </tr>
             ';
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Render Table
+        |--------------------------------------------------------------------------
+        */
+
         return new HtmlString(
+
             '
-            <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+            <div class="overflow-x-auto rounded-lg
+                border border-gray-200 dark:border-gray-700">
 
-                <table class="w-full min-w-[1000px]">
+                <table class="w-full min-w-[1650px]
+                    border-collapse">
 
-                    <thead class="bg-gray-50 dark:bg-gray-800">
+                    <thead>
+                        <tr class="bg-gray-100 dark:bg-gray-800">
 
-                        <tr>
-
-                            <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                Item
+                            <th class="border border-gray-300 px-2 py-2
+                                text-center text-xs font-semibold
+                                uppercase dark:border-gray-700">
+                                #
                             </th>
 
-                            <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                Name
+                            <th class="border border-gray-300 px-2 py-2
+                                text-center text-xs font-semibold
+                                uppercase dark:border-gray-700">
+                                Item Code
                             </th>
 
-                            <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            <th class="border border-gray-300 px-2 py-2
+                                text-left text-xs font-semibold
+                                uppercase dark:border-gray-700">
+                                Item Name
+                            </th>
+
+                            <th class="border border-gray-300 px-2 py-2
+                                text-left text-xs font-semibold
+                                uppercase dark:border-gray-700">
                                 Description
                             </th>
 
-                            <th class="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                Assigned
-                            </th>
-
-                            <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            <th class="border border-gray-300 px-2 py-2
+                                text-center text-xs font-semibold
+                                uppercase dark:border-gray-700">
                                 UOM
                             </th>
 
-                            <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            <th class="border border-gray-300 px-2 py-2
+                                text-center text-xs font-semibold
+                                uppercase dark:border-gray-700">
+                                Journal (COA)
+                            </th>
+
+                            <th class="border border-gray-300 px-2 py-2
+                                text-center text-xs font-semibold
+                                uppercase dark:border-gray-700">
+                                Requested
+                            </th>
+
+                            <th class="border border-gray-300 px-2 py-2
+                                text-center text-xs font-semibold
+                                uppercase dark:border-gray-700">
+                                Assigned
+                            </th>
+
+                            <th class="border border-gray-300 px-2 py-2
+                                text-left text-xs font-semibold
+                                uppercase dark:border-gray-700">
                                 Supplier
                             </th>
 
-                            <th class="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            <th class="border border-gray-300 px-2 py-2
+                                text-right text-xs font-semibold
+                                uppercase dark:border-gray-700">
                                 Unit Price
                             </th>
 
-                            <th class="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                Amount
+                            <th class="border border-gray-300 px-2 py-2
+                                text-right text-xs font-semibold
+                                uppercase dark:border-gray-700">
+                                Disc %
+                            </th>
+
+                            <th class="border border-gray-300 px-2 py-2
+                                text-right text-xs font-semibold
+                                uppercase dark:border-gray-700">
+                                Disc Amt
+                            </th>
+
+                            <th class="border border-gray-300 px-2 py-2
+                                text-left text-xs font-semibold
+                                uppercase dark:border-gray-700">
+                                Tax
+                            </th>
+
+                            <th class="border border-gray-300 px-2 py-2
+                                text-right text-xs font-semibold
+                                uppercase dark:border-gray-700">
+                                Tax %
+                            </th>
+
+                            <th class="border border-gray-300 px-2 py-2
+                                text-right text-xs font-semibold
+                                uppercase dark:border-gray-700">
+                                Tax Amt
+                            </th>
+
+                            <th class="border border-gray-300 px-2 py-2
+                                text-right text-xs font-semibold
+                                uppercase dark:border-gray-700">
+                                Grand Total
                             </th>
 
                         </tr>
-
                     </thead>
 
-                    <tbody>
+                    <tbody class="bg-white dark:bg-gray-900">
                         '.$rows.'
                     </tbody>
 
                 </table>
 
+                <div class="flex min-w-[1650px] items-center
+                    justify-between gap-8 border-t border-gray-200
+                    bg-gray-50 px-5 py-3 text-xs
+                    dark:border-gray-700 dark:bg-gray-800">
+
+                    <div class="whitespace-nowrap">
+                        <span class="text-gray-500">
+                            Total Lines :
+                        </span>
+                        <strong class="text-blue-700">
+                            '.$totalLines.'
+                        </strong>
+                    </div>
+
+                    <div class="flex items-center gap-8 whitespace-nowrap">
+
+                        <div>
+                            <span class="text-gray-500">
+                                Requested Qty :
+                            </span>
+                            <strong class="text-blue-700">
+                                '.number_format($totalRequestedQty, 2).'
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span class="text-gray-500">
+                                Assigned Qty :
+                            </span>
+                            <strong class="text-blue-700">
+                                '.number_format($totalAssignedQty, 2).'
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span class="text-gray-500">
+                                Total Amount :
+                            </span>
+                            <strong class="text-blue-700">
+                                Rp '.number_format($totalAmount, 2).'
+                            </strong>
+                        </div>
+
+                    </div>
+
+                </div>
+
             </div>
             '
         );
     }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -952,4 +1188,221 @@ class GeneratePurchaseOrderForm
 
         };
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Supporting Documents
+    |--------------------------------------------------------------------------
+    */
+
+    protected static function renderSupportingDocuments(
+        ?AssignmentMaterialRequisition $record
+    ): HtmlString {
+
+        if (! $record) {
+            return new HtmlString(
+                '<div class="text-sm text-gray-500">
+                    No assignment found.
+                </div>'
+            );
+        }
+
+        $documents = $record
+            ->documents()
+            ->with('uploader')
+            ->orderBy('id')
+            ->get();
+
+        if ($documents->isEmpty()) {
+            return new HtmlString(
+                '<div class="rounded-lg border border-dashed
+                    border-gray-300 px-4 py-6 text-center
+                    text-sm text-gray-500 dark:border-gray-700">
+                    No supporting documents uploaded.
+                </div>'
+            );
+        }
+
+        $rows = '';
+
+        foreach ($documents as $document) {
+
+            $fileName = $document->file_name
+                ?: basename($document->file_path);
+
+            $documentType = $document->document_type ?: '-';
+
+            $uploadedBy = $document->uploader?->name ?? '-';
+
+            $uploadedAt = $document->created_at
+                ? \App\Support\Timezone\UserTimezone::format(
+                    $document->created_at,
+                    'd M Y H:i:s'
+                )
+                : '-';
+
+            $storage = \Illuminate\Support\Facades\Storage::disk(
+                'public'
+            );
+
+            $exists = $storage->exists($document->file_path);
+
+            $url = $exists
+                ? $storage->url($document->file_path)
+                : null;
+
+            $viewAction = $url
+                ? '<a href="'.e($url).'"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1
+                            whitespace-nowrap text-primary-600
+                            hover:underline">
+                        <span>◎</span> Open
+                   </a>'
+                : '<span class="whitespace-nowrap text-gray-400">
+                        Unavailable
+                   </span>';
+
+            $downloadAction = $url
+                ? '<a href="'.e($url).'"
+                        download="'.e($fileName).'"
+                        class="inline-flex items-center gap-1
+                            whitespace-nowrap text-primary-600
+                            hover:underline">
+                        <span>↓</span> Download
+                   </a>'
+                : '<span class="whitespace-nowrap text-gray-400">
+                        Unavailable
+                   </span>';
+
+            $rows .= '
+                <tr class="border-b border-gray-100
+                    last:border-0 dark:border-gray-800">
+
+                    <td class="px-3 py-4 text-sm font-semibold
+                        text-gray-900 dark:text-white">
+                        '.e($fileName).'
+                    </td>
+
+                    <td class="whitespace-nowrap px-3 py-4">
+                        <span class="inline-flex rounded-md
+                            bg-warning-50 px-2 py-1 text-xs
+                            font-medium text-warning-700
+                            dark:bg-warning-400/10
+                            dark:text-warning-400">
+                            '.e($documentType).'
+                        </span>
+                    </td>
+
+                    <td class="whitespace-nowrap px-3 py-4
+                        text-sm text-gray-700 dark:text-gray-300">
+                        '.e($uploadedBy).'
+                    </td>
+
+                    <td class="whitespace-nowrap px-3 py-4
+                        text-sm text-gray-700 dark:text-gray-300">
+                        '.e($uploadedAt).'
+                    </td>
+
+                    <td class="whitespace-nowrap px-3 py-4
+                        text-sm">
+                        '.$viewAction.'
+                    </td>
+
+                    <td class="whitespace-nowrap px-3 py-4
+                        text-sm">
+                        '.$downloadAction.'
+                    </td>
+
+                </tr>
+            ';
+        }
+
+        return new HtmlString(
+            '
+            <div class="overflow-x-auto rounded-lg
+                border border-gray-200 dark:border-gray-700">
+
+                <table class="w-full min-w-[1050px]
+                    table-auto">
+
+                    <thead class="bg-gray-50 dark:bg-gray-800">
+                        <tr>
+
+                            <th class="px-3 py-3 text-left
+                                text-xs font-semibold uppercase
+                                tracking-wide text-gray-500">
+                                Document
+                            </th>
+
+                            <th class="px-3 py-3 text-left
+                                text-xs font-semibold uppercase
+                                tracking-wide text-gray-500">
+                                Type
+                            </th>
+
+                            <th class="px-3 py-3 text-left
+                                text-xs font-semibold uppercase
+                                tracking-wide text-gray-500">
+                                Uploaded By
+                            </th>
+
+                            <th class="px-3 py-3 text-left
+                                text-xs font-semibold uppercase
+                                tracking-wide text-gray-500">
+                                Uploaded At
+                            </th>
+
+                            <th class="px-3 py-3 text-left
+                                text-xs font-semibold uppercase
+                                tracking-wide text-gray-500">
+                                View
+                            </th>
+
+                            <th class="px-3 py-3 text-left
+                                text-xs font-semibold uppercase
+                                tracking-wide text-gray-500">
+                                Download
+                            </th>
+
+                        </tr>
+                    </thead>
+
+                    <tbody class="divide-y divide-gray-100
+                        dark:divide-gray-800">
+                        '.$rows.'
+                    </tbody>
+
+                </table>
+
+            </div>
+            '
+        );
+    }
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Information Box
+    |--------------------------------------------------------------------------
+    */
+
+    protected static function renderInfoBox(
+        ?string $value
+    ): HtmlString {
+
+        return new HtmlString(
+            '<div class="rounded-lg border border-gray-200
+                bg-gray-50 px-3 py-2 text-sm text-gray-700
+                dark:border-gray-700 dark:bg-gray-800
+                dark:text-gray-200">'
+                . e($value ?: '-')
+            . '</div>'
+        );
+    }
+
+
 }

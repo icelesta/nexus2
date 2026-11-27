@@ -12,6 +12,10 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Filament\Models\Contracts\HasAvatar;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\GoodsReceiptAudit;
+use App\Models\GoodsReceiptItem;
+
 class User extends Authenticatable implements HasAvatar
 {
     /** @use HasFactory<UserFactory> */
@@ -270,7 +274,7 @@ class User extends Authenticatable implements HasAvatar
         }
 
         return $query;
-    } 
+    }
 
     public function getAvatarUrlAttribute(): string
     {
@@ -284,7 +288,7 @@ class User extends Authenticatable implements HasAvatar
     public function getFilamentAvatarUrl(): ?string
     {
         return $this->avatar_url;
-    }        
+    }
 
 
     /*
@@ -327,6 +331,22 @@ class User extends Authenticatable implements HasAvatar
         ->implode(' - ');
     }
 
+    public function goodsReceiptAudits(): HasMany
+    {
+        return $this->hasMany(
+            GoodsReceiptAudit::class,
+            'user_id'
+        );
+    }
+
+    public function goodsReceiptQcChecks(): HasMany
+    {
+        return $this->hasMany(
+            GoodsReceiptItem::class,
+            'qc_checked_by'
+        );
+    }
+
     // TODO:
     // public function employee(): BelongsTo
     // {
@@ -337,6 +357,5 @@ class User extends Authenticatable implements HasAvatar
     // {
     //     return $this->belongsTo(Position::class);
     // }
-    
 
 }

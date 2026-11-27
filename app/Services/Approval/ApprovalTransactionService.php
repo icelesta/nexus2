@@ -1249,6 +1249,39 @@ class ApprovalTransactionService
 
                     /*
                     |--------------------------------------------------------------------------
+                    | Update AMR after Final MR Approval
+                    |--------------------------------------------------------------------------
+                    |
+                    | Only AMR that has completed Buyer Submit is eligible.
+                    | Legacy / single-level AMR remains in its original status.
+                    |
+                    */
+
+                    $assignment = AssignmentMaterialRequisition::query()
+                        ->where(
+                            'purchase_requisition_id',
+                            $purchaseRequisition->getKey()
+                        )
+                        ->lockForUpdate()
+                        ->latest('id')
+                        ->first();
+
+                    if (
+                        $assignment
+                        && $assignment->status
+                            === AssignmentMaterialRequisition::STATUS_WAITING_APPROVAL
+                    ) {
+                        $assignment->update([
+                            'status' =>
+                                AssignmentMaterialRequisition::STATUS_APPROVED,
+
+                            'updated_by' =>
+                                $approver->getKey(),
+                        ]);
+                    }
+
+                    /*
+                    |--------------------------------------------------------------------------
                     | Final Approval Notification
                     |--------------------------------------------------------------------------
                     */

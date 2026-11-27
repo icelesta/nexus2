@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\GoodsReceiptAudit;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class GoodsReceiptItem extends Model
 {
@@ -26,6 +28,15 @@ class GoodsReceiptItem extends Model
         'item_id',
 
         'received_qty',
+        'allocated_qty',
+
+        'item_status',
+        'qc_passed',
+        'qc_checked_by',
+        'qc_checked_at',
+
+        'draft_receive_qty',
+
         'uom_id',
         'warehouse_id',
 
@@ -56,8 +67,15 @@ class GoodsReceiptItem extends Model
             'warehouse_id'           => 'integer',
 
             'received_qty'           => 'decimal:4',
+            'allocated_qty'          => 'decimal:4',
             'accepted_qty'           => 'decimal:4',
             'rejected_qty'           => 'decimal:4',
+            'draft_receive_qty'      => 'decimal:4',
+
+            'item_status'            => 'string',
+            'qc_passed'              => 'boolean',
+            'qc_checked_by'          => 'integer',
+            'qc_checked_at'          => 'datetime',
 
             'created_by'             => 'integer',
             'updated_by'             => 'integer',
@@ -91,7 +109,7 @@ class GoodsReceiptItem extends Model
             AssignmentDirectMarketItem::class,
             'assignment_direct_market_item_id'
         );
-    }    
+    }
 
     public function item(): BelongsTo
     {
@@ -170,4 +188,18 @@ class GoodsReceiptItem extends Model
     {
         return (float) $this->rejected_qty > 0;
     }
+
+    public function audits(): HasMany
+    {
+        return $this->hasMany(
+            GoodsReceiptAudit::class,
+            'goods_receipt_item_id'
+        )->orderBy('created_at');
+    }
+
+    public function qcCheckedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'qc_checked_by');
+    }
+
 }

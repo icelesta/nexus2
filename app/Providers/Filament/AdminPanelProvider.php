@@ -48,9 +48,10 @@ class AdminPanelProvider extends PanelProvider
             ->navigationGroups([
                 'Purchasing',
                 'Logistics',
+                'Inventory Control',
                 'Setup Master',
-            ])            
-            
+            ])
+
             ->navigationItems([
                 NavigationItem::make('Material Requisition')
                     ->label('Material Requisition')

@@ -312,6 +312,18 @@ class AssignmentMaterialRequisitionService
 
             /*
             |--------------------------------------------------------------------------
+            | Validate Submit Requirements
+            |--------------------------------------------------------------------------
+            |
+            | Submit is a business workflow transition. It must not be possible
+            | to bypass the AMR completion rules through a custom Filament action.
+            |
+            */
+
+            $this->validateDocument($assignment);
+
+            /*
+            |--------------------------------------------------------------------------
             | Validate Workflow
             |--------------------------------------------------------------------------
             |
@@ -1488,6 +1500,122 @@ class AssignmentMaterialRequisitionService
 
 
     /**
+     * Validate AMR before Submit.
+     *
+     * This is the authoritative business gate for the Submit action.
+     * Form-level required rules are intentionally not sufficient because
+     * the Submit action is a custom action and can bypass normal form save
+     * validation.
+     *
+     * Requirements:
+     * - AMR must still be editable.
+     * - Shipping Address must be saved.
+     * - Payment Instruction must be saved and non-empty.
+     * - At least one Assignment Item must exist.
+     * - EVERY Assignment Item must have:
+     *   - Supplier
+     *   - Assigned Qty > 0
+     *   - Unit Price > 0
+     *
+     * @throws RuntimeException
+     */
+    protected function validateDocument(
+        AssignmentMaterialRequisition $assignment,
+    ): void {
+
+        if (! $this->canModify($assignment)) {
+            throw new RuntimeException(
+                'Assignment Material Requisition cannot be modified.'
+            );
+        }
+
+        $errors = [];
+
+        /*
+        |--------------------------------------------------------------------------
+        | Header Validation
+        |--------------------------------------------------------------------------
+        */
+
+        if (blank($assignment->shipping_address_id)) {
+            $errors[] = 'Shipping Address is required.';
+        }
+
+        if (blank($assignment->payment_instruction)) {
+            $errors[] = 'Payment Instruction is required.';
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Assignment Items Validation
+        |--------------------------------------------------------------------------
+        */
+
+        $items = $assignment
+            ->items()
+            ->orderBy('id')
+            ->get();
+
+        if ($items->isEmpty()) {
+
+            $errors[] = 'Assignment Items are required.';
+
+        } else {
+
+            foreach ($items as $index => $item) {
+
+                $itemNumber = $index + 1;
+
+                $itemCode = trim((string) ($item->item_code ?? ''));
+                $itemName = trim((string) ($item->item_name ?? ''));
+
+                $itemLabel = match (true) {
+                    $itemCode !== '' && $itemName !== ''
+                        => "Item #{$itemNumber} ({$itemCode} - {$itemName})",
+                    $itemCode !== ''
+                        => "Item #{$itemNumber} ({$itemCode})",
+                    $itemName !== ''
+                        => "Item #{$itemNumber} ({$itemName})",
+                    default
+                        => "Item #{$itemNumber}",
+                };
+
+                if (blank($item->supplier_id)) {
+                    $errors[] = "{$itemLabel}: Supplier is not assigned.";
+                }
+
+                if ((float) $item->assigned_qty <= 0) {
+                    $errors[] = "{$itemLabel}: Assigned Qty must be greater than zero.";
+                }
+
+                if ((float) $item->unit_price <= 0) {
+                    $errors[] = "{$itemLabel}: Unit Price must be greater than zero.";
+                }
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Block Submit
+        |--------------------------------------------------------------------------
+        */
+
+        if ($errors !== []) {
+
+            throw new RuntimeException(
+                "Unable to submit Assignment Material Requisition:\n\n"
+                . implode(
+                    "\n",
+                    array_map(
+                        static fn (string $error): string => '• ' . $error,
+                        $errors,
+                    ),
+                )
+            );
+        }
+    }
+
+    /**
      * Validate workflow transition.
      */
     protected function validateWorkflowTransition(
@@ -1576,6 +1704,7 @@ class AssignmentMaterialRequisitionService
             */
 
             AssignmentMaterialRequisition::STATUS_WAITING_APPROVAL => [
+                AssignmentMaterialRequisition::STATUS_APPROVED,
                 AssignmentMaterialRequisition::STATUS_REJECTED,
             ],
 

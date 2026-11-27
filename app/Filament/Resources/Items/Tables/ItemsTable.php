@@ -139,6 +139,10 @@ class ItemsTable
 
                 TextColumn::make('stocks_sum_qty_on_hand')
                     ->label('Current Stock')
+                    ->formatStateUsing(fn ($state): string => rtrim(
+                        rtrim(number_format((float) ($state ?? 0), 4, '.', ''), '0'),
+                        '.'
+                    ))
                     ->alignCenter()
                     ->sortable(),
 

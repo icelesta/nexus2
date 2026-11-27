@@ -1,5 +1,66 @@
 @import '../../../../vendor/filament/filament/resources/css/theme.css';
 
+/* Nexus 2.0 - Poppins Font Family */
+@font-face {
+    font-family: "Poppins";
+    src: url("../../../fonts/Poppins-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Poppins";
+    src: url("../../../fonts/Poppins-Medium.ttf") format("truetype");
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Poppins";
+    src: url("../../../fonts/Poppins-SemiBold.ttf") format("truetype");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Poppins";
+    src: url("../../../fonts/Poppins-Bold.ttf") format("truetype");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Nexus 2.0 - Global Filament Typography */
+html,
+body,
+.fi-body,
+.fi-layout,
+.fi-main,
+.fi-sidebar,
+.fi-topbar,
+.fi-modal,
+.fi-dropdown-panel,
+.fi-input-wrp,
+.fi-btn,
+.fi-ta,
+.fi-fo {
+    font-family: "Poppins", sans-serif !important;
+}
+
+@theme {
+    --font-sans: "Poppins", sans-serif;
+}
+
+/* Existing source declarations remain below */
+@source "../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php";
+@source "../../storage/framework/views/*.php";
+@source "../**/*.blade.php";
+@source "../**/*.js";
+
+
 @source '../../../../app/Filament/**/*';
 @source '../../../../resources/views/filament/**/*';
 
@@ -625,4 +686,15 @@
 
 .fi-notification-body {
     font-size: 12px !important;
+}
+/* Hide number input spinner - Chrome, Edge, Safari */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Hide number input spinner - Firefox */
+input[type="number"] {
+    -moz-appearance: textfield;
 }
